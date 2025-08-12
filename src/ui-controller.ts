@@ -104,6 +104,28 @@ export class UIController {
     private handleCardTarget(position: Position, unit?: SummonUnit): void {
         if (!this.selectedCard) return;
 
+        const card = this.selectedCard as any;
+        
+        if (card.type === 'Action') {
+            // For action cards, we need to handle targeting differently
+            if (this.requiresTargetSelection(card)) {
+                if (unit && card.name === 'Healing Hands' && unit.owner === this.game.currentPlayer.type) {
+                    // Healing Hands targets friendly units
+                    this.executeActionCard(card, [unit]);
+                } else if (unit && card.name === 'Lightning Strike' && unit.owner !== this.game.currentPlayer.type) {
+                    // Lightning Strike targets enemy units
+                    this.executeActionCard(card, [unit]);
+                } else if (unit && card.name === 'Shield Barrier' && unit.owner === this.game.currentPlayer.type) {
+                    // Shield Barrier targets friendly units
+                    this.executeActionCard(card, [unit]);
+                } else {
+                    this.game.addToLog('Invalid target for this action card');
+                }
+            }
+            return;
+        }
+
+        // For other card types (Summon, etc.)
         const targets = unit ? [unit] : [position];
         const success = this.game.playCard(this.selectedCard, targets);
 
@@ -171,10 +193,10 @@ export class UIController {
     }
 
     private updateBoard(): void {
-        // Clear existing units
-        document.querySelectorAll('.summon-unit').forEach(el => el.remove());
+        // Clear existing units and buildings
+        document.querySelectorAll('.summon-unit, .building').forEach(el => el.remove());
         document.querySelectorAll('.grid-cell').forEach(el => {
-            el.classList.remove('selected', 'valid-move', 'valid-attack');
+            el.classList.remove('selected', 'valid-move', 'valid-attack', 'building-preview', 'building-invalid');
         });
 
         // Place units
@@ -182,12 +204,15 @@ export class UIController {
             this.createUnitElement(unit);
         });
 
+        // Place buildings
+        this.renderBuildings();
+
         // Highlight selections and valid actions
         if (this.selectedUnit) {
             this.highlightSelectedUnit();
         }
 
-        if (this.selectedCard && this.gameMode === 'card-play') {
+        if (this.selectedCard) {
             this.highlightCardTargets();
         }
     }
@@ -210,6 +235,38 @@ export class UIController {
         });
 
         cell.appendChild(unitElement);
+    }
+
+    private renderBuildings(): void {
+        // Get all buildings from both players
+        const allBuildings = [
+            ...this.game.playerA.buildingsInPlay,
+            ...this.game.playerB.buildingsInPlay
+        ];
+
+        allBuildings.forEach((building: any) => {
+            if (building.positions) {
+                building.positions.forEach((pos: Position, index: number) => {
+                    this.createBuildingElement(building, pos, index === 0);
+                });
+            }
+        });
+    }
+
+    private createBuildingElement(building: any, position: Position, isMainCell: boolean): void {
+        const cell = document.querySelector(`[data-x="${position.x}"][data-y="${position.y}"]`);
+        if (!cell) return;
+
+        const buildingElement = document.createElement('div');
+        buildingElement.className = 'building';
+        
+        if (isMainCell) {
+            buildingElement.innerHTML = building.name.substring(0, 6);
+        } else {
+            buildingElement.innerHTML = '■'; // Show this is part of a multi-space building
+        }
+
+        cell.appendChild(buildingElement);
     }
 
     private handleUnitClick(unit: SummonUnit): void {
@@ -290,6 +347,11 @@ export class UIController {
     private highlightCardTargets(): void {
         if (!this.selectedCard) return;
 
+        if (this.gameMode === 'place-building') {
+            this.highlightBuildingPlacement();
+            return;
+        }
+
         const validTargets = this.selectedCard.getValidTargets(this.game, this.game.currentPlayer);
         
         // This is simplified - would need to handle different target types
@@ -302,6 +364,52 @@ export class UIController {
                 }
             }
         });
+    }
+
+    private highlightBuildingPlacement(): void {
+        if (!this.selectedCard || this.gameMode !== 'place-building') return;
+
+        const building = this.selectedCard as any;
+        const width = building.dimensions?.width || 1;
+        const height = building.dimensions?.height || 1;
+
+        // Clear previous highlights
+        document.querySelectorAll('.building-preview, .building-invalid').forEach(el => {
+            el.classList.remove('building-preview', 'building-invalid');
+        });
+
+        // Show selected positions
+        this.buildingPlacement.forEach(pos => {
+            const cell = document.querySelector(`[data-x="${pos.x}"][data-y="${pos.y}"]`);
+            if (cell) {
+                cell.classList.add('building-preview');
+            }
+        });
+
+        // If we have at least one position, preview the full building shape
+        if (this.buildingPlacement.length > 0) {
+            const firstPos = this.buildingPlacement[0];
+            
+            for (let dx = 0; dx < width; dx++) {
+                for (let dy = 0; dy < height; dy++) {
+                    const x = firstPos.x + dx;
+                    const y = firstPos.y + dy;
+                    const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                    
+                    if (cell) {
+                        // Simple validation - check if position is within bounds and not occupied
+                        const isValid = x >= 0 && x < 14 && y >= 0 && y < 12 && 
+                                       !this.game.board.getUnitAt(x, y);
+                        
+                        if (isValid) {
+                            cell.classList.add('building-preview');
+                        } else {
+                            cell.classList.add('building-invalid');
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private updatePlayerAreas(): void {
@@ -601,19 +709,31 @@ export class UIController {
                 modeText = 'Select cards or units to interact';
                 break;
             case 'card-play':
-                modeText = `Playing: ${this.selectedCard?.name}`;
+                if (this.selectedCard) {
+                    const cardType = (this.selectedCard as any).type;
+                    if (cardType === 'Action') {
+                        modeText = `Select target for ${this.selectedCard.name}`;
+                    } else {
+                        modeText = `Playing: ${this.selectedCard.name}`;
+                    }
+                } else {
+                    modeText = 'Select card target';
+                }
                 break;
             case 'unit-select':
                 modeText = `Selected: ${this.selectedUnit?.getDisplayName()}`;
                 break;
             case 'move-unit':
-                modeText = `Moving: ${this.selectedUnit?.getDisplayName()}`;
+                modeText = `Moving: ${this.selectedUnit?.getDisplayName()} - Click destination`;
                 break;
             case 'attack-unit':
-                modeText = `Attacking with: ${this.selectedUnit?.getDisplayName()}`;
+                modeText = `Attacking with: ${this.selectedUnit?.getDisplayName()} - Click target`;
                 break;
             case 'place-building':
-                modeText = `Placing: ${this.selectedCard?.name}`;
+                const building = this.selectedCard as any;
+                const width = building?.dimensions?.width || 1;
+                const height = building?.dimensions?.height || 1;
+                modeText = `Placing: ${this.selectedCard?.name} (${width}x${height}) - Click to place`;
                 break;
             case 'select-advance-target':
                 modeText = `Select target for: ${this.selectedCard?.name}`;
@@ -646,6 +766,12 @@ export class UIController {
             this.playQuestCard(card);
             this.clearSelection();
             return;
+        } else if ((card as any).type === 'Action') {
+            // Action cards need target selection
+            this.handleActionCard(card);
+            return;
+        } else if ((card as any).type === 'Summon') {
+            this.gameMode = 'card-play';
         } else {
             this.gameMode = 'card-play';
         }
@@ -666,23 +792,180 @@ export class UIController {
         }
     }
 
+    private handleActionCard(card: Card): void {
+        const actionCard = card as any;
+        const player = this.game.currentPlayer;
+
+        // Check if this action card requires targets
+        if (this.requiresTargetSelection(actionCard)) {
+            this.gameMode = 'card-play';
+            this.game.addToLog(`Select target(s) for ${actionCard.name}`);
+            this.updateDisplay();
+        } else {
+            // Execute immediately if no targets needed
+            this.executeActionCard(actionCard, []);
+        }
+    }
+
+    private requiresTargetSelection(actionCard: any): boolean {
+        // Check if the action card needs targets based on its name/effect
+        const noTargetCards = ['Spell Recall', 'Rejuvenate', 'Scout Ahead'];
+        const requiresUnitTarget = ['Healing Hands', 'Lightning Strike', 'Shield Barrier'];
+        
+        return !noTargetCards.includes(actionCard.name);
+    }
+
+    private executeActionCard(actionCard: any, targets: any[]): void {
+        const player = this.game.currentPlayer;
+        
+        // Execute the action card effect based on its name
+        switch (actionCard.name) {
+            case 'Healing Hands':
+                this.executeHealingHands(actionCard, targets[0]);
+                break;
+            case 'Lightning Strike':
+                this.executeLightningStrike(actionCard, targets[0]);
+                break;
+            case 'Spell Recall':
+                this.executeSpellRecall(actionCard);
+                break;
+            case 'Shield Barrier':
+                this.executeShieldBarrier(actionCard, targets[0]);
+                break;
+            case 'Scout Ahead':
+                this.executeScoutAhead(actionCard);
+                break;
+            default:
+                // Generic action card execution
+                if (this.game.playActionCard) {
+                    this.game.playActionCard(player, actionCard, targets);
+                }
+                break;
+        }
+
+        // Move card from hand to discard
+        const handIndex = player.hand.indexOf(actionCard);
+        if (handIndex !== -1) {
+            player.hand.splice(handIndex, 1);
+            player.discardPile.push(actionCard);
+        }
+
+        this.game.addToLog(`${player.name} played ${actionCard.name}`);
+        this.clearSelection();
+        this.updateDisplay();
+    }
+
+    private executeHealingHands(card: any, target: SummonUnit): void {
+        if (!target) {
+            this.game.addToLog('Healing Hands requires a target unit');
+            return;
+        }
+        
+        const healAmount = 3; // Example heal amount
+        const oldHp = target.currentHp;
+        target.currentHp = Math.min(target.maxHp, target.currentHp + healAmount);
+        const actualHeal = target.currentHp - oldHp;
+        
+        this.game.addToLog(`${target.getDisplayName()} healed for ${actualHeal} HP`);
+    }
+
+    private executeLightningStrike(card: any, target: SummonUnit): void {
+        if (!target) {
+            this.game.addToLog('Lightning Strike requires a target unit');
+            return;
+        }
+        
+        const damage = 2; // Example damage amount
+        target.currentHp = Math.max(0, target.currentHp - damage);
+        
+        this.game.addToLog(`${target.getDisplayName()} takes ${damage} lightning damage`);
+        
+        if (target.currentHp === 0) {
+            this.game.board.removeUnit(target);
+            this.game.addToLog(`${target.getDisplayName()} is defeated!`);
+        }
+    }
+
+    private executeSpellRecall(card: any): void {
+        const player = this.game.currentPlayer;
+        
+        // Let player select a card from discard pile
+        if (player.discardPile.length > 0) {
+            const randomCard = player.discardPile[Math.floor(Math.random() * player.discardPile.length)];
+            const discardIndex = player.discardPile.indexOf(randomCard);
+            player.discardPile.splice(discardIndex, 1);
+            player.hand.push(randomCard);
+            
+            this.game.addToLog(`${player.name} recalls ${randomCard.name} from discard pile`);
+        } else {
+            this.game.addToLog('No cards in discard pile to recall');
+        }
+    }
+
+    private executeShieldBarrier(card: any, target: SummonUnit): void {
+        if (!target) {
+            this.game.addToLog('Shield Barrier requires a target unit');
+            return;
+        }
+        
+        // Add temporary shield effect (simplified)
+        this.game.addToLog(`${target.getDisplayName()} gains shield protection`);
+    }
+
+    private executeScoutAhead(card: any): void {
+        const player = this.game.currentPlayer;
+        
+        // Let player draw extra cards
+        if (player.deck.length > 0) {
+            const drawnCard = player.deck.pop();
+            if (drawnCard) {
+                player.hand.push(drawnCard);
+                this.game.addToLog(`${player.name} scouts ahead and draws a card`);
+            }
+        } else {
+            this.game.addToLog('No cards left in deck to scout');
+        }
+    }
+
     private handleBuildingPlacement(position: Position): void {
         if (!this.selectedCard || this.gameMode !== 'place-building') return;
 
         const building = this.selectedCard as any;
-        this.buildingPlacement.push(position);
+        
+        // If this is the first click, start the placement
+        if (this.buildingPlacement.length === 0) {
+            this.buildingPlacement.push(position);
+            this.updateDisplay();
+            return;
+        }
 
         // Check if we have enough positions for the building
-        const requiredPositions = building.dimensions.width * building.dimensions.height;
+        const width = building.dimensions?.width || 1;
+        const height = building.dimensions?.height || 1;
+        const requiredPositions = width * height;
+        
         if (this.buildingPlacement.length >= requiredPositions) {
+            // Try to place the building
             const player = this.game.currentPlayer;
-            if (this.game.playBuildingCard(player, building, this.buildingPlacement)) {
-                this.clearSelection();
-            } else {
-                this.buildingPlacement = [];
-                this.game.addToLog('Invalid building placement');
+            
+            // Simple placement logic - add building to player's buildings
+            building.positions = this.buildingPlacement.slice();
+            player.buildingsInPlay.push(building);
+            
+            // Remove card from hand
+            const handIndex = player.hand.indexOf(building);
+            if (handIndex !== -1) {
+                player.hand.splice(handIndex, 1);
             }
+            
+            this.game.addToLog(`${player.name} placed building: ${building.name}`);
+            this.clearSelection();
+        } else {
+            // Add more positions for multi-space buildings
+            this.buildingPlacement.push(position);
         }
+        
+        this.updateDisplay();
     }
 
     private handleAdvanceTarget(target: SummonUnit): void {
