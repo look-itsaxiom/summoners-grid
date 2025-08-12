@@ -199,3 +199,206 @@ export class EquipmentCard extends Card {
         // Equipment doesn't get played directly
     }
 }
+
+export class BuildingCard extends Card {
+    public readonly dimensions: { width: number; height: number };
+    public readonly speed: Speed;
+    public readonly effect: CardEffect;
+    public readonly requiredRoleFamily?: RoleFamily;
+
+    constructor(
+        id: string,
+        name: string,
+        attribute: Attribute,
+        rarity: string,
+        description: string,
+        dimensions: { width: number; height: number },
+        effect: CardEffect,
+        requiredRoleFamily?: RoleFamily
+    ) {
+        super(id, name, CardType.Building, attribute, rarity, description);
+        this.dimensions = dimensions;
+        this.speed = Speed.Action;
+        this.effect = effect;
+        this.requiredRoleFamily = requiredRoleFamily;
+    }
+
+    canPlay(_game: any, player: any): boolean {
+        if (this.requiredRoleFamily) {
+            const hasRequiredRole = player.summonUnits.some((unit: any) => 
+                unit.roleFamily === this.requiredRoleFamily
+            );
+            if (!hasRequiredRole) return false;
+        }
+        return true;
+    }
+
+    getValidTargets(game: any, player: any): any[] {
+        // Return valid building placement positions
+        const validPositions = [];
+        const startRow = player.type === 'A' ? 0 : 9;
+        const endRow = player.type === 'A' ? 2 : 11;
+        
+        for (let y = startRow; y <= endRow - this.dimensions.height + 1; y++) {
+            for (let x = 0; x <= 13 - this.dimensions.width + 1; x++) {
+                let canPlace = true;
+                for (let dy = 0; dy < this.dimensions.height; dy++) {
+                    for (let dx = 0; dx < this.dimensions.width; dx++) {
+                        if (game.board.getUnitAt(x + dx, y + dy)) {
+                            canPlace = false;
+                            break;
+                        }
+                    }
+                    if (!canPlace) break;
+                }
+                if (canPlace) {
+                    validPositions.push({ x, y });
+                }
+            }
+        }
+        return validPositions;
+    }
+
+    play(game: any, player: any, targets?: any[]): void {
+        if (targets && targets[0]) {
+            const position = targets[0];
+            // Place building on board
+            game.placeBuilding(this, player, position);
+            this.effect.execute(game, player, null);
+            game.addToLog(`${player.name} built ${this.name} at (${position.x}, ${position.y})`);
+        }
+    }
+}
+
+export class CounterCard extends Card {
+    public readonly speed: Speed;
+    public readonly triggerCondition: string;
+    public readonly effect: CardEffect;
+    public readonly requiredRoleFamily?: RoleFamily;
+
+    constructor(
+        id: string,
+        name: string,
+        attribute: Attribute,
+        rarity: string,
+        description: string,
+        triggerCondition: string,
+        effect: CardEffect,
+        requiredRoleFamily?: RoleFamily
+    ) {
+        super(id, name, CardType.Counter, attribute, rarity, description);
+        this.speed = Speed.Counter;
+        this.triggerCondition = triggerCondition;
+        this.effect = effect;
+        this.requiredRoleFamily = requiredRoleFamily;
+    }
+
+    canPlay(_game: any, player: any): boolean {
+        if (this.requiredRoleFamily) {
+            const hasRequiredRole = player.summonUnits.some((unit: any) => 
+                unit.roleFamily === this.requiredRoleFamily
+            );
+            if (!hasRequiredRole) return false;
+        }
+        return true;
+    }
+
+    getValidTargets(): any[] {
+        return []; // Counters are set face-down
+    }
+
+    play(game: any, player: any, targets?: any[]): void {
+        // Set counter face-down
+        game.setCounter(this, player);
+        game.addToLog(`${player.name} set a Counter card face-down`);
+    }
+}
+
+export class QuestCard extends Card {
+    public readonly speed: Speed;
+    public readonly objective: string;
+    public readonly failureCondition: string;
+    public readonly reward: CardEffect;
+    public readonly failure?: CardEffect;
+
+    constructor(
+        id: string,
+        name: string,
+        attribute: Attribute,
+        rarity: string,
+        description: string,
+        objective: string,
+        failureCondition: string,
+        reward: CardEffect,
+        failure?: CardEffect
+    ) {
+        super(id, name, CardType.Quest, attribute, rarity, description);
+        this.speed = Speed.Action;
+        this.objective = objective;
+        this.failureCondition = failureCondition;
+        this.reward = reward;
+        this.failure = failure;
+    }
+
+    canPlay(): boolean {
+        return true;
+    }
+
+    getValidTargets(game: any, player: any): any[] {
+        // Return qualifying summons based on objective
+        return player.summonUnits.filter((unit: any) => unit.level < 10);
+    }
+
+    play(game: any, player: any, targets?: any[]): void {
+        if (targets && targets[0]) {
+            // Create quest with target
+            game.createQuest(this, player, targets[0]);
+            game.addToLog(`${player.name} started quest ${this.name}`);
+        }
+    }
+}
+
+export class AdvanceCard extends Card {
+    public readonly requirements: string;
+    public readonly effect: CardEffect;
+    public readonly roleTransformation?: { from: RoleFamily; to: string };
+
+    constructor(
+        id: string,
+        name: string,
+        rarity: string,
+        description: string,
+        requirements: string,
+        effect: CardEffect,
+        roleTransformation?: { from: RoleFamily; to: string }
+    ) {
+        super(id, name, CardType.Advance, Attribute.Neutral, rarity, description);
+        this.requirements = requirements;
+        this.effect = effect;
+        this.roleTransformation = roleTransformation;
+    }
+
+    canPlay(_game: any, player: any): boolean {
+        // Check if player has qualifying summons for advancement
+        return player.summonUnits.some((unit: any) => this.meetsRequirements(unit));
+    }
+
+    meetsRequirements(unit: any): boolean {
+        // Simplified requirements check
+        if (this.roleTransformation) {
+            return unit.roleFamily === this.roleTransformation.from && unit.level >= 10;
+        }
+        return unit.level >= 10;
+    }
+
+    getValidTargets(_game: any, player: any): any[] {
+        return player.summonUnits.filter((unit: any) => this.meetsRequirements(unit));
+    }
+
+    play(game: any, player: any, targets?: any[]): void {
+        if (targets && targets[0]) {
+            this.effect.execute(game, targets[0], null);
+            game.addToLog(`${player.name} used ${this.name} on ${targets[0].getDisplayName()}`);
+        }
+    }
+}
