@@ -19,6 +19,7 @@ export class UIController {
     private initializeUI(): void {
         this.createGameBoard();
         this.setupEventListeners();
+        this.setupModalEventListeners();
     }
 
     private createGameBoard(): void {
@@ -216,6 +217,10 @@ export class UIController {
             this.handleUnitAttack(unit);
         } else if (unit.owner === this.game.currentPlayer.type) {
             this.selectUnit(unit);
+            this.showUnitDetailModal(unit);
+        } else {
+            // Show opponent unit details (read-only)
+            this.showUnitDetailModal(unit);
         }
         this.updateDisplay();
     }
@@ -698,5 +703,119 @@ export class UIController {
         this.selectedUnit = undefined;
         this.gameMode = 'none';
         this.buildingPlacement = [];
+    }
+
+    private showUnitDetailModal(unit: SummonUnit): void {
+        const modal = document.getElementById('unit-detail-modal');
+        const title = document.getElementById('unit-modal-title');
+        const content = document.getElementById('unit-modal-content');
+        const actions = document.getElementById('unit-modal-actions');
+
+        if (!modal || !title || !content || !actions) return;
+
+        title.textContent = unit.getDisplayName();
+
+        // Populate unit details
+        content.innerHTML = `
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <h4 style="margin-bottom: 10px; color: #4fc3f7;">Basic Info</h4>
+                    <p><strong>Species:</strong> ${unit.species}</p>
+                    <p><strong>Level:</strong> ${unit.level}</p>
+                    <p><strong>Role:</strong> ${unit.roleCard.name}</p>
+                    <p><strong>HP:</strong> ${unit.currentHp} / ${unit.maxHp}</p>
+                    <p><strong>Position:</strong> (${unit.position.x}, ${unit.position.y})</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 10px; color: #4fc3f7;">Status</h4>
+                    <p><strong>Has Moved:</strong> ${unit.hasMovedThisTurn ? 'Yes' : 'No'}</p>
+                    <p><strong>Has Attacked:</strong> ${unit.hasAttackedThisTurn ? 'Yes' : 'No'}</p>
+                    <p><strong>Movement Used:</strong> ${unit.movementUsed}</p>
+                    <p><strong>Owner:</strong> ${unit.owner}</p>
+                </div>
+            </div>
+            <div style="margin-top: 15px;">
+                <h4 style="margin-bottom: 10px; color: #4fc3f7;">Stats</h4>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; font-size: 0.9em;">
+                    <div><strong>STR:</strong> ${unit.getStats().str}</div>
+                    <div><strong>END:</strong> ${unit.getStats().end}</div>
+                    <div><strong>DEF:</strong> ${unit.getStats().def}</div>
+                    <div><strong>INT:</strong> ${unit.getStats().int}</div>
+                    <div><strong>SPI:</strong> ${unit.getStats().spi}</div>
+                    <div><strong>MDF:</strong> ${unit.getStats().mdf}</div>
+                    <div><strong>SPD:</strong> ${unit.getStats().spd}</div>
+                    <div><strong>ACC:</strong> ${unit.getStats().acc}</div>
+                </div>
+            </div>
+            ${unit.equipment.length > 0 ? `
+                <div style="margin-top: 15px;">
+                    <h4 style="margin-bottom: 10px; color: #4fc3f7;">Equipment</h4>
+                    ${unit.equipment.map(eq => `<p><strong>${eq.name}</strong> (${eq.slot})</p>`).join('')}
+                </div>
+            ` : ''}
+        `;
+
+        // Populate action buttons
+        actions.innerHTML = '';
+
+        if (unit.owner === this.game.currentPlayer.type && this.game.currentPhase === 'Action') {
+            if (!unit.hasMovedThisTurn) {
+                const moveBtn = document.createElement('button');
+                moveBtn.textContent = 'Move';
+                moveBtn.className = 'btn';
+                moveBtn.onclick = () => {
+                    this.hideUnitDetailModal();
+                    this.gameMode = 'move-unit';
+                    this.highlightValidMoves();
+                    this.updateDisplay();
+                };
+                actions.appendChild(moveBtn);
+            }
+
+            if (!unit.hasAttackedThisTurn) {
+                const attackBtn = document.createElement('button');
+                attackBtn.textContent = 'Attack';
+                attackBtn.className = 'btn';
+                attackBtn.onclick = () => {
+                    this.hideUnitDetailModal();
+                    this.gameMode = 'attack-unit';
+                    this.highlightValidAttacks();
+                    this.updateDisplay();
+                };
+                actions.appendChild(attackBtn);
+            }
+        }
+
+        const closeBtn = document.createElement('button');
+        closeBtn.textContent = 'Close';
+        closeBtn.className = 'btn';
+        closeBtn.onclick = () => this.hideUnitDetailModal();
+        actions.appendChild(closeBtn);
+
+        modal.style.display = 'block';
+    }
+
+    private hideUnitDetailModal(): void {
+        const modal = document.getElementById('unit-detail-modal');
+        if (modal) {
+            modal.style.display = 'none';
+        }
+    }
+
+    private setupModalEventListeners(): void {
+        const modal = document.getElementById('unit-detail-modal');
+        const closeBtn = document.getElementById('close-unit-modal');
+        
+        if (closeBtn) {
+            closeBtn.onclick = () => this.hideUnitDetailModal();
+        }
+
+        if (modal) {
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    this.hideUnitDetailModal();
+                }
+            };
+        }
     }
 }

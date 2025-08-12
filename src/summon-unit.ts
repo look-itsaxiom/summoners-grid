@@ -234,4 +234,8 @@ export class SummonUnit {
     getStatusText(): string {
         return `${this.currentHp}/${this.maxHp} HP`;
     }
+
+    getStats(): Stats {
+        return this.stats;
+    }
 }
