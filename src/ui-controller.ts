@@ -65,6 +65,16 @@ export class UIController {
                 this.updateDisplay();
             });
         }
+
+        const resetGameBtn = document.getElementById('reset-game-btn');
+        if (resetGameBtn) {
+            resetGameBtn.addEventListener('click', () => {
+                this.game = new Game();
+                this.clearSelection();
+                this.createGameBoard();
+                this.updateDisplay();
+            });
+        }
     }
 
     private handleCellClick(x: number, y: number): void {
@@ -146,9 +156,9 @@ export class UIController {
     }
 
     private updateGameInfo(): void {
-        const turnIndicator = document.getElementById('turn-indicator');
-        if (turnIndicator) {
-            turnIndicator.textContent = this.game.getCurrentPhaseDisplay();
+        const turnInfo = document.getElementById('turn-info');
+        if (turnInfo) {
+            turnInfo.textContent = this.game.getCurrentPhaseDisplay();
         }
 
         const playerAVP = document.getElementById('player-a-vp');
@@ -378,8 +388,8 @@ export class UIController {
         const passPriorityBtn = document.getElementById('pass-priority-btn') as HTMLButtonElement;
 
         if (endPhaseBtn) {
-            endPhaseBtn.disabled = this.game.currentPhase !== 'Action' || this.game.isGameOver;
-            endPhaseBtn.textContent = this.game.currentPhase === 'Action' ? 'End Action Phase' : 'End Phase';
+            endPhaseBtn.disabled = this.game.isGameOver;
+            endPhaseBtn.textContent = `End ${this.game.currentPhase} Phase`;
         }
 
         if (passPriorityBtn) {

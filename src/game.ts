@@ -132,8 +132,7 @@ export class Game {
             }
         }
         
-        // Automatically advance to level phase
-        setTimeout(() => this.advancePhase(), 1000);
+        this.addToLog(`${this.currentPlayer.name} - Draw Phase. Click "End Phase" to continue.`);
     }
 
     private executeLevelPhase(): void {
@@ -144,8 +143,7 @@ export class Game {
             this.addToLog(`${this.currentPlayer.name}'s summons level up!`);
         }
         
-        // Automatically advance to action phase
-        setTimeout(() => this.advancePhase(), 1000);
+        this.addToLog(`${this.currentPlayer.name} - Level Phase. Click "End Phase" to continue.`);
     }
 
     private executeActionPhase(): void {
@@ -179,9 +177,7 @@ export class Game {
     }
 
     public endCurrentPhase(): void {
-        if (this.currentPhase === TurnPhase.Action) {
-            this.advancePhase();
-        }
+        this.advancePhase();
     }
 
     public playCard(card: Card, targets?: any[]): boolean {

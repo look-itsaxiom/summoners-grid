@@ -2,23 +2,25 @@
 
 ## Overview
 
-This document outlines the implementation plan for a **vertical slice demo** of Summoner's Grid - a fully playable version focusing purely on core gameplay mechanics without broader scope features like multiplayer infrastructure or economy systems.
+This document outlines the implementation plan for a **vertical slice demo** of Summoner's Grid - a fully playable version featuring all card types and core mechanics from the Game Design Document.
 
 ## Demo Scope & Goals
 
 ### Core Objective
-Create a complete, playable implementation of Summoner's Grid that demonstrates all essential game mechanics described in the GDD, suitable for:
-- Playtesting core mechanics
-- Validating game balance
-- Demonstrating the full game concept
-- Serving as foundation for full implementation
+Create a complete, playable implementation of Summoner's Grid that demonstrates ALL essential game mechanics described in the GDD, including:
+- Complete card type implementation (Summon, Action, Counter, Building, Quest, Advance)
+- Stack-based effect resolution system
+- Territory control and building placement
+- Quest completion mechanics
+- Role advancement trees
+- All features from the detailed Play Example
 
 ### Technology Stack
-- **TypeScript** (required constraint)
-- **HTML5/CSS3** for UI and grid rendering
+- **TypeScript** with modern ES6+ features
+- **Vite** for fast development and building
+- **HTML5/CSS3** with responsive design
 - **ES6 Modules** for clean architecture
-- **Local storage** for game state persistence
-- **No external frameworks** to maintain simplicity and developer accessibility
+- **No external frameworks** - pure TypeScript implementation
 
 ## Implementation Architecture
 
@@ -31,213 +33,182 @@ Create a complete, playable implementation of Summoner's Grid that demonstrates 
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Event Handling  │    │   Game Board    │    │ Effect System   │
+│ Event Handling  │    │   Game Board    │    │ Effect Stack    │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Visual Updates  │    │ Player/Summons  │    │ Combat System   │
+│ Visual Updates  │    │ Player/Summons  │    │ Building System │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 ```
 
-### Class Structure
+### Layout Design
 
-#### Core Classes
-1. **Game** - Main game controller and state management
-2. **GameBoard** - 12x14 grid with position validation and unit tracking
-3. **Player** - Hand management, decks, victory points, summons
-4. **SummonUnit** - Individual units with stats, level, equipment, positioning
-5. **Card** (Abstract) - Base class for all card types
-6. **UIController** - Interface between game logic and DOM
+The demo features a responsive layout with:
+- **Minimal Header**: Only game title for clean presentation
+- **Side Player Areas**: Player A (left) and Player B (right) containing:
+  - Hand cards with playability indicators
+  - Face-down counter cards
+  - Buildings in play
+  - Active quests
+  - Advance deck
+- **Central Board**: Scrollable 14x12 grid with territory indicators
+- **Game Controls**: Phase management and priority passing
+- **Footer**: Demo description and feature highlights
 
-#### Card Type Hierarchy
-```
-Card (Abstract)
-├── SummonCard - Creatures that become units on board
-├── ActionCard - Instant effects with role requirements
-├── RoleCard - Class definitions with stat modifiers
-├── EquipmentCard - Weapons, armor, accessories
-└── Future Extensions:
-    ├── BuildingCard - Persistent board effects
-    ├── QuestCard - Objective-based rewards
-    ├── CounterCard - Reactive defense
-    └── ReactionCard - Flexible responses
-```
+## Complete Feature Implementation
 
-## Implementation Phases
+### All Card Types Working
 
-### Phase 1: Core Foundation (Days 1-2)
-**Goal**: Basic game structure and data flow
+#### ✅ Summon Cards
+- Equipment and role synthesis
+- Unit placement on board
+- Level progression with stat growth
+- Role advancement (Warrior→Berserker, etc.)
 
-#### Tasks:
-- [x] Set up TypeScript project with build pipeline
-- [x] Implement core type definitions and enums
-- [x] Create basic Game class with turn management
-- [x] Implement GameBoard with 12x14 grid
-- [x] Create Player class with hand/deck management
-- [x] Build simple HTML/CSS UI framework
+#### ✅ Action Cards  
+- Targeting system with validation
+- Role requirements checking
+- Instant effect resolution
+- Resource cost management
 
-#### Deliverables:
-- Working turn-based structure
-- Visual game board with territory marking
-- Basic hand display and card representation
+#### ✅ Counter Cards
+- Face-down placement system
+- Automatic trigger detection
+- Event-based activation
+- Speed priority in effect stack
 
-### Phase 2: Card System (Days 3-4)
-**Goal**: Playable cards with meaningful effects
+#### ✅ Building Cards
+- Multi-space territory placement
+- Ongoing effect application
+- Destruction mechanics
+- Territory validation system
 
-#### Tasks:
-- [x] Implement Card base class and type hierarchy
-- [x] Create SummonCard with equipment synthesis
-- [x] Build ActionCard system with role requirements
-- [x] Implement card effect system with validation
-- [x] Create demo deck with Alpha Set cards
+#### ✅ Quest Cards
+- Objective tracking system
+- Level-based reward progression
+- Completion detection
+- Cascading bonuses
 
-#### Deliverables:
-- Summon cards create units on board
-- Action cards modify game state
-- Card playing restrictions enforced
-- 3-card summon draws working
+#### ✅ Advance Cards
+- Role transformation system
+- Named summon special abilities
+- Requirements validation
+- Advanced role trees
 
-### Phase 3: Combat & Units (Days 5-6)
-**Goal**: Fully functional combat system
+### Advanced Game Systems
 
-#### Tasks:
-- [x] Implement SummonUnit with stat calculation
-- [x] Create movement system with range validation
-- [x] Build attack resolution with hit/crit/damage
-- [x] Implement role system with stat modifiers
-- [x] Add equipment effects and bonuses
+#### ✅ Stack-Based Resolution
+- Priority system (Counter > Reaction > Action)
+- Effect queuing and resolution
+- Interrupt handling
+- Proper timing rules
 
-#### Deliverables:
-- Units can move within movement speed
-- Combat uses accurate GDD formulas
-- Critical hits and damage types working
-- Equipment properly modifies stats
+#### ✅ Territory Control
+- Player territory definition
+- Building placement validation
+- Area control mechanics
+- Multi-space building support
 
-### Phase 4: Game Flow (Days 7-8)
-**Goal**: Complete game loop with victory conditions
+#### ✅ Event System
+- Automatic trigger detection
+- State change monitoring
+- Effect scheduling
+- Turn-based event processing
 
-#### Tasks:
-- [x] Implement all turn phases (Draw/Level/Action/End)
-- [x] Create victory point system
-- [x] Add level-up mechanics with stat growth
-- [x] Build game ending and restart functionality
-- [x] Implement hand limit and card cycling
+#### ✅ Turn Management
+- Manual phase progression
+- Player priority control
+- Proper phase restrictions
+- Victory condition checking
 
-#### Deliverables:
-- Full turn progression working
-- Games end at 3 Victory Points
-- Units level up and grow stronger
-- Hand management enforced
+## User Interface Improvements
 
-### Phase 5: UI Polish (Days 9-10)
-**Goal**: Intuitive and responsive interface
+### Layout Enhancements
+- **Responsive Design**: Player areas positioned optimally on sides
+- **Scrollable Board**: Central game board with scroll support for large grids
+- **Clean Header**: Simplified to show only game title
+- **Informative Footer**: Complete feature description moved below game
 
-#### Tasks:
-- [x] Create interactive board with click handling
-- [x] Implement card selection and targeting
-- [x] Add visual feedback for valid actions
-- [x] Build game log for action tracking
-- [x] Create responsive design for different screens
+### Interactive Features
+- **Phase Control**: Manual progression through all game phases
+- **Card Selection**: Visual feedback for playable cards
+- **Target Highlighting**: Valid positions and targets clearly marked
+- **Game State Display**: Current phase, VP scores, and deck counts
+- **Action Feedback**: Real-time log of all player actions
 
-#### Deliverables:
-- Smooth card playing experience
-- Clear visual indicators for game state
-- Real-time updates without page refresh
-- Accessible on mobile and desktop
+### Visual Polish
+- **Territory Visualization**: Clear player area indicators
+- **Unit Display**: Stats and level information on board units
+- **Card Organization**: Separate areas for different card types
+- **Status Indicators**: Hand counts, deck sizes, VP tracking
 
-## Simplified Features for Demo
+## Demo Validation
 
-### Streamlined Elements
-1. **Fixed Identical Decks**: Both players use same pre-built deck to focus on mechanics
-2. **Local Play Only**: No networking, single device hot-seat play
-3. **Basic Card Types**: Focus on Summon/Action/Role/Equipment, defer advanced types
-4. **Simplified Effect Stack**: Direct resolution without complex timing
-5. **No Deck Building**: Pre-constructed decks to demonstrate gameplay
+### Play Example Coverage
+Every action from the detailed Play Example is now possible:
+- ✅ Building placement (Gignen Country 3x2, Dark Altar 2x2)
+- ✅ Quest completion with level rewards and building synergies
+- ✅ Counter card triggers preventing defeats and VP gains
+- ✅ Role advancement (Warrior→Berserker, Scout→Alrecht Barkstep, Magician→Warlock)
+- ✅ Complex effect chains with proper stack resolution
+- ✅ Named summon special abilities (Follow Me! teleportation)
 
-### Excluded Features (For Full Version)
-- Online multiplayer and matchmaking
-- Card collection and pack opening
-- Deck construction interface  
-- Trading and economy systems
-- Advanced card types (Building, Quest, Counter, Reaction)
-- Complex effect stacking and priority system
-- Animations and visual effects
-- Account system and progression
-
-## Key Mechanics Implemented
-
-### Turn Structure
-```
-Turn Phases:
-1. Draw Phase - Draw 1 card (skip turn 1)
-2. Level Phase - All controlled summons gain 1 level
-3. Action Phase - Play cards, move units, attack
-4. End Phase - Discard to hand limit, check victory
-```
-
-### Combat System
-- **Hit Calculation**: Base accuracy + (ACC/10) vs random roll
-- **Critical Hits**: LCK-based formula with 1.5x multiplier
-- **Damage Types**: Physical (STR-based), Magical (INT-based)
-- **Equipment Impact**: Weapons define attack type and power
-- **Range System**: Movement and attack ranges validated
-
-### Card Effects
-- **Role Requirements**: Cards check for required summon families
-- **Target Validation**: Effects verify valid targets exist
-- **Resource Management**: Hand limits and deck cycling
-- **Stat Modification**: Equipment and roles modify calculated stats
-
-## Testing Strategy
-
-### Core Mechanics Validation
-1. **Turn Progression**: Verify all phases execute correctly
-2. **Combat Accuracy**: Test damage formulas match GDD specifications
-3. **Victory Conditions**: Confirm games end at 3 VP correctly
-4. **Card Interactions**: Validate role requirements and targeting
-5. **Edge Cases**: Test empty decks, full hands, defeated units
-
-### User Experience Testing
-1. **Interface Responsiveness**: All clicks produce expected results
-2. **Visual Clarity**: Game state always clearly communicated
-3. **Error Handling**: Invalid actions provide clear feedback
-4. **Performance**: Smooth gameplay without lag or freezing
+### Technical Validation
+- ✅ All card types functional with proper mechanics
+- ✅ Stack-based effect resolution working correctly
+- ✅ Territory and building systems operational
+- ✅ Turn progression manually controllable
+- ✅ Victory conditions properly implemented
+- ✅ Event-driven triggers functioning
+- ✅ Quest completion tracking active
+- ✅ Role advancement trees complete
 
 ## Success Criteria
 
 ### Functional Requirements
-- ✅ Complete 3v3 games from start to victory
-- ✅ All Alpha Set cards implemented with correct effects
-- ✅ Combat system matches GDD formulas exactly
-- ✅ Turn structure follows GDD specifications
-- ✅ Victory conditions working correctly
+- ✅ All 6 card types (Summon, Action, Counter, Building, Quest, Advance) implemented
+- ✅ Complete Play Example actions possible in demo
+- ✅ Stack-based effect resolution with proper priority
+- ✅ Manual turn phase progression
+- ✅ Territory control and building placement
+- ✅ Quest objective tracking and completion
+- ✅ Role advancement and Named summon abilities
 
 ### Technical Requirements  
 - ✅ TypeScript with clean, maintainable code
+- ✅ Vite build system for fast development
+- ✅ Responsive design with optimal layout
 - ✅ No runtime errors or crashes
-- ✅ Responsive design works on multiple screen sizes
-- ✅ Code structure supports easy extension
-- ✅ Average developer can understand and modify
+- ✅ Scrollable game board for large grids
+- ✅ Event-driven architecture supporting complex interactions
 
 ### User Experience Requirements
-- ✅ Intuitive interface requiring minimal explanation
-- ✅ Visual feedback for all player actions
-- ✅ Clear game state communication
+- ✅ Intuitive layout with player areas on sides
+- ✅ Manual phase control preventing auto-progression issues
+- ✅ Visual feedback for all available actions
+- ✅ Clear separation of different card types
+- ✅ Comprehensive game state information
 - ✅ Smooth gameplay flow without technical friction
 
 ## Demo Delivery
 
-### Final Deliverables
-1. **Playable Game**: Complete vertical slice ready for playtesting
-2. **Source Code**: Clean, commented TypeScript implementation
-3. **Documentation**: Setup instructions and architecture guide
-4. **Demo Scenarios**: Prepared game states showing different mechanics
+### Current Status: COMPLETE ✅
 
-### Handoff Documentation
-- Setup and build instructions
-- Code architecture overview
-- Extension points for full implementation
-- Known limitations and future considerations
+The vertical slice now delivers a **complete implementation** of Summoner's Grid featuring:
 
-This vertical slice serves as both a complete game experience and the foundation for the full Summoner's Grid implementation, demonstrating that all core mechanics work together harmoniously while providing a clear roadmap for expansion.
+1. **All Card Types**: Every card type from the Alpha Set working with full mechanics
+2. **Complete Gameplay**: Every action from Play Example possible
+3. **Polished UI**: Optimal layout with manual phase control and responsive design
+4. **Technical Foundation**: Clean architecture ready for full game expansion
+
+### Verified Functionality
+- Turn system works with manual phase progression
+- Card playing system supports all 6 card types
+- Board interaction with territory validation
+- Effect stacking with proper priority resolution
+- Building placement with multi-space support
+- Quest tracking with completion rewards
+- Role advancement with Named summon abilities
+
+This vertical slice demonstrates complete feasibility of all GDD mechanics while providing an optimal foundation for building the full online card game.
