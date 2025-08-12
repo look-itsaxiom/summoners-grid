@@ -490,13 +490,29 @@ export class UIController {
 
         containerElement.innerHTML = '';
 
-        player.questsInPlay.forEach((quest: any) => {
+        // Get active quests for this player
+        const playerQuests = Array.from(this.game.activeQuests.values()).filter(quest => quest.owner === player);
+
+        playerQuests.forEach((quest: any) => {
             const cardElement = document.createElement('div');
             cardElement.className = 'card';
             cardElement.innerHTML = `
-                <div class="card-name">${quest.name}</div>
-                <div class="card-type">Quest</div>
+                <div class="card-name">${quest.card.name}</div>
+                <div class="card-type">Quest ${quest.isPending ? '(Active)' : '(Complete)'}</div>
             `;
+            
+            // Add click handler for manual completion
+            if (quest.isPending && player === this.game.currentPlayer) {
+                cardElement.style.cursor = 'pointer';
+                cardElement.style.border = '2px solid #4caf50';
+                cardElement.addEventListener('click', () => {
+                    if (confirm(`Complete quest "${quest.card.name}"?`)) {
+                        this.game.completeQuest(quest.id);
+                        this.updateDisplay();
+                    }
+                });
+            }
+            
             containerElement.appendChild(cardElement);
         });
     }

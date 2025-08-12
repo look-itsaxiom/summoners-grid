@@ -19,6 +19,7 @@ export class Game {
     public effectStack: EffectStack;
     public buildingEffects: Map<string, any> = new Map();
     public scheduledEvents: Map<number, any[]> = new Map();
+    public activeQuests: Map<string, any> = new Map(); // Quest tracking
 
     constructor() {
         this.board = new GameBoard();
@@ -197,6 +198,49 @@ export class Game {
         // Execute card effect
         card.play(this, this.currentPlayer, targets);
         
+        return true;
+    }
+
+    public createQuest(questCard: any, player: Player, target?: any): void {
+        const questId = `${player.type}-${questCard.id}-${Date.now()}`;
+        const quest = {
+            id: questId,
+            card: questCard,
+            owner: player,
+            target: target,
+            isComplete: false,
+            isPending: true // Requires manual completion
+        };
+        
+        this.activeQuests.set(questId, quest);
+        
+        // Move quest card to player's active quests (remove from hand)
+        const cardIndex = player.hand.indexOf(questCard);
+        if (cardIndex > -1) {
+            player.hand.splice(cardIndex, 1);
+        }
+        
+        this.addToLog(`${player.name} places ${questCard.name} as an active quest`);
+    }
+
+    public completeQuest(questId: string): boolean {
+        const quest = this.activeQuests.get(questId);
+        if (!quest || quest.isComplete) {
+            return false;
+        }
+
+        // Execute the quest's completion effect
+        if (quest.card.completionEffect && quest.target) {
+            quest.card.completionEffect.execute(this, quest.target, quest);
+        }
+
+        quest.isComplete = true;
+        this.activeQuests.delete(questId);
+        
+        // Move quest card to discard pile
+        quest.owner.discardPile.push(quest.card);
+        
+        this.addToLog(`${quest.owner.name} completes quest ${quest.card.name}!`);
         return true;
     }
 
