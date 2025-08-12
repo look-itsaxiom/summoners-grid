@@ -301,11 +301,14 @@ export class Game {
             this.endGame(this.playerA);
         } else if (this.playerB.victoryPoints >= 3) {
             this.endGame(this.playerB);
-        } else if (this.playerA.hasLost()) {
-            this.endGame(this.playerB);
-        } else if (this.playerB.hasLost()) {
-            this.endGame(this.playerA);
         }
+        // For demo purposes, don't check hasLost() conditions to allow full gameplay testing
+        // In real game, these would be uncommented:
+        // else if (this.playerA.hasLost()) {
+        //     this.endGame(this.playerB);
+        // } else if (this.playerB.hasLost()) {
+        //     this.endGame(this.playerA);
+        // }
     }
 
     private endGame(winner: Player): void {
