@@ -82,17 +82,24 @@ export class UIController {
         const position: Position = { x, y };
         const unit = this.game.board.getUnitAt(x, y);
 
-        if (this.gameMode === 'card-play' && this.selectedCard) {
-            this.handleCardTarget(position, unit);
+        // Priority order: when a card is selected, card actions take precedence over unit selection
+        if (this.selectedCard) {
+            if (this.gameMode === 'card-play') {
+                this.handleCardTarget(position, unit);
+            } else if (this.gameMode === 'place-building') {
+                this.handleBuildingPlacement(position);
+            } else if (this.gameMode === 'select-advance-target' && unit) {
+                this.handleAdvanceTarget(unit);
+            } else {
+                // Default card action handling
+                this.handleCardTarget(position, unit);
+            }
         } else if (this.gameMode === 'move-unit' && this.selectedUnit) {
             this.handleUnitMove(position);
         } else if (this.gameMode === 'attack-unit' && this.selectedUnit) {
             this.handleUnitAttack(unit);
-        } else if (this.gameMode === 'place-building' && this.selectedCard) {
-            this.handleBuildingPlacement(position);
-        } else if (this.gameMode === 'select-advance-target' && this.selectedCard && unit) {
-            this.handleAdvanceTarget(unit);
         } else if (unit) {
+            // Only open unit details if no card is selected for targeting
             this.selectUnit(unit);
         } else {
             this.clearSelection();
@@ -290,9 +297,66 @@ export class UIController {
             cell.classList.add('selected');
         }
 
+        // Show movement range indicators
+        if (this.gameMode === 'move-unit') {
+            this.showMovementRange();
+        } else if (this.gameMode === 'attack-unit') {
+            this.showAttackRange();
+        }
+
         // Show action options
         if (this.game.currentPhase === 'Action') {
             this.showUnitActionButtons();
+        }
+    }
+
+    private showMovementRange(): void {
+        if (!this.selectedUnit) return;
+
+        const remainingMovement = this.selectedUnit.getMovementSpeed() - this.selectedUnit.movementUsed;
+        const currentPos = this.selectedUnit.position;
+
+        // Show all cells within movement range
+        for (let x = 0; x < 14; x++) {
+            for (let y = 0; y < 12; y++) {
+                const distance = Math.max(
+                    Math.abs(x - currentPos.x),
+                    Math.abs(y - currentPos.y)
+                );
+                
+                if (distance <= remainingMovement && distance > 0) {
+                    const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                    if (cell && !this.game.board.getUnitAt(x, y)) {
+                        cell.classList.add('valid-move');
+                    }
+                }
+            }
+        }
+    }
+
+    private showAttackRange(): void {
+        if (!this.selectedUnit) return;
+
+        const attackRange = this.selectedUnit.getAttackRange();
+        const currentPos = this.selectedUnit.position;
+
+        // Show all cells within attack range
+        for (let x = 0; x < 14; x++) {
+            for (let y = 0; y < 12; y++) {
+                const distance = Math.max(
+                    Math.abs(x - currentPos.x),
+                    Math.abs(y - currentPos.y)
+                );
+                
+                if (distance <= attackRange && distance > 0) {
+                    const cell = document.querySelector(`[data-x="${x}"][data-y="${y}"]`);
+                    const unit = this.game.board.getUnitAt(x, y);
+                    
+                    if (cell && unit && unit.owner !== this.selectedUnit.owner) {
+                        cell.classList.add('valid-attack');
+                    }
+                }
+            }
         }
     }
 
@@ -757,7 +821,12 @@ export class UIController {
             this.gameMode = 'place-building';
             this.buildingPlacement = [];
         } else if ((card as any).type === 'Counter') {
-            // Counter cards are set face down
+            // Counter cards can only be set face down during Action Phase
+            if (!this.game.canPlayCard(card)) {
+                this.game.addToLog('Can only play counter cards during Action Phase');
+                this.clearSelection();
+                return;
+            }
             this.playCounterCard(card);
             this.clearSelection();
             return;

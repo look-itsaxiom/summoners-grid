@@ -134,7 +134,11 @@ export class SummonUnit {
 
     canAttackTarget(target: SummonUnit): boolean {
         if (!this.canAttack()) return false;
-        const distance = Math.abs(target.position.x - this.position.x) + Math.abs(target.position.y - this.position.y);
+        // Use Chebyshev distance (allows diagonal attacks) instead of Manhattan distance
+        const distance = Math.max(
+            Math.abs(target.position.x - this.position.x), 
+            Math.abs(target.position.y - this.position.y)
+        );
         return distance <= this.getAttackRange();
     }
 
