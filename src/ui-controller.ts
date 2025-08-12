@@ -150,6 +150,7 @@ export class UIController {
         this.updateBuildingsInPlay();
         this.updateQuestsInPlay();
         this.updateAdvanceDecks();
+        this.updateRechargeZones();
         this.updateDiscardZones();
         this.updateGameLog();
         this.updateActionButtons();
@@ -391,6 +392,32 @@ export class UIController {
         this.updateDiscardZone('B');
     }
 
+    private updateRechargeZones(): void {
+        this.updateRechargeZone('A');
+        this.updateRechargeZone('B');
+    }
+
+    private updateRechargeZone(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const rechargeElement = document.getElementById(`player-${playerType.toLowerCase()}-recharge`);
+
+        if (!rechargeElement) return;
+
+        rechargeElement.innerHTML = '';
+
+        player.rechargePile.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            cardElement.innerHTML = `
+                <div class="card-name">${card.name}</div>
+                <div class="card-type">${card.type}</div>
+            `;
+
+            rechargeElement.appendChild(cardElement);
+        });
+    }
+
     private updateDiscardZone(playerType: 'A' | 'B'): void {
         const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
         const discardElement = document.getElementById(`player-${playerType.toLowerCase()}-discard`);
@@ -445,10 +472,13 @@ export class UIController {
         player.faceDownCards.forEach((card: any) => {
             const cardElement = document.createElement('div');
             cardElement.className = 'card face-down';
+            
+            // Show actual card name to the owner (in demo, show to both since no real opponent)
             cardElement.innerHTML = `
-                <div class="card-name">Face Down</div>
-                <div class="card-type">Counter</div>
+                <div class="card-name">${card.name}</div>
+                <div class="card-type">Counter (Face Down)</div>
             `;
+            cardElement.title = `Face-down counter card: ${card.name}`;
             containerElement.appendChild(cardElement);
         });
     }

@@ -766,7 +766,8 @@ export const dualShot = new ActionCard(
 );
 
 export function createDemoActionCards(): ActionCard[] {
-    return [blastBolt, healingHands, sharpenedBlade, rush, ensnare, drainTouch, adventurousSpirit, spellRecall, lifeAlchemy, dualShot, followMe];
+    // Note: followMe and other special unique cards are excluded - they should only appear via effects
+    return [blastBolt, healingHands, sharpenedBlade, rush, ensnare, drainTouch, adventurousSpirit, spellRecall, lifeAlchemy, dualShot];
 }
 
 export function createDemoRoles(): RoleCard[] {
