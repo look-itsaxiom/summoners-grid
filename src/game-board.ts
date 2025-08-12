@@ -92,7 +92,11 @@ export class GameBoard {
         for (let x = 0; x < this.width; x++) {
             for (let y = 0; y < this.height; y++) {
                 const position = { x, y };
-                const distance = Math.abs(x - unit.position.x) + Math.abs(y - unit.position.y);
+                // Use Chebyshev distance for diagonal movement
+                const distance = Math.max(
+                    Math.abs(x - unit.position.x),
+                    Math.abs(y - unit.position.y)
+                );
                 
                 if (distance <= maxMove && distance > 0 && !this.getUnitAt(x, y)) {
                     validPositions.push(position);
@@ -109,8 +113,11 @@ export class GameBoard {
         
         for (const targetUnit of this.getAllUnits()) {
             if (targetUnit.owner !== unit.owner) {
-                const distance = Math.abs(targetUnit.position.x - unit.position.x) + 
-                               Math.abs(targetUnit.position.y - unit.position.y);
+                // Use Chebyshev distance for diagonal attacks
+                const distance = Math.max(
+                    Math.abs(targetUnit.position.x - unit.position.x),
+                    Math.abs(targetUnit.position.y - unit.position.y)
+                );
                 
                 if (distance <= range) {
                     targets.push(targetUnit);

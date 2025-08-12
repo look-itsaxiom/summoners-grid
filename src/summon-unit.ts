@@ -113,12 +113,20 @@ export class SummonUnit {
     }
 
     canMoveTo(newPosition: Position): boolean {
-        const distance = Math.abs(newPosition.x - this.position.x) + Math.abs(newPosition.y - this.position.y);
+        // Use Chebyshev distance (diagonal movement allowed) to match UI indicators
+        const distance = Math.max(
+            Math.abs(newPosition.x - this.position.x),
+            Math.abs(newPosition.y - this.position.y)
+        );
         return distance <= this.remainingMovement;
     }
 
     moveTo(newPosition: Position): void {
-        const distance = Math.abs(newPosition.x - this.position.x) + Math.abs(newPosition.y - this.position.y);
+        // Use Chebyshev distance to calculate movement cost
+        const distance = Math.max(
+            Math.abs(newPosition.x - this.position.x),
+            Math.abs(newPosition.y - this.position.y)
+        );
         this.movementUsed += distance;
         this.position = newPosition;
         this.hasMovedThisTurn = true;

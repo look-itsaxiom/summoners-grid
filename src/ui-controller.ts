@@ -277,9 +277,20 @@ export class UIController {
     }
 
     private handleUnitClick(unit: SummonUnit): void {
+        // Priority 1: If we have a selected card for targeting, handle that first
+        if (this.selectedCard && this.gameMode === 'card-play') {
+            this.handleCardTarget(unit.position, unit);
+            return;
+        }
+        
+        // Priority 2: If we're in attack mode with a selected unit
         if (this.gameMode === 'attack-unit' && this.selectedUnit) {
             this.handleUnitAttack(unit);
-        } else if (unit.owner === this.game.currentPlayer.type) {
+            return;
+        }
+        
+        // Priority 3: Show unit details (only if no card targeting in progress)
+        if (unit.owner === this.game.currentPlayer.type) {
             this.selectUnit(unit);
             this.showUnitDetailModal(unit);
         } else {
@@ -313,7 +324,7 @@ export class UIController {
     private showMovementRange(): void {
         if (!this.selectedUnit) return;
 
-        const remainingMovement = this.selectedUnit.getMovementSpeed() - this.selectedUnit.movementUsed;
+        const remainingMovement = this.selectedUnit.movementSpeed - this.selectedUnit.movementUsed;
         const currentPos = this.selectedUnit.position;
 
         // Show all cells within movement range
@@ -905,10 +916,8 @@ export class UIController {
                 this.executeScoutAhead(actionCard);
                 break;
             default:
-                // Generic action card execution
-                if (this.game.playActionCard) {
-                    this.game.playActionCard(player, actionCard, targets);
-                }
+                // Generic action card execution - for now just add to log
+                this.game.addToLog(`${player.name} played ${actionCard.name} - effect not yet implemented`);
                 break;
         }
 
@@ -985,8 +994,8 @@ export class UIController {
         const player = this.game.currentPlayer;
         
         // Let player draw extra cards
-        if (player.deck.length > 0) {
-            const drawnCard = player.deck.pop();
+        if (player.mainDeck.length > 0) {
+            const drawnCard = player.mainDeck.pop();
             if (drawnCard) {
                 player.hand.push(drawnCard);
                 this.game.addToLog(`${player.name} scouts ahead and draws a card`);

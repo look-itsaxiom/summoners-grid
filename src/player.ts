@@ -1,4 +1,4 @@
-import { PlayerType } from './types.js';
+import { PlayerType, CardType } from './types.js';
 import { Card } from './cards.js';
 import { SummonUnit } from './summon-unit.js';
 
@@ -110,8 +110,8 @@ export class Player {
     hasLost(): boolean {
         // Only consider lost if player has no summon units AND no summon cards in hand/deck
         // This prevents immediate loss at game start
-        const hasSummonCards = this.hand.some(card => card.type === 'summon') || 
-                              this.mainDeck.some(card => card.type === 'summon');
+        const hasSummonCards = this.hand.some(card => card.type === CardType.Summon) || 
+                              this.mainDeck.some(card => card.type === CardType.Summon);
         return this.summonUnits.length === 0 && !hasSummonCards;
     }
 
