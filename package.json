@@ -4,14 +4,13 @@
   "description": "A tactical grid-based RPG card game",
   "main": "dist/index.js",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "serve": "http-server dist -p 8080 -o",
-    "start": "npm run build && npm run serve"
+  "dev": "vite",
+  "build": "vite build",
+  "preview": "vite preview"
   },
   "devDependencies": {
     "typescript": "^5.0.0",
-    "http-server": "^14.1.1"
+    "vite": "^5.0.0"
   },
   "engines": {
     "node": ">=16"
