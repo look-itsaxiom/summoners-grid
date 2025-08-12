@@ -37,7 +37,7 @@ export class Game {
         this.setupPlayerDeck(this.playerA);
         this.setupPlayerDeck(this.playerB);
 
-        // Draw initial hands (3 summon cards)
+        // Draw initial hands (only 3 summon slot cards)
         const summons = createDemoSummons();
         this.playerA.hand = [...summons];
         this.playerB.hand = [...summons];
@@ -48,17 +48,13 @@ export class Game {
         const buildingCards = createDemoBuildingCards();
         const questCards = createDemoQuestCards();
         
-        this.playerA.mainDeck = [...actionCards, ...buildingCards, ...questCards];
-        this.playerB.mainDeck = [...actionCards, ...buildingCards, ...questCards];
+        this.playerA.mainDeck = [...actionCards, ...counterCards, ...buildingCards, ...questCards];
+        this.playerB.mainDeck = [...actionCards, ...counterCards, ...buildingCards, ...questCards];
         
         // Add advance cards to advance deck
         const advanceCards = createDemoAdvanceCards();
         this.playerA.advanceDeck = [...advanceCards];
         this.playerB.advanceDeck = [...advanceCards];
-        
-        // Add counter cards to hand for demo purposes
-        this.playerA.hand.push(...counterCards.slice(0, 2));
-        this.playerB.hand.push(...counterCards.slice(0, 2));
 
         // Shuffle main decks
         this.shuffleDeck(this.playerA.mainDeck);
@@ -165,8 +161,7 @@ export class Game {
         this.checkVictoryConditions();
         
         if (!this.isGameOver) {
-            // Automatically advance to next turn
-            setTimeout(() => this.advancePhase(), 1000);
+            this.addToLog(`${this.currentPlayer.name} - End Phase. Click "End Phase" to pass turn to next player.`);
         }
     }
 

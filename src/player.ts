@@ -108,7 +108,11 @@ export class Player {
     }
 
     hasLost(): boolean {
-        return this.summonUnits.length === 0;
+        // Only consider lost if player has no summon units AND no summon cards in hand/deck
+        // This prevents immediate loss at game start
+        const hasSummonCards = this.hand.some(card => card.type === 'summon') || 
+                              this.mainDeck.some(card => card.type === 'summon');
+        return this.summonUnits.length === 0 && !hasSummonCards;
     }
 
     getHandSize(): number {

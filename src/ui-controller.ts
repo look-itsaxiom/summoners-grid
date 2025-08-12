@@ -150,6 +150,7 @@ export class UIController {
         this.updateBuildingsInPlay();
         this.updateQuestsInPlay();
         this.updateAdvanceDecks();
+        this.updateDiscardZones();
         this.updateGameLog();
         this.updateActionButtons();
         this.updateGameMode();
@@ -349,9 +350,11 @@ export class UIController {
         const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
         const deckCountElement = document.getElementById(`player-${playerType.toLowerCase()}-deck-count`);
         const rechargeCountElement = document.getElementById(`player-${playerType.toLowerCase()}-recharge-count`);
+        const discardCountElement = document.getElementById(`player-${playerType.toLowerCase()}-discard-count`);
 
         if (deckCountElement) deckCountElement.textContent = player.getDeckSize().toString();
         if (rechargeCountElement) rechargeCountElement.textContent = player.getRechargeSize().toString();
+        if (discardCountElement) discardCountElement.textContent = player.discardPile.length.toString();
     }
 
     private updateGameLog(): void {
@@ -381,6 +384,32 @@ export class UIController {
 
         // Scroll to bottom
         logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    private updateDiscardZones(): void {
+        this.updateDiscardZone('A');
+        this.updateDiscardZone('B');
+    }
+
+    private updateDiscardZone(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const discardElement = document.getElementById(`player-${playerType.toLowerCase()}-discard`);
+
+        if (!discardElement) return;
+
+        discardElement.innerHTML = '';
+
+        player.discardPile.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            cardElement.innerHTML = `
+                <div class="card-name">${card.name}</div>
+                <div class="card-type">${card.type}</div>
+            `;
+
+            discardElement.appendChild(cardElement);
+        });
     }
 
     private updateActionButtons(): void {

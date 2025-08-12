@@ -56,6 +56,7 @@
             flex-direction: column;
             gap: 15px;
             min-width: 0;
+            max-width: 70%;
         }
 
         .player-area-right {
@@ -104,6 +105,7 @@
             padding: 10px;
             min-width: 600px;
             min-height: 520px;
+            margin: 0 auto;
         }
 
         .grid-cell {
@@ -452,6 +454,7 @@
                         <span>Hand (<span id="player-a-hand-count">0</span>)</span>
                         <span>Deck (<span id="player-a-deck-count">0</span>)</span>
                         <span>Recharge (<span id="player-a-recharge-count">0</span>)</span>
+                        <span>Discard (<span id="player-a-discard-count">0</span>)</span>
                     </div>
                 </div>
 
@@ -487,6 +490,13 @@
                     <div class="section-header">Advance Deck</div>
                     <div class="cards-container advance-deck" id="player-a-advance">
                         <!-- Available advance cards -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Discard Zone</div>
+                    <div class="cards-container" id="player-a-discard">
+                        <!-- Discarded cards -->
                     </div>
                 </div>
             </div>
@@ -540,6 +550,7 @@
                         <span>Hand (<span id="player-b-hand-count">0</span>)</span>
                         <span>Deck (<span id="player-b-deck-count">0</span>)</span>
                         <span>Recharge (<span id="player-b-recharge-count">0</span>)</span>
+                        <span>Discard (<span id="player-b-discard-count">0</span>)</span>
                     </div>
                 </div>
 
@@ -575,6 +586,13 @@
                     <div class="section-header">Advance Deck</div>
                     <div class="cards-container advance-deck" id="player-b-advance">
                         <!-- Available advance cards -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Discard Zone</div>
+                    <div class="cards-container" id="player-b-discard">
+                        <!-- Discarded cards -->
                     </div>
                 </div>
             </div>
