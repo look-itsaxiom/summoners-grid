@@ -136,7 +136,7 @@ export const warlock = new RoleCard(
     { str: 0, end: 0, def: -0.15, int: 0.6, spi: 0.3, mdf: -0.2, spd: 0, acc: 0, lck: 0.2 }
 );
 
-// Building Cards
+// Building Cards with proper positioning and IDs
 export const gignenCountry = new BuildingCard(
     '004',
     'Gignen Country',
@@ -157,6 +157,9 @@ export const gignenCountry = new BuildingCard(
     }
 );
 
+// Add building ID
+(gignenCountry as any).id = 'gignen-country';
+
 export const darkAltar = new BuildingCard(
     '010',
     'Dark Altar',
@@ -167,8 +170,9 @@ export const darkAltar = new BuildingCard(
     {
         description: 'Sacrificial structure that enables rapid role advancement',
         execute: (game: any, player: any, target: any) => {
-            // Set delayed destruction effect
-            game.scheduleBuildingDestruction('dark-altar', player, game.currentTurn + 1, (destroyedUnits: any[]) => {
+            // Set delayed destruction effect for next turn's end
+            const destructionTurn = game.turnNumber + (game.currentPlayer === player ? 2 : 1);
+            game.scheduleBuildingDestruction('dark-altar', player, destructionTurn, (destroyedUnits: any[]) => {
                 if (destroyedUnits.length > 0) {
                     // Find magician to level up
                     const magician = player.summonUnits.find((unit: any) => unit.roleFamily === RoleFamily.Magician);
@@ -183,14 +187,18 @@ export const darkAltar = new BuildingCard(
     }
 );
 
+// Add building ID
+(darkAltar as any).id = 'dark-altar';
+
 // Counter Cards
+// Counter Cards with proper trigger conditions
 export const dramaticReturn = new CounterCard(
     '003',
     'Dramatic Return!',
     Attribute.Light,
     'Legendary',
     'When a summon you control is defeated, return it with 10% HP',
-    'summon defeated',
+    'summon-defeated',
     {
         description: 'Miraculous resurrection that brings back fallen allies',
         execute: (game: any, player: any, defeatedUnit: any) => {
@@ -201,11 +209,18 @@ export const dramaticReturn = new CounterCard(
                 defeatedUnit.hp = Math.floor(defeatedUnit.maxHp * 0.1);
                 defeatedUnit.position = position;
                 player.addSummonUnit(defeatedUnit);
-                game.addToLog(`Dramatic Return! resurrects ${defeatedUnit.getDisplayName()} at (${position.x}, ${position.y})`);
+                game.board.placeUnit(defeatedUnit, position);
+                game.addToLog(`Dramatic Return! resurrects ${defeatedUnit.getDisplayName()} at (${position.x}, ${position.y}) with ${defeatedUnit.hp} HP`);
             }
         }
     }
 );
+
+// Add trigger checking method
+(dramaticReturn as any).shouldTrigger = function(game: any): boolean {
+    // This would be set by the game when a summon is defeated
+    return this.triggeredThisTurn || false;
+};
 
 export const graverobbing = new CounterCard(
     '041',
@@ -213,19 +228,30 @@ export const graverobbing = new CounterCard(
     Attribute.Dark,
     'Uncommon',
     'When opponent gains Victory Points, nullify the gain by discarding a card',
-    'victory point gained',
+    'victory-point-gained',
     {
         description: 'Defensive counter that steals enemies\' victories',
         execute: (game: any, player: any, vpEvent: any) => {
-            // Nullify VP gain
+            // Nullify VP gain and discard a card
             if (vpEvent && vpEvent.amount > 0) {
                 vpEvent.amount = 0;
-                // Simplified - should discard a card from hand
-                game.addToLog(`Graverobbing nullifies Victory Point gain`);
+                
+                // Discard a card from hand as cost
+                if (player.hand.length > 0) {
+                    const discardedCard = player.hand.pop();
+                    player.discardPile.push(discardedCard);
+                    game.addToLog(`Graverobbing nullifies Victory Point gain (discards ${discardedCard.name})`);
+                } else {
+                    game.addToLog(`Graverobbing nullifies Victory Point gain`);
+                }
             }
         }
     }
 );
+
+(graverobbing as any).shouldTrigger = function(game: any): boolean {
+    return this.triggeredThisTurn || false;
+};
 
 export const nightmarePain = new CounterCard(
     '132',
@@ -290,13 +316,31 @@ export const nearwoodForestExpedition = new QuestCard(
         description: 'Target summon gains 2 levels',
         execute: (game: any, target: any, questData: any) => {
             if (target && target.level < 10) {
+                const oldLevel = target.level;
                 target.level += 2;
                 target.calculateStats();
-                game.addToLog(`${target.getDisplayName()} gains 2 levels from exploration!`);
+                
+                // Apply Gignen Country bonus if applicable
+                if (target.species === Species.Gignen && game.isUnitInBuilding(target, 'gignen-country')) {
+                    target.level += 2; // Additional bonus levels
+                    target.calculateStats();
+                    game.addToLog(`${target.getDisplayName()} gains ${target.level - oldLevel} levels from exploration (including Gignen Country bonus)!`);
+                } else {
+                    game.addToLog(`${target.getDisplayName()} gains 2 levels from exploration!`);
+                }
             }
         }
     }
 );
+
+// Add completion checking method
+(nearwoodForestExpedition as any).checkCompletion = function(unit: any): boolean {
+    return unit.level < 10 && (
+        unit.roleFamily === RoleFamily.Warrior || 
+        unit.roleFamily === RoleFamily.Scout || 
+        unit.roleFamily === RoleFamily.Magician
+    );
+};
 
 // Advance Cards
 export const berserkerRage = new AdvanceCard(
@@ -334,17 +378,30 @@ export const alrechtBarkstep = new AdvanceCard(
             if (target && target.roleFamily === RoleFamily.Scout && target.level >= 10) {
                 // Transform into named summon
                 target.name = 'Alrecht Barkstep, Scoutmaster';
+                target.role = rogue; // Use Rogue role for enhanced stats
                 target.roleFamily = RoleFamily.Scout;
                 target.isNamedSummon = true;
+                
+                // Enhanced stats for named summon
+                target.baseStats.str = Math.max(target.baseStats.str, 24);
+                target.baseStats.spd = Math.max(target.baseStats.spd, 35);
+                target.baseStats.acc = Math.max(target.baseStats.acc, 43);
+                
                 // Add special ability card to hand
-                game.addToHand(caster, 'follow-me');
+                caster.addToHand(followMe);
                 target.calculateStats();
-                game.addToLog(`${target.getDisplayName()} is transformed into the legendary Alrecht Barkstep!`);
+                game.addToLog(`${target.getDisplayName()} is transformed into the legendary Alrecht Barkstep, Scoutmaster!`);
             }
         }
     },
     { from: RoleFamily.Scout, to: 'Alrecht Barkstep' }
 );
+
+// Add requirement checking
+(alrechtBarkstep as any).checkRequirements = function(unit: any): boolean {
+    return unit.roleFamily === RoleFamily.Scout && unit.level >= 10 && 
+           (unit.role === explorer || unit.role === rogue);
+};
 
 export const shadowPact = new AdvanceCard(
     '039',
@@ -355,21 +412,32 @@ export const shadowPact = new AdvanceCard(
     {
         description: 'High-risk enhancement trading health for magical power',
         execute: (game: any, target: any, caster: any) => {
-            if (target && (target.roleFamily === RoleFamily.Magician)) {
+            if (target && target.roleFamily === RoleFamily.Magician) {
                 // Role transformation
                 target.role = warlock;
                 target.roleFamily = RoleFamily.Magician;
+                
                 // Apply HP cost and spell enhancement
                 const hpCost = Math.floor(target.hp * 0.25);
                 target.takeDamage(hpCost);
                 target.enhancedSpellsRemaining = 3;
                 target.calculateStats();
-                game.addToLog(`${target.getDisplayName()} becomes a Warlock through dark pact!`);
+                
+                // Add unique counter card to hand
+                caster.addToHand(nightmarePain);
+                
+                game.addToLog(`${target.getDisplayName()} becomes a Warlock through dark pact! (sacrifices ${hpCost} HP)`);
             }
         }
     },
     { from: RoleFamily.Magician, to: 'Warlock' }
 );
+
+// Add requirement checking
+(shadowPact as any).checkRequirements = function(unit: any): boolean {
+    return unit.roleFamily === RoleFamily.Magician && 
+           (unit.level >= 20 || unit.role === darkMage);
+};
 
 // Action Cards
 export const blastBolt = new ActionCard(
@@ -644,6 +712,40 @@ export const lifeAlchemy = new ActionCard(
     RoleFamily.Magician
 );
 
+// Special unique cards generated by other effects
+export const followMe = new ActionCard(
+    '050',
+    'Follow Me!',
+    Attribute.Neutral,
+    'Special',
+    'Teleport target summon you control to space adjacent to Alrecht Barkstep',
+    Speed.Action,
+    {
+        description: 'Special ability card generated by Alrecht Barkstep',
+        execute: (game: any, caster: any, target: any) => {
+            if (!target || !caster) return;
+            
+            // Find adjacent spaces to Alrecht Barkstep
+            const adjacentPositions = game.board.getAdjacentPositions(caster.position);
+            const validPositions = adjacentPositions.filter((pos: any) => 
+                !game.board.getUnitAt(pos.x, pos.y)
+            );
+            
+            if (validPositions.length > 0) {
+                const newPosition = validPositions[0];
+                game.board.moveUnit(target, newPosition);
+                target.position = newPosition;
+                target.movementUsed = 0; // Reset movement as this is teleportation
+                
+                game.addToLog(`Follow Me! teleports ${target.getDisplayName()} to (${newPosition.x}, ${newPosition.y})`);
+            } else {
+                game.addToLog(`Follow Me! fails - no adjacent spaces available`);
+            }
+        }
+    },
+    RoleFamily.Scout
+);
+
 export const dualShot = new ActionCard(
     '017',
     'Dual Shot',
@@ -664,7 +766,7 @@ export const dualShot = new ActionCard(
 );
 
 export function createDemoActionCards(): ActionCard[] {
-    return [blastBolt, healingHands, sharpenedBlade, rush, ensnare, drainTouch, adventurousSpirit, spellRecall, lifeAlchemy, dualShot];
+    return [blastBolt, healingHands, sharpenedBlade, rush, ensnare, drainTouch, adventurousSpirit, spellRecall, lifeAlchemy, dualShot, followMe];
 }
 
 export function createDemoRoles(): RoleCard[] {

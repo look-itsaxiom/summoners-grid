@@ -7,7 +7,8 @@ export class UIController {
     private game: Game;
     private selectedCard: Card | undefined;
     private selectedUnit: SummonUnit | undefined;
-    private gameMode: 'none' | 'card-play' | 'unit-select' | 'move-unit' | 'attack-unit' = 'none';
+    private gameMode: 'none' | 'card-play' | 'unit-select' | 'move-unit' | 'attack-unit' | 'place-building' | 'select-advance-target' = 'none';
+    private buildingPlacement: any[] = [];
 
     constructor() {
         this.game = new Game();
@@ -76,6 +77,10 @@ export class UIController {
             this.handleUnitMove(position);
         } else if (this.gameMode === 'attack-unit' && this.selectedUnit) {
             this.handleUnitAttack(unit);
+        } else if (this.gameMode === 'place-building' && this.selectedCard) {
+            this.handleBuildingPlacement(position);
+        } else if (this.gameMode === 'select-advance-target' && this.selectedCard && unit) {
+            this.handleAdvanceTarget(unit);
         } else if (unit) {
             this.selectUnit(unit);
         } else {
@@ -127,24 +132,17 @@ export class UIController {
         this.gameMode = 'unit-select';
     }
 
-    private selectCard(card: Card): void {
-        this.selectedCard = card;
-        this.selectedUnit = undefined;
-        this.gameMode = 'card-play';
-    }
-
-    private clearSelection(): void {
-        this.selectedCard = undefined;
-        this.selectedUnit = undefined;
-        this.gameMode = 'none';
-    }
-
     public updateDisplay(): void {
         this.updateGameInfo();
         this.updateBoard();
         this.updatePlayerAreas();
+        this.updateFaceDownCards();
+        this.updateBuildingsInPlay();
+        this.updateQuestsInPlay();
+        this.updateAdvanceDecks();
         this.updateGameLog();
         this.updateActionButtons();
+        this.updateGameMode();
     }
 
     private updateGameInfo(): void {
@@ -388,5 +386,232 @@ export class UIController {
             passPriorityBtn.disabled = this.game.isGameOver;
             passPriorityBtn.textContent = this.gameMode !== 'none' ? 'Cancel Action' : 'Pass Priority';
         }
+    }
+
+    // New methods for all card types and UI elements
+
+    private updateFaceDownCards(): void {
+        this.updatePlayerFaceDown('A');
+        this.updatePlayerFaceDown('B');
+    }
+
+    private updatePlayerFaceDown(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const containerElement = document.getElementById(`player-${playerType.toLowerCase()}-face-down`);
+
+        if (!containerElement) return;
+
+        containerElement.innerHTML = '';
+
+        player.faceDownCards.forEach((card: any) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card face-down';
+            cardElement.innerHTML = `
+                <div class="card-name">Face Down</div>
+                <div class="card-type">Counter</div>
+            `;
+            containerElement.appendChild(cardElement);
+        });
+    }
+
+    private updateBuildingsInPlay(): void {
+        this.updatePlayerBuildings('A');
+        this.updatePlayerBuildings('B');
+    }
+
+    private updatePlayerBuildings(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const containerElement = document.getElementById(`player-${playerType.toLowerCase()}-buildings`);
+
+        if (!containerElement) return;
+
+        containerElement.innerHTML = '';
+
+        player.buildingsInPlay.forEach((building: any) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.innerHTML = `
+                <div class="card-name">${building.name}</div>
+                <div class="card-type">Building</div>
+            `;
+            containerElement.appendChild(cardElement);
+        });
+    }
+
+    private updateQuestsInPlay(): void {
+        this.updatePlayerQuests('A');
+        this.updatePlayerQuests('B');
+    }
+
+    private updatePlayerQuests(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const containerElement = document.getElementById(`player-${playerType.toLowerCase()}-quests`);
+
+        if (!containerElement) return;
+
+        containerElement.innerHTML = '';
+
+        player.questsInPlay.forEach((quest: any) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            cardElement.innerHTML = `
+                <div class="card-name">${quest.name}</div>
+                <div class="card-type">Quest</div>
+            `;
+            containerElement.appendChild(cardElement);
+        });
+    }
+
+    private updateAdvanceDecks(): void {
+        this.updatePlayerAdvance('A');
+        this.updatePlayerAdvance('B');
+    }
+
+    private updatePlayerAdvance(playerType: 'A' | 'B'): void {
+        const player = playerType === 'A' ? this.game.playerA : this.game.playerB;
+        const containerElement = document.getElementById(`player-${playerType.toLowerCase()}-advance`);
+
+        if (!containerElement) return;
+
+        containerElement.innerHTML = '';
+
+        const isCurrentPlayer = player === this.game.currentPlayer;
+
+        player.advanceDeck.forEach((advance: any) => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card';
+            
+            const canPlay = isCurrentPlayer && player.canPlayAdvanceCard(advance);
+            if (canPlay) {
+                cardElement.classList.add('playable');
+            }
+
+            cardElement.innerHTML = `
+                <div class="card-name">${advance.name}</div>
+                <div class="card-type">Advance</div>
+            `;
+
+            if (isCurrentPlayer && canPlay) {
+                cardElement.addEventListener('click', () => {
+                    this.selectAdvanceCard(advance);
+                });
+            }
+
+            containerElement.appendChild(cardElement);
+        });
+    }
+
+    private updateGameMode(): void {
+        const gameModeElement = document.getElementById('game-mode');
+        if (!gameModeElement) return;
+
+        let modeText = '';
+        switch (this.gameMode) {
+            case 'none':
+                modeText = 'Select cards or units to interact';
+                break;
+            case 'card-play':
+                modeText = `Playing: ${this.selectedCard?.name}`;
+                break;
+            case 'unit-select':
+                modeText = `Selected: ${this.selectedUnit?.getDisplayName()}`;
+                break;
+            case 'move-unit':
+                modeText = `Moving: ${this.selectedUnit?.getDisplayName()}`;
+                break;
+            case 'attack-unit':
+                modeText = `Attacking with: ${this.selectedUnit?.getDisplayName()}`;
+                break;
+            case 'place-building':
+                modeText = `Placing: ${this.selectedCard?.name}`;
+                break;
+            case 'select-advance-target':
+                modeText = `Select target for: ${this.selectedCard?.name}`;
+                break;
+        }
+
+        gameModeElement.textContent = modeText;
+    }
+
+    private selectAdvanceCard(advance: any): void {
+        this.selectedCard = advance;
+        this.gameMode = 'select-advance-target';
+        this.updateDisplay();
+    }
+
+    private selectCard(card: Card): void {
+        this.selectedCard = card;
+        
+        // Determine game mode based on card type
+        if ((card as any).type === 'Building') {
+            this.gameMode = 'place-building';
+            this.buildingPlacement = [];
+        } else if ((card as any).type === 'Counter') {
+            // Counter cards are set face down
+            this.playCounterCard(card);
+            this.clearSelection();
+            return;
+        } else if ((card as any).type === 'Quest') {
+            // Quest cards are played immediately
+            this.playQuestCard(card);
+            this.clearSelection();
+            return;
+        } else {
+            this.gameMode = 'card-play';
+        }
+        
+        this.updateDisplay();
+    }
+
+    private playCounterCard(card: Card): void {
+        const player = this.game.currentPlayer;
+        player.setFaceDownCard(card);
+        this.game.addToLog(`${player.name} sets a counter card face down`);
+    }
+
+    private playQuestCard(card: Card): void {
+        const player = this.game.currentPlayer;
+        if (this.game.playQuestCard(player, card)) {
+            this.game.addToLog(`${player.name} begins quest: ${card.name}`);
+        }
+    }
+
+    private handleBuildingPlacement(position: Position): void {
+        if (!this.selectedCard || this.gameMode !== 'place-building') return;
+
+        const building = this.selectedCard as any;
+        this.buildingPlacement.push(position);
+
+        // Check if we have enough positions for the building
+        const requiredPositions = building.dimensions.width * building.dimensions.height;
+        if (this.buildingPlacement.length >= requiredPositions) {
+            const player = this.game.currentPlayer;
+            if (this.game.playBuildingCard(player, building, this.buildingPlacement)) {
+                this.clearSelection();
+            } else {
+                this.buildingPlacement = [];
+                this.game.addToLog('Invalid building placement');
+            }
+        }
+    }
+
+    private handleAdvanceTarget(target: SummonUnit): void {
+        if (!this.selectedCard || this.gameMode !== 'select-advance-target') return;
+
+        const player = this.game.currentPlayer;
+        const advance = this.selectedCard as any;
+
+        if (this.game.playAdvanceCard(player, advance, target)) {
+            this.clearSelection();
+        } else {
+            this.game.addToLog('Invalid target for advance card');
+        }
+    }
+
+    private clearSelection(): void {
+        this.selectedCard = undefined;
+        this.selectedUnit = undefined;
+        this.gameMode = 'none';
+        this.buildingPlacement = [];
     }
 }

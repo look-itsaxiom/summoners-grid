@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Summoner's Grid - Complete Vertical Slice Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            text-align: center;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-bottom: 2px solid #4a90e2;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .header .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .header .demo-note {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: inline-block;
+            font-size: 0.9em;
+        }
+
+        .game-container {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .board-section {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .game-info {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .turn-info {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .victory-points {
+            display: flex;
+            gap: 30px;
+        }
+
+        .vp-display {
+            text-align: center;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(14, 1fr);
+            gap: 1px;
+            background: #333;
+            border: 2px solid #666;
+            border-radius: 10px;
+            overflow: hidden;
+            aspect-ratio: 14/12;
+            max-height: 600px;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7em;
+            color: #666;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .grid-cell:hover {
+            background: #f0f0f0;
+        }
+
+        .grid-cell.player-a-territory {
+            background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        }
+
+        .grid-cell.player-b-territory {
+            background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+        }
+
+        .grid-cell.selected {
+            background: #4caf50 !important;
+            box-shadow: inset 0 0 0 3px #2e7d32;
+        }
+
+        .grid-cell.valid-move {
+            background: #81c784 !important;
+            cursor: pointer;
+        }
+
+        .grid-cell.valid-attack {
+            background: #e57373 !important;
+            cursor: crosshair;
+        }
+
+        .summon-unit {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s;
+        }
+
+        .summon-unit:hover {
+            transform: scale(1.05);
+        }
+
+        .summon-unit.player-b {
+            background: linear-gradient(135deg, #f06292 0%, #ec407a 100%);
+        }
+
+        .building {
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            right: 1px;
+            bottom: 1px;
+            background: linear-gradient(135deg, #8d6e63 0%, #6d4c41 100%);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.5em;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .players-section {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .player-area {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            border: 2px solid;
+        }
+
+        .player-area.player-a {
+            border-color: #4fc3f7;
+        }
+
+        .player-area.player-b {
+            border-color: #f06292;
+        }
+
+        .player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .player-name {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+
+        .deck-info {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9em;
+        }
+
+        .card-section {
+            margin-bottom: 15px;
+        }
+
+        .section-header {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #4fc3f7;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .card {
+            background: linear-gradient(135deg, #37474f 0%, #263238 100%);
+            border: 1px solid #546e7a;
+            border-radius: 6px;
+            padding: 8px;
+            min-width: 90px;
+            max-width: 110px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.75em;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .card.playable {
+            border-color: #4caf50;
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+        }
+
+        .card.selected {
+            border-color: #ffeb3b;
+            box-shadow: 0 0 10px rgba(255, 235, 59, 0.5);
+        }
+
+        .card.face-down {
+            background: linear-gradient(135deg, #424242 0%, #212121 100%);
+            border-color: #616161;
+        }
+
+        .card-name {
+            font-weight: bold;
+            margin-bottom: 4px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .card-type {
+            font-size: 0.8em;
+            opacity: 0.8;
+            color: #90caf9;
+        }
+
+        .controls-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .controls-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #4fc3f7 0%, #29b6f6 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+
+        .btn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #29b6f6 0%, #039be5 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+
+        .btn.danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%);
+        }
+
+        .game-log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            line-height: 1.4;
+        }
+
+        .log-entry {
+            margin-bottom: 3px;
+            padding: 2px 0;
+        }
+
+        .log-entry.player-a {
+            color: #4fc3f7;
+        }
+
+        .log-entry.player-b {
+            color: #f06292;
+        }
+
+        .log-entry.system {
+            color: #ffeb3b;
+        }
+
+        .game-mode-indicator {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .in-play-area {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+
+        .advance-deck {
+            background: rgba(138, 43, 226, 0.2);
+            border: 1px solid #8a2be2;
+        }
+
+        .quest-area {
+            background: rgba(255, 152, 0, 0.2);
+            border: 1px solid #ff9800;
+        }
+
+        .building-area {
+            background: rgba(121, 85, 72, 0.2);
+            border: 1px solid #795548;
+        }
+
+        .counter-area {
+            background: rgba(156, 39, 176, 0.2);
+            border: 1px solid #9c27b0;
+        }
+
+        @media (max-width: 1200px) {
+            .game-container {
+                flex-direction: column;
+            }
+            
+            .players-section {
+                flex-direction: row;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .players-section {
+                flex-direction: column;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(14, minmax(20px, 1fr));
+            }
+            
+            .grid-cell {
+                font-size: 0.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <h1>Summoner's Grid</h1>
+        <div class="subtitle">Complete Vertical Slice Demo</div>
+        <div class="demo-note">
+            🎮 Featuring all card types: Summon, Action, Counter, Building, Quest & Advance cards with full stack-based resolution
+        </div>
+    </header>
+
+    <div class="game-container">
+        <div class="board-section">
+            <div class="game-info">
+                <div class="turn-info" id="turn-info">
+                    Player A's Turn - Draw Phase
+                </div>
+                <div class="victory-points">
+                    <div class="vp-display">
+                        <div>Player A VP: <span id="player-a-vp">0</span></div>
+                    </div>
+                    <div class="vp-display">
+                        <div>Player B VP: <span id="player-b-vp">0</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="game-board" id="game-board">
+                <!-- Grid cells will be generated by JavaScript -->
+            </div>
+
+            <div class="game-log" id="game-log">
+                <!-- Game log entries will be added by JavaScript -->
+            </div>
+        </div>
+
+        <div class="players-section">
+            <div class="player-area player-a">
+                <div class="player-header">
+                    <div class="player-name">Player A</div>
+                    <div class="deck-info">
+                        <span>Hand (<span id="player-a-hand-count">0</span>)</span>
+                        <span>Deck (<span id="player-a-deck-count">0</span>)</span>
+                        <span>Recharge (<span id="player-a-recharge-count">0</span>)</span>
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Hand</div>
+                    <div class="cards-container" id="player-a-hand">
+                        <!-- Hand cards will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Face-Down Cards</div>
+                    <div class="cards-container counter-area" id="player-a-face-down">
+                        <!-- Face-down counter cards -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Buildings in Play</div>
+                    <div class="cards-container building-area" id="player-a-buildings">
+                        <!-- Building cards in play -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Active Quests</div>
+                    <div class="cards-container quest-area" id="player-a-quests">
+                        <!-- Quest cards in play -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Advance Deck</div>
+                    <div class="cards-container advance-deck" id="player-a-advance">
+                        <!-- Available advance cards -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="controls-section">
+                <div class="controls-header">Game Controls</div>
+                
+                <div class="game-mode-indicator" id="game-mode">
+                    Select cards or units to interact
+                </div>
+
+                <div class="action-buttons">
+                    <button class="btn" id="end-phase-btn">End Phase</button>
+                    <button class="btn" id="pass-priority-btn">Pass Priority</button>
+                    <button class="btn danger" id="reset-game-btn">Reset Game</button>
+                </div>
+            </div>
+
+            <div class="player-area player-b">
+                <div class="player-header">
+                    <div class="player-name">Player B</div>
+                    <div class="deck-info">
+                        <span>Hand (<span id="player-b-hand-count">0</span>)</span>
+                        <span>Deck (<span id="player-b-deck-count">0</span>)</span>
+                        <span>Recharge (<span id="player-b-recharge-count">0</span>)</span>
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Hand</div>
+                    <div class="cards-container" id="player-b-hand">
+                        <!-- Hand cards will be populated by JavaScript -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Face-Down Cards</div>
+                    <div class="cards-container counter-area" id="player-b-face-down">
+                        <!-- Face-down counter cards -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Buildings in Play</div>
+                    <div class="cards-container building-area" id="player-b-buildings">
+                        <!-- Building cards in play -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Active Quests</div>
+                    <div class="cards-container quest-area" id="player-b-quests">
+                        <!-- Quest cards in play -->
+                    </div>
+                </div>
+
+                <div class="card-section">
+                    <div class="section-header">Advance Deck</div>
+                    <div class="cards-container advance-deck" id="player-b-advance">
+                        <!-- Available advance cards -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/main.js"></script>
+</body>
+</html>

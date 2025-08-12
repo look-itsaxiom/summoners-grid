@@ -53,6 +53,7 @@ export enum Attribute {
     Wind = 'Wind',
     Light = 'Light',
     Dark = 'Dark',
+    Nature = 'Nature',
     Neutral = 'Neutral'
 }
 
