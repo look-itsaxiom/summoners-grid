@@ -21,14 +21,16 @@ cd summoners-grid
 # Install dependencies
 npm install
 
-# Build the TypeScript
-npm run build
-
 # Start the development server
-npm start
+npm run dev
 ```
 
-The game will open automatically in your browser at `http://localhost:8080`.
+The game will open automatically in your browser at `http://localhost:5173`.
+
+### 🌐 Live Demo
+Play the latest version at: **[https://look-itsaxiom.github.io/summoners-grid/](https://look-itsaxiom.github.io/summoners-grid/)**
+
+The demo is automatically updated on every push to the main branch via GitHub Actions.
 
 ## 🎯 Current Status: Vertical Slice Demo
 
@@ -123,9 +125,20 @@ Based on the GDD specifications:
 
 ### Building
 ```bash
-npm run build    # Compile TypeScript
-npm run dev      # Watch mode for development
+npm run build    # Build for production
+npm run dev      # Start development server
+npm run preview  # Preview production build locally
 ```
+
+### 🚀 Deployment
+The project uses GitHub Actions for automatic deployment to GitHub Pages:
+- **Triggers**: Push to main branch
+- **Build**: Vite production build with correct base path
+- **Deploy**: Automatic deployment to `https://look-itsaxiom.github.io/summoners-grid/`
+
+Configuration files:
+- `.github/workflows/deploy.yml` - GitHub Actions workflow
+- `vite.config.ts` - Build configuration with GitHub Pages support
 
 ### Project Structure
 - `src/` - TypeScript source files
