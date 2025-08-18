@@ -4,98 +4,292 @@
 
 The Game UI layer is responsible for creating a visually pleasing, animation-rich user interface that supports all game design requirements. This layer serves as the player's primary interaction point with the game, handling everything from card collection to tactical combat visualization.
 
+**Architecture Decision**: Given the complexity of real-time tactical combat, animations, and visual effects required for Summoner's Grid, we recommend a **hybrid approach** using Phaser.js for the core game client with React for UI overlays and menus.
+
 ## UI Architecture Principles
 
 ### Core Requirements
 - **Visual Clarity**: Clear representation of complex game state
 - **Responsive Design**: Works across different screen sizes and devices
-- **Animation Rich**: Smooth transitions and engaging visual feedback
+- **Animation Rich**: Smooth transitions and engaging visual feedback with 60fps performance
 - **Accessibility**: Keyboard navigation and screen reader support
-- **Performance**: 60fps gameplay on modern browsers
+- **Real-time Performance**: Handle complex tactical combat with multiple animations
+- **Game-Quality Graphics**: Support for particle effects, sprite animations, and visual polish
 
 ### Design System Foundation
-- **Component-Based**: Reusable UI components with consistent styling
-- **State-Driven**: UI reflects game state changes automatically
-- **Theme Support**: Consistent visual language across all interfaces
-- **Mobile-First**: Responsive design starting from mobile constraints
+- **Hybrid Architecture**: Phaser.js for game canvas + React for UI overlays
+- **Component-Based UI**: Reusable React components for menus and HUD
+- **Performance-First**: Optimized rendering for complex game scenes
+- **Mobile-Responsive**: Touch-friendly controls with fallback to mouse/keyboard
 
 ## Technology Stack
 
-### Core Technologies
-- **React 18+**: Component framework with concurrent features
-- **TypeScript**: Type safety and better developer experience
-- **Vite**: Fast development server and optimized builds
-- **Tailwind CSS**: Utility-first styling framework
+### Core Game Rendering
+- **Phaser.js 3.70+**: High-performance 2D game framework with TypeScript support
+- **WebGL/Canvas**: Hardware-accelerated rendering with Canvas fallback
+- **TypeScript**: Type safety and excellent developer experience
 
-### UI Enhancement Libraries
-- **Framer Motion**: Advanced animations and transitions
+### UI Framework (Overlays & Menus)
+- **React 18+**: Component framework for UI overlays and menu systems
+- **Framer Motion**: Animations for React components (menus, modals, transitions)
+- **Tailwind CSS**: Utility-first styling for UI components
 - **React Hook Form**: Form handling with validation
+
+### State Management
+- **Zustand**: Client-side state management for UI state
+- **Phaser Data Manager**: Game state management within Phaser scenes
 - **React Query**: Server state management and caching
-- **Zustand**: Client-side state management
 
 ### Game-Specific Libraries
-- **React DnD**: Drag and drop for card interactions
-- **React Spring**: Physics-based animations for card movements
-- **Konva.js or Three.js**: 2D/3D game board rendering
 - **Socket.IO Client**: Real-time game state synchronization
+- **Howler.js**: Audio management and sound effects
+- **particles.js or Phaser Particles**: Particle effects for spell animations
+- **Tween.js**: Advanced animation sequences
 
-## UI Component Architecture
+## Hybrid Architecture: Phaser + React
+
+### Architecture Overview
 
 ```
-src/
-├── components/
-│   ├── game/
-│   │   ├── GameBoard/          # Main game board component
-│   │   ├── CardDisplay/        # Individual card rendering
-│   │   ├── HandManager/        # Player hand interface
-│   │   ├── StackDisplay/       # Effect stack visualization
-│   │   └── TurnIndicator/      # Turn phase display
-│   ├── collection/
-│   │   ├── CardCollection/     # Card browsing interface
-│   │   ├── DeckBuilder/        # Deck construction tools
-│   │   └── PackOpener/         # Card pack opening animation
-│   ├── lobby/
-│   │   ├── GameLobby/          # Pre-game lobby
-│   │   ├── MatchmakingQueue/   # Queue status display
-│   │   └── PlayerList/         # Connected players
-│   └── shared/
-│       ├── Layout/             # App layout components
-│       ├── Navigation/         # Menu and navigation
-│       └── Modals/             # Dialog and overlay components
-├── hooks/                      # Custom React hooks
-├── stores/                     # Zustand state stores
-├── services/                   # API and WebSocket services
-├── utils/                      # Helper functions
-└── assets/                     # Images, sounds, fonts
+┌─────────────────────────────────────────────────────────────┐
+│                    BROWSER CLIENT                           │
+│                                                             │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │               REACT APP CONTAINER                       │ │
+│  │  ┌─────────────────┐  ┌─────────────────────────────────┐ │ │
+│  │  │   React UI      │  │        Phaser Game             │ │ │
+│  │  │   Overlays      │  │        Canvas                  │ │ │
+│  │  │  ┌───────────┐  │  │  ┌─────────────┐  ┌─────────┐ │ │ │
+│  │  │  │  HUD      │  │  │  │ Game Board  │  │ Summons │ │ │ │
+│  │  │  │  Menus    │  │  │  │ Cards       │  │ Effects │ │ │ │
+│  │  │  │  Modals   │  │  │  │ Animations  │  │ UI      │ │ │ │
+│  │  │  └───────────┘  │  │  └─────────────┘  └─────────┘ │ │ │
+│  │  └─────────────────┘  └─────────────────────────────────┘ │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Core UI Components
+### Why Phaser.js for Game Client?
 
-### 1. Game Board Component
+**Performance Benefits:**
+- **Hardware Acceleration**: WebGL rendering for smooth 60fps gameplay
+- **Sprite Management**: Efficient sprite batching and texture atlas support
+- **Animation System**: Built-in tweening and sprite animation systems
+- **Physics Integration**: Optional physics engines for smooth movement
 
-**Purpose**: Visualize the 12x14 grid battlefield with summons, buildings, and territories.
+**Game-Specific Features:**
+- **Input Handling**: Sophisticated mouse, touch, and keyboard input management
+- **Audio Management**: Advanced audio system with spatial audio support  
+- **Scene Management**: Organized game state and scene transitions
+- **Plugin System**: Extensible with community plugins
+
+**TypeScript Support:**
+- **Full Type Definitions**: Complete TypeScript definitions available
+- **Type-Safe Development**: Catch errors at compile time
+- **IntelliSense Support**: Excellent IDE support for game development
+
+### React Integration Strategy
+
+React handles all non-game UI elements:
+- **Authentication flows** (login, registration)
+- **Main menu navigation** and settings
+- **Card collection management** and deck building
+- **Game lobby** and matchmaking interfaces
+- **HUD overlays** (health, mana, turn indicators)
+- **Modal dialogs** and notifications
+
+## Implementation Architecture
+
+### Project Structure
+
+```
+packages/game-client/
+├── src/
+│   ├── components/                 # React Components
+│   │   ├── auth/                  # Authentication UI
+│   │   ├── collection/            # Card collection management
+│   │   ├── lobby/                 # Game lobby and matchmaking
+│   │   ├── hud/                   # In-game HUD overlays
+│   │   └── shared/                # Shared UI components
+│   ├── game/                      # Phaser Game Code
+│   │   ├── scenes/                # Phaser game scenes
+│   │   │   ├── MainGameScene.ts   # Core tactical combat
+│   │   │   ├── MainMenuScene.ts   # Game main menu
+│   │   │   └── LoadingScene.ts    # Asset loading
+│   │   ├── entities/              # Game object classes
+│   │   │   ├── Card.ts           # Card game objects
+│   │   │   ├── Summon.ts         # Summon game objects
+│   │   │   └── GameBoard.ts      # Board management
+│   │   ├── systems/               # Game systems
+│   │   │   ├── InputManager.ts   # Input handling
+│   │   │   ├── AnimationManager.ts # Animation control
+│   │   │   └── EffectManager.ts  # Visual effects
+│   │   └── utils/                 # Game utilities
+│   ├── stores/                    # Zustand state stores
+│   ├── services/                  # API and WebSocket services
+│   ├── hooks/                     # Custom React hooks
+│   └── assets/                    # Game assets
+│       ├── images/                # Sprite sheets, textures
+│       ├── audio/                 # Sound effects, music
+│       └── data/                  # Game data JSON files
+```
+
+## Core Implementation Components
+
+### 1. Phaser Game Client
+
+**Main Game Scene (MainGameScene.ts)**
+
+**Purpose**: Handle the core tactical combat gameplay with full animation support.
 
 **Key Features**:
-- Interactive grid with hover states and click handlers
-- Real-time position updates for summons
-- Territory highlighting (player controlled vs neutral)
-- Animation support for movement, combat, and effects
+- Interactive 12x14 grid with smooth hover and selection states
+- Real-time summon positioning with smooth movement animations
+- Territory highlighting with visual effects
+- Particle effects for spells and abilities
+- Damage numbers and status effect visualization
+
+**Implementation Approach**:
+```typescript
+// Example scene structure (no full implementation)
+export class MainGameScene extends Phaser.Scene {
+  private gameBoard: GameBoard;
+  private summons: Map<string, SummonSprite>;
+  private effectManager: EffectManager;
+  
+  constructor() {
+    super({ key: 'MainGameScene' });
+  }
+  
+  create(): void {
+    // Initialize game board visualization
+    this.gameBoard = new GameBoard(this, 12, 14);
+    
+    // Set up input handlers for tactical combat
+    this.setupInputHandlers();
+    
+    // Initialize particle systems for effects
+    this.effectManager = new EffectManager(this);
+  }
+  
+  // Key responsibilities:
+  // - Render 12x14 grid with proper coordinate system
+  // - Animate summon movements and combat
+  // - Handle tactical input (movement, targeting, abilities)
+  // - Display visual effects and animations
+  // - Sync with game engine via WebSocket events
+}
+```
+
+**Game Board Management (GameBoard.ts)**
+```typescript
+export class GameBoard {
+  private scene: Phaser.Scene;
+  private tiles: Phaser.GameObjects.Image[][];
+  private highlightGraphics: Phaser.GameObjects.Graphics;
+  
+  constructor(scene: Phaser.Scene, width: number, height: number) {
+    this.scene = scene;
+    this.createGrid(width, height);
+  }
+  
+  // Responsibilities:
+  // - Create interactive grid tiles
+  // - Handle tile highlighting and selection
+  // - Manage territory control visualization
+  // - Provide world <-> grid coordinate conversion
+}
+```
+
+### 2. React UI Overlays
+
+**Game HUD Component (GameHUD.tsx)**
+
+**Purpose**: Display game information and controls that overlay the Phaser canvas.
+
+**Key Features**:
+- Player health, mana, and turn indicators
+- Hand display with card previews
+- Effect stack visualization
+- Game menu and settings access
 
 **Implementation Approach**:
 ```typescript
 // Example component structure (no implementation)
-interface GameBoardProps {
+interface GameHUDProps {
   gameState: GameState;
-  onCellClick: (position: Position) => void;
-  onSummonSelect: (summonId: string) => void;
-  highlightedCells?: Position[];
+  onCardSelect: (cardId: string) => void;
+  onMenuToggle: () => void;
 }
 
+export const GameHUD: React.FC<GameHUDProps> = ({ 
+  gameState, 
+  onCardSelect, 
+  onMenuToggle 
+}) => {
+  return (
+    <div className="absolute inset-0 pointer-events-none">
+      {/* HUD elements with pointer-events-auto on interactive parts */}
+      <div className="top-4 left-4 pointer-events-auto">
+        <PlayerStats player={gameState.currentPlayer} />
+      </div>
+      
+      <div className="bottom-4 inset-x-4 pointer-events-auto">
+        <HandDisplay 
+          cards={gameState.currentPlayer.hand}
+          onCardSelect={onCardSelect}
+        />
+      </div>
+    </div>
+  );
+};
+
 // Key responsibilities:
-// - Render 12x14 grid with proper coordinate system
-// - Display summons at correct positions with animations
-// - Show valid movement/action targets
-// - Handle drag-and-drop for summon positioning
+// - Overlay game information without blocking Phaser input
+// - Provide touch-friendly controls for mobile
+// - Maintain responsive design across screen sizes
+// - Handle React state updates from WebSocket events
+```
+
+### 3. State Management Bridge
+
+**Phaser-React Bridge (GameBridge.ts)**
+
+**Purpose**: Coordinate state between Phaser game client and React UI components.
+
+**Key Features**:
+- Bidirectional event communication
+- State synchronization
+- WebSocket event distribution
+
+**Implementation Approach**:
+```typescript
+export class GameBridge extends EventTarget {
+  private phaserScene: MainGameScene;
+  private reactStore: GameStore;
+  
+  constructor(phaserScene: MainGameScene, reactStore: GameStore) {
+    super();
+    this.phaserScene = phaserScene;
+    this.reactStore = reactStore;
+    this.setupEventHandlers();
+  }
+  
+  // Forward events from Phaser to React
+  onPhaserEvent(eventType: string, data: any): void {
+    this.reactStore.dispatch({ type: eventType, payload: data });
+  }
+  
+  // Forward events from React to Phaser
+  onReactEvent(eventType: string, data: any): void {
+    this.phaserScene.handleReactEvent(eventType, data);
+  }
+  
+  // Key responsibilities:
+  // - Maintain synchronized state between Phaser and React
+  // - Route WebSocket events to appropriate handlers
+  // - Provide clean interface for cross-system communication
+}
 ```
 
 **Design Considerations**:

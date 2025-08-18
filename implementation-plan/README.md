@@ -66,14 +66,24 @@ Database design and data access patterns for scalable, performant data storage a
 - Backup and recovery procedures
 
 ### 🚀 [06-PROJECT-SETUP-GUIDE.md](./06-PROJECT-SETUP-GUIDE.md)
-Step-by-step guide for setting up the development environment and implementing the architecture.
+Step-by-step guide for setting up the development environment and implementing the architecture with enhanced monorepo tooling options.
 
 **Key Topics:**
 - Complete development environment setup
-- Monorepo configuration with npm workspaces
+- Advanced monorepo configuration (Nx, Lerna, npm workspaces)
 - Package structure and dependency management
 - Development workflow and testing setup
 - Docker and deployment configuration
+
+### 📋 [07-GITHUB-ISSUES-BREAKDOWN.md](./07-GITHUB-ISSUES-BREAKDOWN.md)
+Comprehensive breakdown of 35 detailed GitHub issues covering the entire implementation timeline.
+
+**Key Topics:**
+- Granular implementation tasks with clear acceptance criteria
+- Priority levels, sizing, and team assignments
+- Issue dependencies and critical path analysis
+- Milestone planning and resource allocation
+- Project management guidelines and templates
 
 ## Implementation Timeline
 
@@ -130,10 +140,11 @@ Step-by-step guide for setting up the development environment and implementing t
 ## Technology Stack Summary
 
 ### Frontend
-- **React 18+** with TypeScript for UI components
+- **Phaser.js 3.70+** with TypeScript for core game client
+- **React 18+** with TypeScript for UI overlays and menus
 - **Vite** for fast development and optimized builds
 - **Tailwind CSS** + **Framer Motion** for styling and animations
-- **Zustand** for state management
+- **Zustand** for UI state management
 - **Socket.IO** for real-time communication
 
 ### Backend

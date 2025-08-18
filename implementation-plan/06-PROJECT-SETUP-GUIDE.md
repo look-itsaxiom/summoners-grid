@@ -45,7 +45,28 @@ mkdir -p deployment
 npm init -y
 ```
 
-### Step 2: Configure Workspace Management
+### Step 2: Configure Monorepo Management with Nx
+
+For optimal monorepo management, we'll use Nx which provides excellent TypeScript support, caching, and dependency graph management.
+
+```bash
+# Install Nx globally
+npm install -g nx@latest
+
+# Initialize Nx workspace
+npx create-nx-workspace@latest summoners-grid --preset=ts --packageManager=npm
+cd summoners-grid
+
+# Generate applications and libraries
+nx g @nx/node:app game-server
+nx g @nx/node:app api-server  
+nx g @nx/react:app game-client
+nx g @nx/js:lib shared-types
+nx g @nx/js:lib game-engine
+nx g @nx/js:lib database
+```
+
+Alternatively, if you prefer a simpler approach with npm workspaces:
 
 Create `package.json` in root directory:
 
@@ -58,11 +79,12 @@ Create `package.json` in root directory:
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces",
-    "dev": "npm run dev --workspaces",
-    "test": "npm run test --workspaces",
-    "lint": "npm run lint --workspaces",
-    "clean": "npm run clean --workspaces"
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "type-check": "npm run type-check --workspaces --if-present"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
@@ -73,9 +95,44 @@ Create `package.json` in root directory:
     "eslint": "^8.0.0",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "prettier": "^3.0.0"
+    "prettier": "^3.0.0",
+    "husky": "^8.0.0",
+    "lint-staged": "^14.0.0"
   }
 }
+```
+
+### Alternative: Monorepo with Lerna + npm workspaces
+
+If you need more advanced publishing and versioning capabilities:
+
+```bash
+# Install Lerna
+npm install -g lerna
+
+# Initialize Lerna
+lerna init
+
+# Configure lerna.json
+cat > lerna.json << 'EOF'
+{
+  "version": "independent",
+  "npmClient": "npm",
+  "useWorkspaces": true,
+  "stream": true,
+  "command": {
+    "publish": {
+      "conventionalCommits": true,
+      "message": "chore(release): publish"
+    },
+    "bootstrap": {
+      "ignore": "component-*",
+      "npmClientArgs": ["--no-package-lock"]
+    }
+  }
+}
+EOF
+```
 ```
 
 ### Step 3: Set Up TypeScript Configuration
