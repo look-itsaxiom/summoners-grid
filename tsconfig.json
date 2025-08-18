@@ -1,0 +1,28 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compileOnSave": false,
+  "files": [],
+  "references": [
+    {
+      "path": "./apps/game-server"
+    },
+    {
+      "path": "./apps/api-server"
+    },
+    {
+      "path": "./packages/shared-types"
+    },
+    {
+      "path": "./packages/game-engine"
+    },
+    {
+      "path": "./apps/game-client-e2e"
+    },
+    {
+      "path": "./apps/game-client"
+    },
+    {
+      "path": "./packages/database"
+    }
+  ]
+}
