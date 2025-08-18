@@ -112,7 +112,6 @@ model CardTemplate {
   speed         Speed?
   
   // Game mechanics (stored as JSON for flexibility)
-  cost          Json?    // Resource costs for playing the card
   requirements  Json?    // Requirements to play (role, level, etc.)
   effects       Json?    // Card effects and abilities
   stats         Json?    // For summon cards: STR, INT, etc.
@@ -371,11 +370,10 @@ model AuditLog {
 
 enum CardType {
   SUMMON
+  ROLE
   ACTION
   BUILDING
   WEAPON
-  ARMOR
-  ACCESSORY
   ADVANCE
   COUNTER
   QUEST

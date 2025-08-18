@@ -146,7 +146,7 @@ const alphaCardTemplates = [
   {
     id: '020',
     name: 'Warrior',
-    type: CardType.SUMMON,
+    type: CardType.ROLE,
     rarity: Rarity.COMMON,
     attribute: Attribute.NEUTRAL,
     setCode: 'ALPHA',
@@ -160,7 +160,7 @@ const alphaCardTemplates = [
   {
     id: '021',
     name: 'Magician',
-    type: CardType.SUMMON,
+    type: CardType.ROLE,
     rarity: Rarity.COMMON,
     attribute: Attribute.NEUTRAL,
     setCode: 'ALPHA',
@@ -174,7 +174,7 @@ const alphaCardTemplates = [
   {
     id: '022',
     name: 'Scout',
-    type: CardType.SUMMON,
+    type: CardType.ROLE,
     rarity: Rarity.COMMON,
     attribute: Attribute.NEUTRAL,
     setCode: 'ALPHA',
@@ -190,7 +190,7 @@ const alphaCardTemplates = [
   {
     id: '023',
     name: 'Berserker',
-    type: CardType.ADVANCE,
+    type: CardType.ROLE,
     rarity: Rarity.UNCOMMON,
     attribute: Attribute.NEUTRAL,
     setCode: 'ALPHA',
@@ -205,7 +205,7 @@ const alphaCardTemplates = [
   {
     id: '024',
     name: 'Knight',
-    type: CardType.ADVANCE,
+    type: CardType.ROLE,
     rarity: Rarity.UNCOMMON,
     attribute: Attribute.NEUTRAL,
     setCode: 'ALPHA',
