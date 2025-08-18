@@ -22,6 +22,7 @@ Issues are organized by:
 - Create build and development scripts
 - **Acceptance Criteria**: All packages can be built/tested from root
 - **Dependencies**: None
+- **Status**: ✅ COMPLETED
 
 **[P0][DevOps][Small] #002: Configure development environment tooling**
 - Set up ESLint, Prettier, and TypeScript configs
@@ -30,6 +31,7 @@ Issues are organized by:
 - Configure VS Code workspace settings
 - **Acceptance Criteria**: Consistent code formatting and linting across all packages
 - **Dependencies**: #001
+- **Status**: ✅ COMPLETED
 
 **[P0][DevOps][Medium] #003: Set up Docker development environment**
 - Create Docker Compose for PostgreSQL, Redis, and development services
