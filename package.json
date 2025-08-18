@@ -53,10 +53,12 @@
     "nx": "21.4.0",
     "postcss": "8.4.38",
     "prettier": "^2.6.2",
+    "prisma": "^6.14.0",
     "tailwindcss": "3.4.3",
     "ts-jest": "^29.4.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
+    "tsx": "^4.20.4",
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.29.0",
     "vite": "^6.0.0",
@@ -68,6 +70,7 @@
     "apps/*"
   ],
   "dependencies": {
+    "@prisma/client": "^6.14.0",
     "express": "^4.21.2",
     "react": "19.0.0",
     "react-dom": "19.0.0"
