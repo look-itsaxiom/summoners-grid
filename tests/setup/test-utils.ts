@@ -271,16 +271,28 @@ export class GameTestUtils {
 
   // Complex actions
   async completeTurn(): Promise<void> {
-    // Navigate through all phases of a turn
-    while (true) {
+    // Navigate through all phases of a turn with safety limit
+    const maxPhases = 10; // Safety limit to prevent infinite loops
+    let phaseCount = 0;
+    
+    while (phaseCount < maxPhases) {
+      const currentPlayer = await this.getCurrentPlayer();
       const phase = await this.getCurrentPhase();
-      if (phase === 'Draw' || phase === 'Level' || phase === 'Action' || phase === 'End') {
-        await this.endPhase();
-        const newPhase = await this.getCurrentPhase();
-        if (newPhase === phase) {
-          // Phase didn't change, we're done
+      
+      // If we've moved to a different player, the turn is complete
+      if (phaseCount > 0) {
+        const newPlayer = await this.getCurrentPlayer();
+        if (newPlayer !== currentPlayer) {
           break;
         }
+      }
+      
+      if (phase === 'Draw' || phase === 'Level' || phase === 'Action' || phase === 'End') {
+        await this.endPhase();
+        phaseCount++;
+        
+        // Add a small delay to ensure UI updates
+        await this.page.waitForTimeout(200);
       } else {
         break;
       }
