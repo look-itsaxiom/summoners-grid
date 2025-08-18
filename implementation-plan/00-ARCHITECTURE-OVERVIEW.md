@@ -95,15 +95,15 @@ Summoner's Grid is a tactical grid-based RPG card game designed for competitive 
 - **Migrations**: Prisma migrations for database versioning
 
 ### DevOps & Deployment
-- **Package Manager**: npm or pnpm for consistent dependencies
-- **Monorepo Tool**: Nx or Lerna for multi-package management
+- **Package Manager**: npm for consistent dependencies
+- **Monorepo Tool**: Nx for multi-package management
 - **Build System**: Docker for containerization
 - **Process Management**: PM2 for production deployment
 - **Monitoring**: Simple logging with Winston
 
 ## Project Structure
 
-**Monorepo Organization**: The project uses a monorepo structure to enable code sharing and coordinated development across all components. For detailed setup instructions including advanced tooling options (Nx, Lerna), see the [Project Setup Guide](./06-PROJECT-SETUP-GUIDE.md).
+**Monorepo Organization**: The project uses a monorepo structure to enable code sharing and coordinated development across all components. For detailed setup instructions using Nx workspace tooling, see the [Project Setup Guide](./06-PROJECT-SETUP-GUIDE.md).
 
 ```
 summoners-grid/
@@ -125,7 +125,7 @@ summoners-grid/
 **For detailed task breakdown**: See the [GitHub Issues Breakdown](./07-GITHUB-ISSUES-BREAKDOWN.md) which provides 35 specific, actionable issues with priority levels, sizing estimates, and team assignments.
 
 ### Phase 1: Foundation (Weeks 1-2)
-- Set up monorepo structure with advanced tooling (Nx or Lerna)
+- Set up monorepo structure with Nx workspace tooling
 - Implement basic game engine with card data models
 - Create Phaser.js client with React UI overlay architecture
 - Establish database schema and basic API endpoints

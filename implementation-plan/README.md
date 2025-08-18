@@ -70,7 +70,7 @@ Step-by-step guide for setting up the development environment and implementing t
 
 **Key Topics:**
 - Complete development environment setup
-- Advanced monorepo configuration (Nx, Lerna, npm workspaces)
+- Advanced Nx monorepo configuration with TypeScript support
 - Package structure and dependency management
 - Development workflow and testing setup
 - Docker and deployment configuration

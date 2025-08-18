@@ -8,7 +8,7 @@ This guide provides step-by-step instructions for setting up the complete Summon
 
 ### Required Software
 - **Node.js 18+**: JavaScript runtime ([Download](https://nodejs.org/))
-- **npm or pnpm**: Package manager (npm comes with Node.js, pnpm can be installed separately)
+- **npm**: Package manager (comes with Node.js)
 - **PostgreSQL 15+**: Primary database ([Download](https://www.postgresql.org/download/))
 - **Redis 7+**: Caching server ([Download](https://redis.io/download))
 - **Git**: Version control ([Download](https://git-scm.com/))
@@ -27,113 +27,32 @@ This guide provides step-by-step instructions for setting up the complete Summon
 
 ## Phase 1: Project Foundation Setup (Week 1)
 
-### Step 1: Create Project Structure
+### Step 1: Create Nx Workspace
 
-```bash
-# Create main project directory
-mkdir summoners-grid
-cd summoners-grid
-
-# Initialize monorepo structure
-mkdir -p packages/{client,game-engine,game-server,api-server,database,shared}
-mkdir -p assets/{images,sounds,fonts}
-mkdir -p docs
-mkdir -p tools
-mkdir -p deployment
-
-# Create root package.json
-npm init -y
-```
+The Nx workspace will automatically create the optimal project structure with proper monorepo configuration.
 
 ### Step 2: Configure Monorepo Management with Nx
 
-For optimal monorepo management, we'll use Nx which provides excellent TypeScript support, caching, and dependency graph management.
+Summoner's Grid uses Nx which provides excellent TypeScript support, caching, and dependency graph management.
 
 ```bash
-# Install Nx globally
-npm install -g nx@latest
-
-# Initialize Nx workspace
-npx create-nx-workspace@latest summoners-grid --preset=ts --packageManager=npm
+# Create the Nx workspace (this will create a new directory)
+npx create-nx-workspace@latest summoners-grid --preset=ts --packageManager=npm --nx-cloud=skip
 cd summoners-grid
 
+# Install required Nx plugins
+npm install @nx/node @nx/react @nx/js --save-dev
+
 # Generate applications and libraries
-nx g @nx/node:app game-server
-nx g @nx/node:app api-server  
-nx g @nx/react:app game-client
-nx g @nx/js:lib shared-types
-nx g @nx/js:lib game-engine
-nx g @nx/js:lib database
+npx nx g @nx/node:app game-server
+npx nx g @nx/node:app api-server  
+npx nx g @nx/react:app game-client
+npx nx g @nx/js:lib shared-types
+npx nx g @nx/js:lib game-engine
+npx nx g @nx/js:lib database
 ```
 
-Alternatively, if you prefer a simpler approach with npm workspaces:
-
-Create `package.json` in root directory:
-
-```json
-{
-  "name": "summoners-grid",
-  "version": "1.0.0",
-  "private": true,
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
-    "build": "npm run build --workspaces --if-present",
-    "dev": "npm run dev --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present",
-    "lint": "npm run lint --workspaces --if-present",
-    "clean": "npm run clean --workspaces --if-present",
-    "type-check": "npm run type-check --workspaces --if-present"
-  },
-  "devDependencies": {
-    "@types/node": "^20.0.0",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0",
-    "eslint": "^8.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.0.0",
-    "@typescript-eslint/parser": "^6.0.0",
-    "prettier": "^3.0.0",
-    "husky": "^8.0.0",
-    "lint-staged": "^14.0.0"
-  }
-}
-```
-
-### Alternative: Monorepo with Lerna + npm workspaces
-
-If you need more advanced publishing and versioning capabilities:
-
-```bash
-# Install Lerna
-npm install -g lerna
-
-# Initialize Lerna
-lerna init
-
-# Configure lerna.json
-cat > lerna.json << 'EOF'
-{
-  "version": "independent",
-  "npmClient": "npm",
-  "useWorkspaces": true,
-  "stream": true,
-  "command": {
-    "publish": {
-      "conventionalCommits": true,
-      "message": "chore(release): publish"
-    },
-    "bootstrap": {
-      "ignore": "component-*",
-      "npmClientArgs": ["--no-package-lock"]
-    }
-  }
-}
-EOF
-```
-```
+**Note**: The React app generation may show a Playwright installation error. This is non-critical and can be ignored for development purposes.
 
 ### Step 3: Set Up TypeScript Configuration
 
@@ -161,52 +80,21 @@ Create `tsconfig.json` in root:
 }
 ```
 
-### Step 4: Initialize Shared Package
+### Step 4: Configure Shared Types Package
+
+The Nx-generated shared-types library needs to be configured with game-specific types.
 
 ```bash
-cd packages/shared
-npm init -y
+# Install Zod for runtime type validation
+npm install zod --save
+
+# Update shared-types to include game types
 ```
 
-Create `packages/shared/package.json`:
-
-```json
-{
-  "name": "@summoners-grid/shared",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "clean": "rm -rf dist"
-  },
-  "dependencies": {
-    "zod": "^3.22.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0"
-  }
-}
-```
-
-Create `packages/shared/tsconfig.json`:
-
-```json
-{
-  "extends": "../../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src/**/*"]
-}
-```
-
-Create shared types in `packages/shared/src/types/`:
+Replace `shared-types/src/lib/shared-types.ts` with game-specific types:
 
 ```typescript
-// packages/shared/src/types/game.ts
+// shared-types/src/lib/shared-types.ts
 export interface Position {
   x: number;
   y: number;
@@ -231,51 +119,76 @@ export interface Card {
   effects: Effect[];
 }
 
-// Export all types from index
-export * from './game';
-export * from './user';
-export * from './network';
+export type TurnPhase = 'draw' | 'main' | 'combat' | 'end';
+export type CardType = 'unit' | 'structure' | 'spell' | 'trap';
+export type Rarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
+
+export interface ResourceCost {
+  energy: number;
+  influence: number;
+}
+
+export interface Effect {
+  id: string;
+  type: string;
+  condition?: any;
+  parameters: any;
+}
+
+export interface GameBoard {
+  // Board implementation details
+}
+
+export interface PlayerState {
+  // Player state details
+}
 ```
 
-### Step 5: Set Up Game Engine Package
+Update `shared-types/src/index.ts`:
+
+```typescript
+export * from './lib/shared-types';
+```
+
+### Step 5: Configure Game Engine Package
+
+The Nx-generated game-engine library needs additional dependencies and game logic implementation.
 
 ```bash
-cd packages/game-engine
-npm init -y
+# Install game engine dependencies
+npm install immutable zod --save
 ```
 
-Create `packages/game-engine/package.json`:
+Update `game-engine/package.json` to add shared-types dependency:
 
 ```json
 {
   "name": "@summoners-grid/game-engine",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
-    "test": "jest",
-    "clean": "rm -rf dist"
-  },
+  "version": "0.0.1",
   "dependencies": {
-    "@summoners-grid/shared": "^1.0.0",
+    "@summoners-grid/shared-types": "*",
     "immutable": "^4.3.0",
     "zod": "^3.22.0"
-  },
-  "devDependencies": {
-    "typescript": "^5.0.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
   }
 }
 ```
 
-Create basic game engine structure:
+Replace `game-engine/src/lib/game-engine.ts` with core game logic:
 
 ```typescript
-// packages/game-engine/src/GameEngine.ts
-import { GameState, PlayerAction, GameEvent } from '@summoners-grid/shared';
+// game-engine/src/lib/game-engine.ts
+import { GameState, PlayerAction, GameEvent } from '@summoners-grid/shared-types';
+
+export interface ActionResult {
+  success: boolean;
+  error?: string;
+  newState?: GameState;
+}
+
+export interface ValidationResult {
+  isValid: boolean;
+  error?: string;
+}
 
 export class GameEngine {
   private gameState: GameState;
@@ -312,50 +225,61 @@ export class GameEngine {
     return this.gameState;
   }
 }
+
+// Define additional types that shared-types might be missing
+export interface PlayerAction {
+  type: string;
+  playerId: string;
+  data: any;
+}
+
+export interface GameEvent {
+  type: string;
+  timestamp: number;
+  data: any;
+}
 ```
 
 ## Phase 2: Database Setup (Week 1)
 
-### Step 1: Database Package Setup
+### Step 1: Configure Database Package
+
+The Nx-generated database library needs Prisma setup and configuration.
 
 ```bash
-cd packages/database
-npm init -y
+# Install Prisma dependencies
+npm install @prisma/client --save
+npm install prisma --save-dev
+
+# Initialize Prisma in the database package
+cd database
+npx prisma init
 ```
 
-Create `packages/database/package.json`:
+Update `database/package.json` to add Prisma scripts:
 
 ```json
 {
   "name": "@summoners-grid/database",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "scripts": {
     "db:migrate": "prisma migrate dev",
-    "db:deploy": "prisma migrate deploy",
+    "db:deploy": "prisma migrate deploy", 
     "db:reset": "prisma migrate reset",
     "db:seed": "ts-node seeds/index.ts",
     "db:studio": "prisma studio"
   },
   "dependencies": {
     "@prisma/client": "^5.0.0",
-    "@summoners-grid/shared": "^1.0.0"
+    "@summoners-grid/shared-types": "*"
   },
   "devDependencies": {
-    "prisma": "^5.0.0",
-    "typescript": "^5.0.0",
-    "ts-node": "^10.9.0"
+    "prisma": "^5.0.0"
   }
 }
 ```
 
-### Step 2: Initialize Prisma
-
-```bash
-cd packages/database
-npx prisma init
-```
-
-Create `packages/database/schema.prisma`:
+Create `database/schema.prisma`:
 
 ```prisma
 generator client {
@@ -552,9 +476,12 @@ LOG_LEVEL=debug
 ### Step 4: Database Migration
 
 ```bash
-# Install dependencies
-cd packages/database
+# Install dependencies from root directory
+cd ../..
 npm install
+
+# Return to database package for migration
+cd database
 
 # Create and run first migration
 npx prisma migrate dev --name init
@@ -565,56 +492,44 @@ npx prisma generate
 
 ## Phase 3: API Server Setup (Week 1)
 
-### Step 1: API Server Package Setup
+### Step 1: Configure API Server Package
+
+The Nx-generated API server needs additional dependencies for Express.js functionality.
 
 ```bash
-cd packages/api-server
-npm init -y
+# Install API server dependencies
+npm install express cors helmet express-rate-limit jsonwebtoken bcryptjs winston ioredis --save
+npm install @types/express @types/cors @types/jsonwebtoken @types/bcryptjs ts-node-dev --save-dev
 ```
 
-Create `packages/api-server/package.json`:
+Update `api-server/package.json` to add proper scripts and dependencies:
 
 ```json
 {
-  "name": "@summoners-grid/api-server",
-  "version": "1.0.0",
-  "main": "dist/index.js",
+  "name": "@summoners-grid/api-server", 
+  "version": "0.0.1",
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "clean": "rm -rf dist"
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "start": "node dist/main.js"
   },
   "dependencies": {
-    "@summoners-grid/shared": "^1.0.0",
-    "@summoners-grid/database": "^1.0.0",
+    "@summoners-grid/shared-types": "*",
+    "@summoners-grid/database": "*",
     "express": "^4.18.0",
     "cors": "^2.8.5",
     "helmet": "^7.0.0",
     "express-rate-limit": "^6.8.0",
     "jsonwebtoken": "^9.0.0",
     "bcryptjs": "^2.4.3",
-    "zod": "^3.22.0",
     "winston": "^3.10.0",
     "ioredis": "^5.3.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.0",
-    "@types/cors": "^2.8.0",
-    "@types/jsonwebtoken": "^9.0.0",
-    "@types/bcryptjs": "^2.4.0",
-    "typescript": "^5.0.0",
-    "ts-node-dev": "^2.0.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
   }
 }
 ```
 
 ### Step 2: Create API Server Structure
 
-Create basic Express server in `packages/api-server/src/index.ts`:
+Replace `api-server/src/main.ts` with Express server implementation:
 
 ```typescript
 import express from 'express';
@@ -674,51 +589,41 @@ process.on('SIGTERM', async () => {
 
 ## Phase 4: Game Server Setup (Week 1)
 
-### Step 1: Game Server Package Setup
+### Step 1: Configure Game Server Package
+
+The Nx-generated game server needs Socket.IO and related dependencies.
 
 ```bash
-cd packages/game-server
-npm init -y
+# Install game server dependencies
+npm install socket.io express jsonwebtoken winston ioredis --save
+npm install @types/express @types/jsonwebtoken ts-node-dev --save-dev
 ```
 
-Create `packages/game-server/package.json`:
+Update `game-server/package.json`:
 
 ```json
 {
   "name": "@summoners-grid/game-server",
-  "version": "1.0.0",
-  "main": "dist/index.js",
+  "version": "0.0.1",
   "scripts": {
-    "build": "tsc",
-    "dev": "ts-node-dev --respawn --transpile-only src/index.ts",
-    "start": "node dist/index.js",
-    "test": "jest",
-    "clean": "rm -rf dist"
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "start": "node dist/main.js"
   },
   "dependencies": {
-    "@summoners-grid/shared": "^1.0.0",
-    "@summoners-grid/game-engine": "^1.0.0",
+    "@summoners-grid/shared-types": "*",
+    "@summoners-grid/game-engine": "*",
     "socket.io": "^4.7.0",
     "express": "^4.18.0",
     "jsonwebtoken": "^9.0.0",
-    "zod": "^3.22.0",
     "winston": "^3.10.0",
     "ioredis": "^5.3.0"
-  },
-  "devDependencies": {
-    "@types/express": "^4.17.0",
-    "@types/jsonwebtoken": "^9.0.0",
-    "typescript": "^5.0.0",
-    "ts-node-dev": "^2.0.0",
-    "jest": "^29.0.0",
-    "@types/jest": "^29.0.0"
   }
 }
 ```
 
 ### Step 2: Create Basic Game Server
 
-Create `packages/game-server/src/index.ts`:
+Replace `game-server/src/main.ts` with Socket.IO server implementation:
 
 ```typescript
 import express from 'express';
@@ -785,58 +690,45 @@ process.on('SIGTERM', async () => {
 
 ## Phase 5: Client Application Setup (Week 1)
 
-### Step 1: React Client Setup
+### Step 1: Configure React + Phaser.js Client
+
+The Nx-generated React client needs Phaser.js for game rendering and additional dependencies.
+
+**Note**: Playwright installation may fail during React app generation. This is non-critical for development and can be ignored.
 
 ```bash
-cd packages/client
-npm create vite@latest . -- --template react-ts
+# Install client dependencies for hybrid Phaser.js + React architecture
+npm install phaser react-router-dom zustand socket.io-client framer-motion tailwindcss --save
+npm install autoprefixer postcss --save-dev
+
+# Configure Tailwind CSS from root directory
+cd game-client
+npx tailwindcss init -p
 ```
 
-Update `packages/client/package.json`:
+Update `game-client/package.json` to include proper dependencies:
 
 ```json
 {
-  "name": "@summoners-grid/client",
-  "private": true,
-  "version": "1.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "preview": "vite preview",
-    "test": "jest"
-  },
+  "name": "@summoners-grid/game-client",
+  "version": "0.0.1",
   "dependencies": {
-    "@summoners-grid/shared": "^1.0.0",
+    "@summoners-grid/shared-types": "*",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.14.0",
+    "phaser": "^3.70.0",
     "zustand": "^4.4.0",
     "socket.io-client": "^4.7.0",
     "framer-motion": "^10.16.0",
     "tailwindcss": "^3.3.0"
-  },
-  "devDependencies": {
-    "@types/react": "^18.2.0",
-    "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.0.0",
-    "typescript": "^5.0.0",
-    "vite": "^4.4.0",
-    "autoprefixer": "^10.4.0",
-    "postcss": "^8.4.0"
   }
 }
 ```
 
 ### Step 2: Configure Tailwind CSS
 
-```bash
-cd packages/client
-npm install -D tailwindcss postcss autoprefixer
-npx tailwindcss init -p
-```
-
-Update `tailwind.config.js`:
+Update `game-client/tailwind.config.js`:
 
 ```javascript
 /** @type {import('tailwindcss').Config} */
@@ -861,28 +753,34 @@ export default {
 }
 ```
 
-### Step 3: Create Basic React Structure
+### Step 3: Create Hybrid Phaser.js + React Structure
 
-Create `packages/client/src/App.tsx`:
+Replace `game-client/src/app/app.tsx` with hybrid architecture implementation:
 
 ```tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import './App.css';
+import './app.module.css';
 
-// Placeholder components
+// Placeholder components that will integrate Phaser.js game scenes
 const HomePage = () => (
   <div className="min-h-screen bg-game-primary text-white flex items-center justify-center">
     <div className="text-center">
       <h1 className="text-4xl font-bold mb-4">Summoner's Grid</h1>
-      <p className="text-xl">Coming Soon...</p>
+      <p className="text-xl">Tactical Card Game with Phaser.js + React</p>
     </div>
   </div>
 );
 
 const GamePage = () => (
-  <div className="min-h-screen bg-game-secondary text-white flex items-center justify-center">
-    <h1 className="text-2xl">Game Interface Coming Soon</h1>
+  <div className="min-h-screen bg-game-secondary text-white">
+    {/* Phaser.js game canvas will be mounted here */}
+    <div id="phaser-game-container" className="w-full h-full">
+      {/* React UI overlays for menus, HUD, etc. */}
+      <div className="absolute top-4 left-4 z-10">
+        <p className="text-lg">Game UI Overlay (React)</p>
+      </div>
+    </div>
   </div>
 );
 
@@ -907,99 +805,75 @@ export default App;
 ### Step 1: Install Dependencies
 
 ```bash
-# From root directory
+# From root directory - Nx handles all dependencies
 npm install
-
-# Install dependencies for all packages
-npm run install --workspaces
 ```
 
 ### Step 2: Build All Packages
 
 ```bash
-# Build shared package first
-cd packages/shared && npm run build
+# Build shared packages first (Nx handles dependency order)
+npx nx build shared-types
+npx nx build game-engine
+npx nx build database
 
-# Build game engine
-cd ../game-engine && npm run build
-
-# Build database package
-cd ../database && npx prisma generate
+# Generate Prisma client
+cd database && npx prisma generate && cd ..
 ```
 
 ### Step 3: Start Development Environment
 
-Open multiple terminal windows/tabs:
+Open multiple terminal windows/tabs and run from root directory:
 
 ```bash
 # Terminal 1: API Server
-cd packages/api-server
-npm run dev
+npx nx serve api-server
 
-# Terminal 2: Game Server
-cd packages/game-server
-npm run dev
+# Terminal 2: Game Server  
+npx nx serve game-server
 
 # Terminal 3: Client
-cd packages/client
-npm run dev
+npx nx serve game-client
 
-# Terminal 4: Database (if needed)
-cd packages/database
-npx prisma studio
+# Terminal 4: Database Studio (if needed)
+cd database && npx prisma studio
 ```
 
 ### Step 4: Verify Setup
 
 1. **API Server**: Visit `http://localhost:3001/health`
-2. **Game Server**: Visit `http://localhost:3002/health`
-3. **Client**: Visit `http://localhost:3000`
+2. **Game Server**: Visit `http://localhost:3002/health` 
+3. **Client**: Visit `http://localhost:4200` (default Nx React port)
 4. **Database Studio**: Visit `http://localhost:5555`
 
 ## Testing Setup
 
-### Step 1: Configure Jest
+### Step 1: Configure Nx Testing
 
-Create `jest.config.js` in root:
+Nx automatically configures Jest for all packages. Test configuration is handled through each package's `project.json`.
 
-```javascript
-module.exports = {
-  projects: [
-    '<rootDir>/packages/*/jest.config.js'
-  ],
-  collectCoverageFrom: [
-    'packages/*/src/**/*.{ts,tsx}',
-    '!packages/*/src/**/*.d.ts',
-  ],
-  coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
-};
-```
+### Step 2: Run Tests
 
-### Step 2: Package-Specific Test Configuration
+```bash
+# Run all tests
+npx nx run-many --target=test
 
-Create `jest.config.js` in each package:
+# Run tests for specific package
+npx nx test shared-types
+npx nx test game-engine
+npx nx test api-server
+npx nx test game-server
 
-```javascript
-// packages/game-engine/jest.config.js
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  roots: ['<rootDir>/src'],
-  testMatch: ['**/__tests__/**/*.test.ts'],
-  collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/**/*.d.ts',
-  ],
-};
+# Run tests with coverage
+npx nx run-many --target=test --coverage
 ```
 
 ### Step 3: Sample Test
 
-Create `packages/game-engine/src/__tests__/GameEngine.test.ts`:
+Create `game-engine/src/lib/game-engine.spec.ts`:
 
 ```typescript
-import { GameEngine } from '../GameEngine';
+import { GameEngine } from './game-engine';
 
 describe('GameEngine', () => {
   it('should initialize with a game state', () => {

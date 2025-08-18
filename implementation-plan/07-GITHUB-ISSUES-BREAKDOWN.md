@@ -15,8 +15,8 @@ Issues are organized by:
 
 ### Project Infrastructure
 
-**[P0][DevOps][Medium] #001: Set up monorepo structure with workspace tooling**
-- Initialize monorepo with Nx or Lerna + npm workspaces
+**[P0][DevOps][Medium] #001: Set up monorepo structure with Nx workspace tooling**
+- Initialize monorepo with Nx workspace using TypeScript preset
 - Configure shared TypeScript configurations
 - Set up cross-package dependency management
 - Create build and development scripts
