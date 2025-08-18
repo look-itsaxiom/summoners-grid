@@ -38,6 +38,7 @@ Issues are organized by:
 - Create development database seeding scripts
 - **Acceptance Criteria**: `docker-compose up` starts all required services
 - **Dependencies**: None
+- **Status**: ✅ COMPLETED
 
 ### Database Foundation
 
@@ -48,6 +49,7 @@ Issues are organized by:
 - Set up audit logging tables for digital provenance
 - **Acceptance Criteria**: Schema migration works, basic CRUD operations available
 - **Dependencies**: #003
+- **Status**: ✅ COMPLETED
 
 **[P1][Backend][Medium] #005: Implement digital provenance system**
 - Create cryptographic card signature generation
