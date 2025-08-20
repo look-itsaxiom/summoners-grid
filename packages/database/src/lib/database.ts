@@ -184,6 +184,93 @@ export class DatabaseService {
   }
 
   /**
+   * Securely mint a new card with cryptographic provenance
+   */
+  static async mintCard(data: {
+    templateId: string;
+    ownerId: string;
+    uniqueStats?: any;
+    mintingReason: string;
+    mintingData?: any;
+  }) {
+    return this.createCardInstance({
+      ...data,
+      acquiredMethod: 'minted',
+      acquisitionData: {
+        reason: data.mintingReason,
+        data: data.mintingData,
+        mintedAt: new Date().toISOString()
+      }
+    });
+  }
+
+  /**
+   * Securely burn (destroy) a card with audit trail
+   */
+  static async burnCard(
+    cardInstanceId: string,
+    burnedBy: string,
+    burnReason: string,
+    burnData?: any
+  ) {
+    const prismaClient = getPrisma();
+    
+    // Verify card exists and is not locked
+    const card = await prismaClient.cardInstance.findUnique({
+      where: { id: cardInstanceId }
+    });
+
+    if (!card) {
+      throw new Error('Card not found');
+    }
+
+    if (card.isLocked) {
+      throw new Error('Card is locked and cannot be burned');
+    }
+
+    // Create burn signature
+    const burnSignature = this.generateSignature({
+      cardInstanceId,
+      burnedBy,
+      burnReason,
+      burnData,
+      timestamp: Date.now(),
+      action: 'burn'
+    });
+
+    // Create final ownership history record for burn
+    await prismaClient.ownershipHistory.create({
+      data: {
+        cardInstanceId,
+        previousOwnerId: card.ownerId,
+        newOwnerId: null, // No new owner - card is burned
+        transferMethod: 'burn',
+        transferData: {
+          burnedBy,
+          burnReason,
+          burnData,
+          burnedAt: new Date().toISOString()
+        },
+        signature: burnSignature,
+        verified: true
+      }
+    });
+
+    // Delete the card instance
+    await prismaClient.cardInstance.delete({
+      where: { id: cardInstanceId }
+    });
+
+    return {
+      cardInstanceId,
+      burnSignature,
+      burnedAt: new Date(),
+      burnedBy,
+      burnReason
+    };
+  }
+
+  /**
    * Get a user's card collection with filtering
    */
   static async getUserCards(

@@ -79,6 +79,49 @@ describe('DatabaseService', () => {
     });
   });
 
+  describe('Digital Provenance System', () => {
+    
+    describe('mintCard signature generation', () => {
+      it('should create proper minting signature', () => {
+        const mintData = {
+          templateId: 'template-123',
+          ownerId: 'user-456',
+          uniqueStats: { STR: 15, INT: 12 },
+          mintingReason: 'pack_opening',
+          mintingData: { packId: 'pack-789' }
+        };
+
+        // Test signature generation for minting
+        const signatureData = {
+          ...mintData,
+          acquiredMethod: 'minted',
+          timestamp: Date.now(),
+          mintingService: 'summoners-grid'
+        };
+
+        const signature = DatabaseService.generateSignature(signatureData);
+        expect(signature).toMatch(/^[a-f0-9]{64}$/);
+      });
+    });
+
+    describe('burnCard signature generation', () => {
+      it('should generate proper burn signature', () => {
+        const burnData = {
+          cardInstanceId: 'card-123',
+          burnedBy: 'admin-456',
+          burnReason: 'duplicate_removal',
+          burnData: { adminNote: 'Duplicate card found' },
+          timestamp: Date.now(),
+          action: 'burn'
+        };
+
+        const signature = DatabaseService.generateSignature(burnData);
+        expect(signature).toMatch(/^[a-f0-9]{64}$/);
+        expect(signature.length).toBe(64);
+      });
+    });
+  });
+
   // Database-dependent tests are commented out until Prisma client is available
   // These tests require a running database and would be uncommented in integration testing
 
