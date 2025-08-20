@@ -109,15 +109,27 @@ export enum Speed {
 }
 
 /**
- * Base stats for summon cards
+ * Base stats for summon cards (as defined in GDD)
  */
 export interface SummonStats {
-  /** Strength - affects physical damage and health */
+  /** Strength - Physical attack damage */
   str: number;
-  /** Intelligence - affects magical damage and mana */
+  /** Endurance - Health point calculation base */
+  end: number;
+  /** Defense - Physical damage reduction */
+  def: number;
+  /** Intelligence - Magical attack damage */
   int: number;
-  /** Agility - affects movement and initiative */
-  agi: number;
+  /** Spirit - Healing effectiveness */
+  spi: number;
+  /** Magic Defense - Magical damage reduction */
+  mdf: number;
+  /** Speed - Movement speed calculation */
+  spd: number;
+  /** Accuracy - Hit chance bonus */
+  acc: number;
+  /** Luck - Critical hit chance and random effects */
+  lck: number;
   /** Current level (gained each turn) */
   level: number;
   /** Current hit points */
@@ -185,18 +197,36 @@ export interface CardTemplate {
   /** Summon-specific stats */
   stats?: {
     baseStr: number;
+    baseEnd: number;
+    baseDef: number;
     baseInt: number;
-    baseAgi: number;
+    baseSpi: number;
+    baseMdf: number;
+    baseSpd: number;
+    baseAcc: number;
+    baseLck: number;
     strGrowth: number;
+    endGrowth: number;
+    defGrowth: number;
     intGrowth: number;
-    agiGrowth: number;
+    spiGrowth: number;
+    mdfGrowth: number;
+    spdGrowth: number;
+    accGrowth: number;
+    lckGrowth: number;
   };
   
   /** Equipment bonuses */
   equipment?: {
     strBonus?: number;
+    endBonus?: number;
+    defBonus?: number;
     intBonus?: number;
-    agiBonus?: number;
+    spiBonus?: number;
+    mdfBonus?: number;
+    spdBonus?: number;
+    accBonus?: number;
+    lckBonus?: number;
     specialEffects?: CardEffect[];
   };
   
@@ -269,8 +299,14 @@ export interface Role {
   /** Stat modifications */
   statModifiers: {
     strModifier: number;
+    endModifier: number;
+    defModifier: number;
     intModifier: number;
-    agiModifier: number;
+    spiModifier: number;
+    mdfModifier: number;
+    spdModifier: number;
+    accModifier: number;
+    lckModifier: number;
     hpModifier: number;
     movementModifier: number;
   };
