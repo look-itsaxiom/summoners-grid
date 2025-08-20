@@ -11,9 +11,10 @@ import { Position, GameBoard, TurnPhase, CardType, SummonStats } from './shared-
 
 /**
  * Calculate distance between two positions
+ * For grid-based movement with diagonal allowed, use Chebyshev distance
  */
 export function calculateDistance(from: Position, to: Position): number {
-  return Math.abs(from.x - to.x) + Math.abs(from.y - to.y);
+  return Math.max(Math.abs(from.x - to.x), Math.abs(from.y - to.y));
 }
 
 /**
@@ -209,7 +210,7 @@ export function canAdvanceToRole(
 // ============================================================================
 
 /**
- * Calculate final stat value with level and equipment bonuses
+ * Calculate final stat value with level, role, and equipment bonuses (as per GDD)
  */
 export function calculateFinalStat(
   baseStat: number,
@@ -218,54 +219,79 @@ export function calculateFinalStat(
   roleModifier: number = 1.0,
   equipmentBonus: number = 0
 ): number {
-  return Math.floor((baseStat + Math.floor(level * growthRate)) * roleModifier) + equipmentBonus;
+  const levelBonusFromGrowth = Math.floor(level * growthRate);
+  const finalStatWithGrowth = baseStat + levelBonusFromGrowth;
+  const finalStatWithRole = Math.floor(finalStatWithGrowth * roleModifier);
+  return finalStatWithRole + equipmentBonus;
 }
 
 /**
- * Calculate derived properties from stats
+ * Calculate derived properties from stats (as per GDD)
  */
 export function calculateDerivedProperties(stats: SummonStats) {
   return {
-    maxHP: 50 + Math.floor(Math.pow(stats.str + stats.int, 1.5)), // Use combined stats as endurance substitute
-    movementSpeed: 2 + Math.floor((stats.agi - 10) / 5), // Use agility as speed
-    basicAttackToHit: 90 + Math.floor(stats.agi / 10), // Use agility as accuracy
-    criticalHitChance: Math.floor((stats.agi * 0.3375) + 1.65), // Use agility as luck
-    abilityToHit: (abilityAccuracy: number) => abilityAccuracy + Math.floor(stats.agi / 10)
+    maxHP: 50 + stats.end * 3, // HP based on endurance
+    movementSpeed: 2 + Math.floor(stats.spd / 5), // Movement based on speed
+    criticalHitChance: Math.floor((stats.lck * 0.3375) + 1.65), // GDD formula for crit chance
+    basicAttackToHit: 90 + Math.floor(stats.acc / 10), // Hit chance based on accuracy
+    abilityToHit: (abilityAccuracy: number) => abilityAccuracy + Math.floor(stats.acc / 10)
   };
 }
 
 /**
- * Calculate physical damage
+ * Calculate physical damage (GDD formula: STR × (1 + WeaponPower/100) × (STR/TargetDEF) × CritMultiplier)
  */
 export function calculatePhysicalDamage(
   attackerSTR: number,
   defenderDEF: number,
-  basePower: number = 100
+  weaponPower: number = 100,
+  isCritical: boolean = false
 ): number {
-  const damage = attackerSTR * (basePower / 100) - defenderDEF;
+  const critMultiplier = isCritical ? 1.5 : 1.0;
+  const damage = attackerSTR * (1 + weaponPower / 100) * (attackerSTR / defenderDEF) * critMultiplier;
   return Math.max(1, Math.floor(damage)); // Minimum 1 damage
 }
 
 /**
- * Calculate magical damage
+ * Calculate bow damage (GDD formula: ((STR + ACC)/2) × (1 + WeaponPower/100) × (STR/TargetDEF) × CritMultiplier)
+ */
+export function calculateBowDamage(
+  attackerSTR: number,
+  attackerACC: number,
+  defenderDEF: number,
+  weaponPower: number = 100,
+  isCritical: boolean = false
+): number {
+  const critMultiplier = isCritical ? 1.5 : 1.0;
+  const effectiveSTR = (attackerSTR + attackerACC) / 2;
+  const damage = effectiveSTR * (1 + weaponPower / 100) * (attackerSTR / defenderDEF) * critMultiplier;
+  return Math.max(1, Math.floor(damage)); // Minimum 1 damage
+}
+
+/**
+ * Calculate magical damage (GDD formula: INT × (1 + BasePower/100) × (INT/TargetMDF) × CritMultiplier)
  */
 export function calculateMagicalDamage(
   attackerINT: number,
   defenderMDF: number,
-  basePower: number = 100
+  basePower: number = 100,
+  isCritical: boolean = false
 ): number {
-  const damage = attackerINT * (basePower / 100) - defenderMDF;
+  const critMultiplier = isCritical ? 1.5 : 1.0;
+  const damage = attackerINT * (1 + basePower / 100) * (attackerINT / defenderMDF) * critMultiplier;
   return Math.max(1, Math.floor(damage)); // Minimum 1 damage
 }
 
 /**
- * Calculate healing amount
+ * Calculate healing amount (GDD formula: SPI × (1 + BasePower/100) × CritMultiplier)
  */
 export function calculateHealingAmount(
   healerSPI: number,
-  basePower: number = 40
+  basePower: number = 100,
+  isCritical: boolean = false
 ): number {
-  return Math.floor(healerSPI * (1 + basePower / 100));
+  const critMultiplier = isCritical ? 1.5 : 1.0;
+  return Math.floor(healerSPI * (1 + basePower / 100) * critMultiplier);
 }
 
 // ============================================================================
