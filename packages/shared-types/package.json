@@ -15,5 +15,7 @@
       "default": "./dist/index.js"
     }
   },
-  "dependencies": {}
+  "dependencies": {
+    "zod": "^4.0.17"
+  }
 }
