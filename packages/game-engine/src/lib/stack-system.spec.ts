@@ -216,7 +216,7 @@ describe('StackSystem', () => {
       
       const result = stackSystem.beginResolution();
       expect(result.success).toBe(false);
-      expect(result.error).toContain('both players must pass');
+      expect(result.error).toContain('Both players must pass');
     });
 
     test('should begin resolution when both players pass', () => {
