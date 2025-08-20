@@ -618,7 +618,7 @@ export class GameEngine {
    * Begin resolving the effect stack
    */
   public beginStackResolution(): ActionResult {
-    const result = this.stackSystem.beginResolution();
+    const result = this.stackSystem.beginResolution(this.gameState || undefined);
     
     if (!result.success) {
       return {
@@ -628,10 +628,11 @@ export class GameEngine {
       };
     }
 
-    this.log('Stack resolution began');
+    this.log('Stack resolution began', result.snapshotId);
     this.emitEvent(GameEventType.STATE_CHANGED, { 
       type: 'STACK_RESOLUTION_BEGAN',
-      stackSize: this.stackSystem.getStackState().size
+      stackSize: this.stackSystem.getStackState().size,
+      snapshotId: result.snapshotId
     });
 
     return {
@@ -750,6 +751,87 @@ export class GameEngine {
    */
   public createStackSnapshot() {
     return this.stackSystem.createSnapshot();
+  }
+
+  /**
+   * Create a snapshot of the current game state for rollback
+   */
+  public createGameStateSnapshot(description: string = 'Manual snapshot'): ActionResult {
+    if (!this.gameState) {
+      return {
+        success: false,
+        message: 'Cannot create snapshot without game state',
+        errors: ['No game state available']
+      };
+    }
+
+    const snapshotId = this.stackSystem.createGameStateSnapshot(this.gameState, description);
+    
+    this.log(`Game state snapshot created: ${snapshotId}`, description);
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'SNAPSHOT_CREATED',
+      snapshotId,
+      description
+    });
+
+    return {
+      success: true,
+      message: `Snapshot created: ${snapshotId}`,
+      newGameState: this.gameState
+    };
+  }
+
+  /**
+   * Rollback to a previous game state snapshot
+   */
+  public rollbackToSnapshot(snapshotId: string): ActionResult {
+    const result = this.stackSystem.rollbackToSnapshot(snapshotId);
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: 'Failed to rollback to snapshot',
+        errors: [result.error || 'Unknown error']
+      };
+    }
+
+    // Update game state with rolled back state
+    this.gameState = result.gameState || this.gameState;
+    
+    this.log(`Rolled back to snapshot: ${snapshotId}`);
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'ROLLBACK_COMPLETED',
+      snapshotId,
+      gameState: this.gameState
+    });
+
+    return {
+      success: true,
+      message: `Rolled back to snapshot: ${snapshotId}`,
+      newGameState: this.gameState
+    };
+  }
+
+  /**
+   * Get list of available snapshots for rollback
+   */
+  public getAvailableSnapshots() {
+    return this.stackSystem.getAvailableSnapshots();
+  }
+
+  /**
+   * Clean up old snapshots to free memory
+   */
+  public cleanupOldSnapshots(olderThanMinutes: number = 30): ActionResult {
+    const removedCount = this.stackSystem.cleanupSnapshots(olderThanMinutes);
+    
+    this.log(`Cleaned up ${removedCount} old snapshots`);
+    
+    return {
+      success: true,
+      message: `Cleaned up ${removedCount} snapshots older than ${olderThanMinutes} minutes`,
+      newGameState: this.gameState || undefined
+    };
   }
 }
 

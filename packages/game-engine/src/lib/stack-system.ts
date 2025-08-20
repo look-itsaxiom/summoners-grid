@@ -70,6 +70,24 @@ export interface StackResolutionState {
 }
 
 /**
+ * Snapshot of game state for rollback purposes
+ */
+export interface GameStateSnapshot {
+  /** Unique identifier for this snapshot */
+  id: string;
+  /** Timestamp when snapshot was created */
+  timestamp: Date;
+  /** Complete game state at time of snapshot */
+  gameState: GameState;
+  /** Stack state at time of snapshot */
+  stackState: StackEffect[];
+  /** Resolution state at time of snapshot */
+  resolutionState: StackResolutionState;
+  /** Description of what triggered this snapshot */
+  description: string;
+}
+
+/**
  * StackSystem - Implements LIFO effect resolution with speed priorities
  * 
  * Key Features:
@@ -84,6 +102,8 @@ export class StackSystem {
   private effectStack: StackEffect[] = [];
   private resolutionState: StackResolutionState;
   private effectIdCounter = 0;
+  private snapshotIdCounter = 0;
+  private gameStateSnapshots: Map<string, GameStateSnapshot> = new Map();
 
   constructor() {
     this.resolutionState = {
@@ -99,6 +119,13 @@ export class StackSystem {
    */
   private generateEffectId(): string {
     return `stack-effect-${Date.now()}-${++this.effectIdCounter}`;
+  }
+
+  /**
+   * Generate unique snapshot ID
+   */
+  private generateSnapshotId(): string {
+    return `snapshot-${Date.now()}-${++this.snapshotIdCounter}`;
   }
 
   /**
@@ -246,7 +273,7 @@ export class StackSystem {
   /**
    * Begin stack resolution process
    */
-  public beginResolution(): { success: boolean; error?: string } {
+  public beginResolution(gameState?: GameState): { success: boolean; error?: string; snapshotId?: string } {
     if (this.effectStack.length === 0) {
       return { success: false, error: 'No effects to resolve' };
     }
@@ -260,10 +287,19 @@ export class StackSystem {
       return { success: false, error: 'Both players must pass before resolution begins' };
     }
 
+    // Create a snapshot before beginning resolution if game state is provided
+    let snapshotId: string | undefined;
+    if (gameState) {
+      snapshotId = this.createGameStateSnapshot(
+        gameState, 
+        `Before stack resolution - ${this.effectStack.length} effects`
+      );
+    }
+
     this.resolutionState.isResolving = true;
     this.resolutionState.resolvingIndex = this.effectStack.length - 1; // Start from top (LIFO)
 
-    return { success: true };
+    return { success: true, snapshotId };
   }
 
   /**
@@ -299,9 +335,23 @@ export class StackSystem {
       };
     }
 
+    // Create snapshot before resolving individual effect
+    const snapshotId = this.createGameStateSnapshot(
+      gameState,
+      `Before resolving effect: ${effectToResolve.effect.name}`
+    );
+
     try {
       // Resolve the effect (this would call specific effect handlers)
       const result = this.processEffect(effectToResolve, gameState);
+
+      if (!result.success) {
+        // If effect resolution failed, we keep the snapshot for potential rollback
+        return {
+          ...result,
+          error: `Effect resolution failed: ${result.error}. Snapshot ${snapshotId} available for rollback.`
+        };
+      }
 
       // Remove the resolved effect from stack
       this.effectStack.splice(this.resolutionState.resolvingIndex, 1);
@@ -316,11 +366,12 @@ export class StackSystem {
 
       return result;
     } catch (error) {
+      // On unexpected error, keep the snapshot for rollback
       return {
         success: false,
         gameState,
         triggeredEffects: [],
-        error: error instanceof Error ? error.message : 'Unknown error during resolution'
+        error: `Error during resolution: ${error instanceof Error ? error.message : 'Unknown error'}. Snapshot ${snapshotId} available for rollback.`
       };
     }
   }
@@ -367,6 +418,132 @@ export class StackSystem {
   public clearStack(): void {
     this.effectStack = [];
     this.completeResolution();
+  }
+
+  /**
+   * Create a snapshot of the current game state and stack state for rollback
+   */
+  public createGameStateSnapshot(
+    gameState: GameState, 
+    description: string = 'Automatic snapshot'
+  ): string {
+    const snapshotId = this.generateSnapshotId();
+    
+    const snapshot: GameStateSnapshot = {
+      id: snapshotId,
+      timestamp: new Date(),
+      gameState: JSON.parse(JSON.stringify(gameState)), // Deep clone
+      stackState: JSON.parse(JSON.stringify(this.effectStack)), // Deep clone
+      resolutionState: {
+        priorityPlayer: this.resolutionState.priorityPlayer,
+        speedLock: this.resolutionState.speedLock,
+        passingPriority: {
+          A: this.resolutionState.passingPriority.A,
+          B: this.resolutionState.passingPriority.B
+        },
+        consecutivePasses: this.resolutionState.consecutivePasses,
+        isResolving: this.resolutionState.isResolving,
+        resolvingIndex: this.resolutionState.resolvingIndex
+      },
+      description
+    };
+
+    this.gameStateSnapshots.set(snapshotId, snapshot);
+    
+    // Limit snapshots to prevent memory leaks (keep last 50)
+    if (this.gameStateSnapshots.size > 50) {
+      const oldestKey = this.gameStateSnapshots.keys().next().value;
+      this.gameStateSnapshots.delete(oldestKey);
+    }
+
+    return snapshotId;
+  }
+
+  /**
+   * Rollback to a previous game state snapshot
+   */
+  public rollbackToSnapshot(snapshotId: string): { 
+    success: boolean; 
+    gameState?: GameState; 
+    error?: string 
+  } {
+    const snapshot = this.gameStateSnapshots.get(snapshotId);
+    
+    if (!snapshot) {
+      return {
+        success: false,
+        error: `Snapshot ${snapshotId} not found`
+      };
+    }
+
+    try {
+      // Restore stack state
+      this.effectStack = JSON.parse(JSON.stringify(snapshot.stackState));
+      
+      // Restore resolution state with deep copy
+      this.resolutionState = {
+        priorityPlayer: snapshot.resolutionState.priorityPlayer,
+        speedLock: snapshot.resolutionState.speedLock,
+        passingPriority: {
+          A: snapshot.resolutionState.passingPriority.A,
+          B: snapshot.resolutionState.passingPriority.B
+        },
+        consecutivePasses: snapshot.resolutionState.consecutivePasses,
+        isResolving: snapshot.resolutionState.isResolving,
+        resolvingIndex: snapshot.resolutionState.resolvingIndex
+      };
+      
+      return {
+        success: true,
+        gameState: JSON.parse(JSON.stringify(snapshot.gameState))
+      };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown rollback error'
+      };
+    }
+  }
+
+  /**
+   * Get information about available snapshots
+   */
+  public getAvailableSnapshots(): Array<{
+    id: string;
+    timestamp: Date;
+    description: string;
+    stackSize: number;
+  }> {
+    return Array.from(this.gameStateSnapshots.values()).map(snapshot => ({
+      id: snapshot.id,
+      timestamp: snapshot.timestamp,
+      description: snapshot.description,
+      stackSize: snapshot.stackState.length
+    }));
+  }
+
+  /**
+   * Remove old snapshots to free memory
+   */
+  public cleanupSnapshots(olderThanMinutes: number = 30): number {
+    const cutoffTime = new Date(Date.now() - olderThanMinutes * 60 * 1000);
+    const idsToRemove: string[] = [];
+    
+    for (const [id, snapshot] of this.gameStateSnapshots) {
+      if (snapshot.timestamp < cutoffTime) {
+        idsToRemove.push(id);
+      }
+    }
+    
+    idsToRemove.forEach(id => this.gameStateSnapshots.delete(id));
+    return idsToRemove.length;
+  }
+
+  /**
+   * Clear all snapshots
+   */
+  public clearSnapshots(): void {
+    this.gameStateSnapshots.clear();
   }
 
   /**

@@ -419,7 +419,7 @@ describe('StackSystem', () => {
       stackSystem.addEffect(errorEffect, 'error-source', 'A', Speed.ACTION);
       stackSystem.passPriority('B');
       stackSystem.passPriority('A');
-      stackSystem.beginResolution();
+      stackSystem.beginResolution(mockGameState);
       
       // Mock the processEffect method to throw an error
       (stackSystem as any).processEffect = () => {
@@ -429,6 +429,8 @@ describe('StackSystem', () => {
       const result = stackSystem.resolveNextEffect(mockGameState);
       expect(result.success).toBe(false);
       expect(result.error).toContain('Test error');
+      expect(result.error).toContain('Snapshot');
+      expect(result.error).toContain('available for rollback');
     });
 
     test('should maintain stack integrity after errors', () => {
@@ -442,6 +444,173 @@ describe('StackSystem', () => {
       const result = stackSystem.addEffect(createMockEffect('New Effect'), 'source', 'A', Speed.ACTION);
       expect(result.success).toBe(true);
       expect(stackSystem.getStackState().size).toBe(1);
+    });
+  });
+
+  describe('State Rollback System', () => {
+    test('should create game state snapshots', () => {
+      const snapshotId = stackSystem.createGameStateSnapshot(mockGameState, 'Test snapshot');
+      
+      expect(snapshotId).toBeDefined();
+      expect(typeof snapshotId).toBe('string');
+      expect(snapshotId).toContain('snapshot-');
+      
+      const snapshots = stackSystem.getAvailableSnapshots();
+      expect(snapshots).toHaveLength(1);
+      expect(snapshots[0].description).toBe('Test snapshot');
+    });
+
+    test('should rollback to previous game state', () => {
+      // Create initial snapshot
+      const initialSnapshotId = stackSystem.createGameStateSnapshot(mockGameState, 'Initial state');
+      
+      // Modify stack state
+      stackSystem.addEffect(createMockEffect('Test Effect'), 'source', 'A', Speed.ACTION);
+      expect(stackSystem.getStackState().size).toBe(1);
+      
+      // Rollback to initial state
+      const rollbackResult = stackSystem.rollbackToSnapshot(initialSnapshotId);
+      expect(rollbackResult.success).toBe(true);
+      expect(rollbackResult.gameState).toBeDefined();
+      expect(stackSystem.getStackState().size).toBe(0);
+    });
+
+    test('should handle rollback to non-existent snapshot', () => {
+      const result = stackSystem.rollbackToSnapshot('non-existent-snapshot');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not found');
+    });
+
+    test('should automatically create snapshots during resolution', () => {
+      stackSystem.addEffect(createMockEffect('Effect'), 'source', 'A', Speed.ACTION);
+      stackSystem.passPriority('B');
+      stackSystem.passPriority('A');
+      
+      const resolutionResult = stackSystem.beginResolution(mockGameState);
+      expect(resolutionResult.success).toBe(true);
+      expect(resolutionResult.snapshotId).toBeDefined();
+      
+      const snapshots = stackSystem.getAvailableSnapshots();
+      expect(snapshots.length).toBeGreaterThan(0);
+    });
+
+    test('should create snapshots before individual effect resolution', () => {
+      stackSystem.addEffect(createMockEffect('Effect'), 'source', 'A', Speed.ACTION);
+      stackSystem.passPriority('B');
+      stackSystem.passPriority('A');
+      stackSystem.beginResolution(mockGameState);
+      
+      const initialSnapshotCount = stackSystem.getAvailableSnapshots().length;
+      
+      // Resolve an effect - should create another snapshot
+      stackSystem.resolveNextEffect(mockGameState);
+      
+      const finalSnapshotCount = stackSystem.getAvailableSnapshots().length;
+      expect(finalSnapshotCount).toBeGreaterThan(initialSnapshotCount);
+    });
+
+    test('should limit number of snapshots to prevent memory leaks', () => {
+      // Create more than 50 snapshots
+      for (let i = 0; i < 55; i++) {
+        stackSystem.createGameStateSnapshot(mockGameState, `Snapshot ${i}`);
+      }
+      
+      const snapshots = stackSystem.getAvailableSnapshots();
+      expect(snapshots.length).toBeLessThanOrEqual(50);
+    });
+
+    test('should cleanup old snapshots', () => {
+      // Create some snapshots with different timestamps
+      stackSystem.createGameStateSnapshot(mockGameState, 'Snapshot 1');
+      stackSystem.createGameStateSnapshot(mockGameState, 'Snapshot 2');
+      // Simulate time passing by manually adjusting timestamp for one snapshot
+      const snapshots = stackSystem.getAvailableSnapshots();
+      
+      expect(snapshots).toHaveLength(2);
+      
+      // Clean up snapshots older than a very large number of minutes (should remove none)
+      let removedCount = stackSystem.cleanupSnapshots(1000);
+      expect(removedCount).toBe(0);
+      expect(stackSystem.getAvailableSnapshots()).toHaveLength(2);
+      
+      // Now clean up all snapshots by setting cutoff to 0 minutes
+      // But first we need to manipulate the timestamp to make them "old"
+      const snapshotMap = (stackSystem as any).gameStateSnapshots as Map<string, any>;
+      for (const [id, snapshot] of snapshotMap) {
+        snapshot.timestamp = new Date(Date.now() - 60 * 1000); // 1 minute ago
+      }
+      
+      removedCount = stackSystem.cleanupSnapshots(0.5); // 30 seconds
+      expect(removedCount).toBe(2);
+      expect(stackSystem.getAvailableSnapshots()).toHaveLength(0);
+    });
+
+    test('should clear all snapshots', () => {
+      stackSystem.createGameStateSnapshot(mockGameState, 'Snapshot 1');
+      stackSystem.createGameStateSnapshot(mockGameState, 'Snapshot 2');
+      
+      expect(stackSystem.getAvailableSnapshots()).toHaveLength(2);
+      
+      stackSystem.clearSnapshots();
+      expect(stackSystem.getAvailableSnapshots()).toHaveLength(0);
+    });
+
+    test('should preserve stack state in snapshots', () => {
+      // Add effects to stack
+      stackSystem.addEffect(createMockEffect('Effect1'), 'source1', 'A', Speed.ACTION);
+      stackSystem.addEffect(createMockEffect('Effect2'), 'source2', 'B', Speed.REACTION);
+      
+      const snapshotId = stackSystem.createGameStateSnapshot(mockGameState, 'With effects');
+      
+      // Clear stack
+      stackSystem.clearStack();
+      expect(stackSystem.getStackState().size).toBe(0);
+      
+      // Rollback should restore the effects
+      const rollbackResult = stackSystem.rollbackToSnapshot(snapshotId);
+      expect(rollbackResult.success).toBe(true);
+      expect(stackSystem.getStackState().size).toBe(2);
+      expect(stackSystem.getStackState().effects[0].effect.name).toBe('Effect1');
+      expect(stackSystem.getStackState().effects[1].effect.name).toBe('Effect2');
+    });
+
+    test('should preserve resolution state in snapshots', () => {
+      stackSystem.addEffect(createMockEffect('Effect'), 'source', 'A', Speed.ACTION);
+      
+      // Check initial state - A passed, B has priority  
+      const initialState = stackSystem.getStackState().resolutionState;
+      expect(initialState.priorityPlayer).toBe('B'); // A added effect, so B has priority
+      expect(initialState.passingPriority.A).toBe(false);
+      expect(initialState.passingPriority.B).toBe(false);
+      
+      const snapshotId = stackSystem.createGameStateSnapshot(mockGameState, 'Initial state');
+      
+      // B passes priority, now A has priority and B has passed
+      stackSystem.passPriority('B');
+      expect(stackSystem.getStackState().resolutionState.priorityPlayer).toBe('A');
+      expect(stackSystem.getStackState().resolutionState.passingPriority.A).toBe(false);
+      expect(stackSystem.getStackState().resolutionState.passingPriority.B).toBe(true);
+      
+      // Rollback should restore the initial resolution state
+      const rollbackResult = stackSystem.rollbackToSnapshot(snapshotId);
+      expect(rollbackResult.success).toBe(true);
+      expect(stackSystem.getStackState().resolutionState.priorityPlayer).toBe('B');
+      expect(stackSystem.getStackState().resolutionState.passingPriority.A).toBe(false);
+      expect(stackSystem.getStackState().resolutionState.passingPriority.B).toBe(false);
+    });
+
+    test('should provide meaningful snapshot metadata', () => {
+      stackSystem.addEffect(createMockEffect('Test Effect'), 'source', 'A', Speed.ACTION);
+      const snapshotId = stackSystem.createGameStateSnapshot(mockGameState, 'Test description');
+      
+      const snapshots = stackSystem.getAvailableSnapshots();
+      expect(snapshots).toHaveLength(1);
+      
+      const snapshot = snapshots[0];
+      expect(snapshot.id).toBe(snapshotId);
+      expect(snapshot.description).toBe('Test description');
+      expect(snapshot.stackSize).toBe(1);
+      expect(snapshot.timestamp).toBeInstanceOf(Date);
     });
   });
 });
