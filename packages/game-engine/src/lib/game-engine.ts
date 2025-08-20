@@ -1,3 +1,537 @@
+import {
+  GameState,
+  GameFormat,
+  TurnPhase,
+  Player,
+  GameAction,
+  Position,
+  GameBoard,
+} from '@summoners-grid/shared-types';
+import { randomUUID } from 'crypto';
+
+/**
+ * Configuration for GameEngine initialization
+ */
+export interface GameEngineConfig {
+  /** Optional random seed for deterministic gameplay */
+  randomSeed?: string;
+  /** Debug mode for additional logging */
+  debugMode?: boolean;
+  /** Game format (currently supports 3v3) */
+  format?: GameFormat;
+}
+
+/**
+ * Result of a player action submission
+ */
+export interface ActionResult {
+  success: boolean;
+  message?: string;
+  newGameState?: GameState;
+  errors?: string[];
+}
+
+/**
+ * Game event types for the event system
+ */
+export enum GameEventType {
+  GAME_STARTED = 'GAME_STARTED',
+  TURN_STARTED = 'TURN_STARTED',
+  PHASE_CHANGED = 'PHASE_CHANGED',
+  PLAYER_ACTION = 'PLAYER_ACTION',
+  GAME_ENDED = 'GAME_ENDED',
+  STATE_CHANGED = 'STATE_CHANGED',
+}
+
+/**
+ * Game event data structure
+ */
+export interface GameEvent {
+  type: GameEventType;
+  timestamp: Date;
+  gameId: string;
+  data?: any;
+}
+
+/**
+ * Event handler function type
+ */
+export type EventHandler = (event: GameEvent) => void;
+
+/**
+ * Core Game Engine - Orchestrates all game systems and manages game state
+ * 
+ * Responsibilities:
+ * - Initialize and configure all game systems
+ * - Coordinate turn phases and state transitions  
+ * - Handle player action submission and validation
+ * - Manage game lifecycle (start, pause, end)
+ * - Provide external API for game server integration
+ */
+export class GameEngine {
+  private gameState: GameState | null = null;
+  private eventHandlers: Map<GameEventType, EventHandler[]> = new Map();
+  private config: GameEngineConfig;
+
+  constructor(config: GameEngineConfig = {}) {
+    this.config = {
+      debugMode: false,
+      format: {
+        name: '3v3',
+        maxSummons: 3,
+        victoryPointTarget: 3,
+        handSizeLimit: 6,
+      },
+      ...config,
+    };
+
+    this.initializeEventHandlers();
+  }
+
+  /**
+   * Initialize a new game with two players
+   */
+  public initializeGame(gameId: string, playerA: Player, playerB: Player): GameState {
+    // Create initial game board (12x14 grid)
+    const board: GameBoard = {
+      width: 12,
+      height: 14,
+      summons: new Map(),
+      buildings: new Map(),
+      territories: {
+        playerA: this.generateTerritoryPositions(0, 2), // First 3 rows (y: 0-2)
+        playerB: this.generateTerritoryPositions(11, 13), // Last 3 rows (y: 11-13)  
+        contested: this.generateTerritoryPositions(3, 10), // Middle rows (y: 3-10)
+      },
+    };
+
+    // Initialize game state
+    this.gameState = {
+      id: randomUUID(),
+      gameId,
+      format: this.config.format!,
+      status: 'IN_PROGRESS',
+      playerA,
+      playerB,
+      currentPlayer: 'A', // First player starts
+      currentTurn: 1,
+      currentPhase: TurnPhase.DRAW,
+      board,
+      effectStack: [],
+      startTime: new Date(),
+      actionHistory: [],
+    };
+
+    this.emitEvent(GameEventType.GAME_STARTED, { gameState: this.gameState });
+    this.log('Game initialized', this.gameState.id);
+
+    return this.gameState;
+  }
+
+  /**
+   * Submit a player action and update game state
+   */
+  public submitAction(playerId: string, action: GameAction): ActionResult {
+    if (!this.gameState) {
+      return {
+        success: false,
+        message: 'Game not initialized',
+      };
+    }
+
+    // Validate the action
+    const validation = this.validateAction(action);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        message: 'Invalid action',
+        errors: validation.errors,
+      };
+    }
+
+    try {
+      // Apply the action to create new game state
+      const newGameState = this.applyAction(action);
+      
+      // Update internal state
+      this.gameState = newGameState;
+      
+      // Emit events
+      this.emitEvent(GameEventType.PLAYER_ACTION, { action, gameState: newGameState });
+      this.emitEvent(GameEventType.STATE_CHANGED, { gameState: newGameState });
+
+      this.log(`Action applied: ${action.type}`, action.id);
+
+      return {
+        success: true,
+        newGameState,
+      };
+    } catch (error) {
+      this.log('Error applying action', error);
+      return {
+        success: false,
+        message: 'Failed to apply action',
+        errors: [error instanceof Error ? error.message : 'Unknown error'],
+      };
+    }
+  }
+
+  /**
+   * Get current game state (immutable copy)
+   */
+  public getGameState(): GameState | null {
+    return this.gameState ? { ...this.gameState } : null;
+  }
+
+  /**
+   * Advance to the next phase in the current turn
+   */
+  public advancePhase(): ActionResult {
+    if (!this.gameState) {
+      return { success: false, message: 'Game not initialized' };
+    }
+
+    const currentPhase = this.gameState.currentPhase;
+    let nextPhase: TurnPhase;
+
+    // Determine next phase based on current phase
+    switch (currentPhase) {
+      case TurnPhase.DRAW:
+        nextPhase = TurnPhase.LEVEL;
+        break;
+      case TurnPhase.LEVEL:
+        nextPhase = TurnPhase.ACTION;
+        break;
+      case TurnPhase.ACTION:
+        nextPhase = TurnPhase.END;
+        break;
+      case TurnPhase.END:
+        // End of turn - switch players and start new turn
+        return this.advanceTurn();
+      default:
+        return { success: false, message: 'Invalid phase' };
+    }
+
+    // Create new game state with updated phase
+    const newGameState: GameState = {
+      ...this.gameState,
+      currentPhase: nextPhase,
+    };
+
+    this.gameState = newGameState;
+    this.emitEvent(GameEventType.PHASE_CHANGED, { 
+      previousPhase: currentPhase,
+      newPhase: nextPhase,
+      gameState: newGameState,
+    });
+
+    this.log(`Phase advanced: ${currentPhase} -> ${nextPhase}`);
+
+    return { success: true, newGameState };
+  }
+
+  /**
+   * Advance to the next turn (switch players)
+   */
+  public advanceTurn(): ActionResult {
+    if (!this.gameState) {
+      return { success: false, message: 'Game not initialized' };
+    }
+
+    // Switch current player
+    const newCurrentPlayer = this.gameState.currentPlayer === 'A' ? 'B' : 'A';
+    
+    // Increment turn number when returning to player A
+    const newTurn = newCurrentPlayer === 'A' 
+      ? this.gameState.currentTurn + 1 
+      : this.gameState.currentTurn;
+
+    const newGameState: GameState = {
+      ...this.gameState,
+      currentPlayer: newCurrentPlayer,
+      currentTurn: newTurn,
+      currentPhase: TurnPhase.DRAW,
+    };
+
+    this.gameState = newGameState;
+    this.emitEvent(GameEventType.TURN_STARTED, {
+      turn: newTurn,
+      player: newCurrentPlayer,
+      gameState: newGameState,
+    });
+
+    this.log(`Turn advanced: Turn ${newTurn}, Player ${newCurrentPlayer}`);
+
+    return { success: true, newGameState };
+  }
+
+  /**
+   * Add event listener for game events
+   */
+  public addEventListener(eventType: GameEventType, handler: EventHandler): void {
+    if (!this.eventHandlers.has(eventType)) {
+      this.eventHandlers.set(eventType, []);
+    }
+    this.eventHandlers.get(eventType)!.push(handler);
+  }
+
+  /**
+   * Remove event listener
+   */
+  public removeEventListener(eventType: GameEventType, handler: EventHandler): void {
+    const handlers = this.eventHandlers.get(eventType);
+    if (handlers) {
+      const index = handlers.indexOf(handler);
+      if (index > -1) {
+        handlers.splice(index, 1);
+      }
+    }
+  }
+
+  /**
+   * Serialize game state to JSON string
+   */
+  public serializeGameState(): string {
+    if (!this.gameState) {
+      throw new Error('No game state to serialize');
+    }
+
+    // Convert Maps to objects for JSON serialization
+    const serializable = {
+      ...this.gameState,
+      board: {
+        ...this.gameState.board,
+        summons: Array.from(this.gameState.board.summons.entries()),
+        buildings: Array.from(this.gameState.board.buildings.entries()),
+      },
+      playerA: this.gameState.playerA ? {
+        ...this.gameState.playerA,
+        activeSummons: Array.from(this.gameState.playerA.activeSummons.entries()),
+        activeBuildings: Array.from(this.gameState.playerA.activeBuildings.entries()),
+      } : undefined,
+      playerB: this.gameState.playerB ? {
+        ...this.gameState.playerB,
+        activeSummons: Array.from(this.gameState.playerB.activeSummons.entries()),
+        activeBuildings: Array.from(this.gameState.playerB.activeBuildings.entries()),
+      } : undefined,
+    };
+
+    return JSON.stringify(serializable);
+  }
+
+  /**
+   * Deserialize game state from JSON string
+   */
+  public deserializeGameState(serializedState: string): GameState {
+    const parsed = JSON.parse(serializedState);
+
+    // Convert arrays back to Maps
+    const gameState: GameState = {
+      ...parsed,
+      board: {
+        ...parsed.board,
+        summons: new Map(parsed.board.summons),
+        buildings: new Map(parsed.board.buildings),
+      },
+      playerA: parsed.playerA ? {
+        ...parsed.playerA,
+        activeSummons: new Map(parsed.playerA.activeSummons),
+        activeBuildings: new Map(parsed.playerA.activeBuildings),
+      } : undefined,
+      playerB: parsed.playerB ? {
+        ...parsed.playerB,
+        activeSummons: new Map(parsed.playerB.activeSummons),
+        activeBuildings: new Map(parsed.playerB.activeBuildings),
+      } : undefined,
+    };
+
+    return gameState;
+  }
+
+  /**
+   * Check if game has ended and determine winner
+   */
+  public checkGameEnd(): { hasEnded: boolean; winner?: 'A' | 'B' | 'DRAW'; reason?: string } {
+    if (!this.gameState || !this.gameState.playerA || !this.gameState.playerB) {
+      return { hasEnded: false };
+    }
+
+    const { playerA, playerB } = this.gameState;
+    const targetVP = this.gameState.format.victoryPointTarget;
+
+    // Check victory point conditions
+    if (playerA.victoryPoints >= targetVP && playerB.victoryPoints >= targetVP) {
+      // Both reached target simultaneously - check tiebreakers
+      const summonCountA = playerA.activeSummons.size;
+      const summonCountB = playerB.activeSummons.size;
+      
+      if (summonCountA > summonCountB) {
+        return { hasEnded: true, winner: 'A', reason: 'Victory points reached (tiebreaker: more summons)' };
+      } else if (summonCountB > summonCountA) {
+        return { hasEnded: true, winner: 'B', reason: 'Victory points reached (tiebreaker: more summons)' };
+      } else {
+        return { hasEnded: true, winner: 'DRAW', reason: 'Victory points reached (tied summon count)' };
+      }
+    } else if (playerA.victoryPoints >= targetVP) {
+      return { hasEnded: true, winner: 'A', reason: 'Victory points reached' };
+    } else if (playerB.victoryPoints >= targetVP) {
+      return { hasEnded: true, winner: 'B', reason: 'Victory points reached' };
+    }
+
+    return { hasEnded: false };
+  }
+
+  // Private helper methods
+
+  private initializeEventHandlers(): void {
+    // Initialize event handler maps
+    Object.values(GameEventType).forEach(eventType => {
+      this.eventHandlers.set(eventType, []);
+    });
+  }
+
+  private emitEvent(type: GameEventType, data?: any): void {
+    const event: GameEvent = {
+      type,
+      timestamp: new Date(),
+      gameId: this.gameState?.gameId || 'unknown',
+      data,
+    };
+
+    const handlers = this.eventHandlers.get(type) || [];
+    handlers.forEach(handler => {
+      try {
+        handler(event);
+      } catch (error) {
+        this.log('Error in event handler', error);
+      }
+    });
+  }
+
+  private validateAction(action: GameAction): { isValid: boolean; errors: string[] } {
+    const errors: string[] = [];
+
+    if (!this.gameState) {
+      errors.push('Game not initialized');
+      return { isValid: false, errors };
+    }
+
+    // Validate player turn
+    if (action.player !== this.gameState.currentPlayer) {
+      errors.push('Not your turn');
+    }
+
+    // Validate turn and phase
+    if (action.turn !== this.gameState.currentTurn) {
+      errors.push('Invalid turn number');
+    }
+
+    if (action.phase !== this.gameState.currentPhase) {
+      errors.push('Invalid phase for this action');
+    }
+
+    // Add more specific validation based on action type
+    switch (action.type) {
+      case 'MOVE_SUMMON':
+        if (!action.fromPosition || !action.toPosition) {
+          errors.push('Movement requires from and to positions');
+        }
+        break;
+      case 'PLAY_CARD':
+        if (!action.cardId) {
+          errors.push('Card play requires card ID');
+        }
+        break;
+      case 'ATTACK':
+        if (!action.target) {
+          errors.push('Attack requires target');
+        }
+        break;
+    }
+
+    return { isValid: errors.length === 0, errors };
+  }
+
+  private applyAction(action: GameAction): GameState {
+    if (!this.gameState) {
+      throw new Error('Game state not initialized');
+    }
+
+    // Create new game state (immutable update)
+    let newGameState: GameState = { ...this.gameState };
+
+    // Add action to history
+    newGameState.actionHistory = [...newGameState.actionHistory, action];
+
+    // Apply action-specific changes
+    switch (action.type) {
+      case 'END_PHASE':
+        // Phase advancement is handled by advancePhase method
+        break;
+      case 'DRAW_CARD':
+        newGameState = this.applyDrawCard(newGameState, action);
+        break;
+      case 'MOVE_SUMMON':
+        newGameState = this.applyMoveSummon(newGameState, action);
+        break;
+      case 'PLAY_CARD':
+        newGameState = this.applyPlayCard(newGameState, action);
+        break;
+      case 'ATTACK':
+        newGameState = this.applyAttack(newGameState, action);
+        break;
+      // Add more action types as needed
+    }
+
+    return newGameState;
+  }
+
+  private applyDrawCard(gameState: GameState, action: GameAction): GameState {
+    // Implementation for draw card action
+    // This is a placeholder - full implementation would handle deck management
+    this.log('Draw card action applied', action.id);
+    return gameState;
+  }
+
+  private applyMoveSummon(gameState: GameState, action: GameAction): GameState {
+    // Implementation for move summon action
+    // This is a placeholder - full implementation would handle position validation and updates
+    this.log('Move summon action applied', action.id);
+    return gameState;
+  }
+
+  private applyPlayCard(gameState: GameState, action: GameAction): GameState {
+    // Implementation for play card action
+    // This is a placeholder - full implementation would handle card effects
+    this.log('Play card action applied', action.id);
+    return gameState;
+  }
+
+  private applyAttack(gameState: GameState, action: GameAction): GameState {
+    // Implementation for attack action
+    // This is a placeholder - full implementation would handle combat resolution
+    this.log('Attack action applied', action.id);
+    return gameState;
+  }
+
+  private generateTerritoryPositions(startY: number, endY: number): Position[] {
+    const positions: Position[] = [];
+    for (let y = startY; y <= endY; y++) {
+      for (let x = 0; x < 12; x++) {
+        positions.push({ x, y });
+      }
+    }
+    return positions;
+  }
+
+  private log(message: string, data?: any): void {
+    if (this.config.debugMode) {
+      console.log(`[GameEngine] ${message}`, data || '');
+    }
+  }
+}
+
+// Export convenience function for backward compatibility
 export function gameEngine(): string {
   return 'game-engine';
 }
