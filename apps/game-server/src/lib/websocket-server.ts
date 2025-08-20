@@ -33,6 +33,7 @@ export interface WebSocketServerConfig {
   };
   pingTimeout?: number;
   pingInterval?: number;
+  disconnectTimeoutDuration?: number;
 }
 
 /**
@@ -86,9 +87,12 @@ export class WebSocketServer {
   private matchmakingQueue: QueueEntry[] = [];
   private config: WebSocketServerConfig;
   private pingInterval?: NodeJS.Timeout;
+  private disconnectTimeouts = new Map<string, NodeJS.Timeout>();
+  private disconnectTimeoutDuration: number;
 
   constructor(config: WebSocketServerConfig) {
     this.config = config;
+    this.disconnectTimeoutDuration = config.disconnectTimeoutDuration || 60000; // Default 60 seconds
     this.httpServer = createServer();
     
     this.server = new Server(this.httpServer, {
@@ -123,6 +127,12 @@ export class WebSocketServer {
     if (this.pingInterval) {
       clearInterval(this.pingInterval);
     }
+    
+    // Clear all disconnect timeouts
+    for (const timeout of this.disconnectTimeouts.values()) {
+      clearTimeout(timeout);
+    }
+    this.disconnectTimeouts.clear();
     
     // Disconnect all players
     for (const player of this.connectedPlayers.values()) {
@@ -425,14 +435,27 @@ export class WebSocketServer {
 
     console.log(`[WebSocketServer] Player ${player.username} disconnected: ${reason}`);
 
+    // Handle game disconnection first (before removing from connectedPlayers)
+    if (player.currentGameId) {
+      const gameSession = this.gameSessions.get(player.currentGameId);
+      if (gameSession) {
+        // Check if the other player is still connected
+        const otherPlayer = gameSession.playerA.id === player.id ? gameSession.playerB : gameSession.playerA;
+        const otherPlayerConnected = this.connectedPlayers.has(otherPlayer.socket.id) && otherPlayer.socket.id !== socket.id;
+        
+        if (!otherPlayerConnected) {
+          // Both players disconnected, end the game immediately
+          this.endGame(gameSession, 'A', 'BOTH_DISCONNECTED'); // Doesn't matter who wins
+        } else {
+          // Only one player disconnected, handle normally
+          this.handleGameDisconnection(player, reason);
+        }
+      }
+    }
+
     // Remove from queue if in queue
     if (player.isInQueue) {
       this.removeFromQueue(player);
-    }
-
-    // Handle game disconnection
-    if (player.currentGameId) {
-      this.handleGameDisconnection(player, reason);
     }
 
     this.connectedPlayers.delete(socket.id);
@@ -619,6 +642,13 @@ export class WebSocketServer {
   private endGame(gameSession: GameSession, winner: 'A' | 'B', reason: string): void {
     gameSession.state = 'ENDED';
 
+    // Clear any disconnect timeout for this game
+    const timeoutId = this.disconnectTimeouts.get(gameSession.id);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.disconnectTimeouts.delete(gameSession.id);
+    }
+
     const gameEndedMessage: GameEndedMessage = {
       type: 'GAME_ENDED',
       timestamp: new Date(),
@@ -689,6 +719,9 @@ export class WebSocketServer {
     const gameSession = this.gameSessions.get(player.currentGameId);
     if (!gameSession) return;
 
+    // If game is already ended, don't set up disconnection handling
+    if (gameSession.state === 'ENDED') return;
+
     const message: PlayerDisconnectedMessage = {
       type: 'PLAYER_DISCONNECTED',
       timestamp: new Date(),
@@ -696,7 +729,7 @@ export class WebSocketServer {
       data: {
         gameId: gameSession.id,
         playerId: player.id,
-        timeUntilForfeit: 60, // 60 seconds to reconnect
+        timeUntilForfeit: Math.floor(this.disconnectTimeoutDuration / 1000), // Convert to seconds
       },
     };
 
@@ -706,9 +739,16 @@ export class WebSocketServer {
 
     // TODO: Implement reconnection window
     // For now, end the game after disconnection
-    setTimeout(() => {
-      this.endGame(gameSession, gameSession.playerA.id === player.id ? 'B' : 'A', 'DISCONNECT');
-    }, 60000);
+    const timeoutId = setTimeout(() => {
+      // Double-check the game still exists and isn't ended
+      const currentSession = this.gameSessions.get(gameSession.id);
+      if (currentSession && currentSession.state !== 'ENDED') {
+        this.endGame(currentSession, gameSession.playerA.id === player.id ? 'B' : 'A', 'DISCONNECT');
+      }
+      this.disconnectTimeouts.delete(gameSession.id);
+    }, this.disconnectTimeoutDuration);
+    
+    this.disconnectTimeouts.set(gameSession.id, timeoutId);
   }
 
   private removeFromQueue(player: ConnectedPlayer): void {

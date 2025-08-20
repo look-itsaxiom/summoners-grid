@@ -25,6 +25,7 @@ describe('WebSocketServer', () => {
     },
     pingTimeout: 60000,
     pingInterval: 25000,
+    disconnectTimeoutDuration: 100, // Very short timeout for tests
   };
 
   beforeAll(async () => {
