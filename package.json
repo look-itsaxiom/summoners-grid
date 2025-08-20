@@ -83,7 +83,13 @@
     "express-rate-limit": "^8.0.1",
     "helmet": "^8.1.0",
     "jsonwebtoken": "^9.0.2",
+    "@types/howler": "^2.2.12",
+    "express": "^4.21.2",
+    "framer-motion": "^12.23.12",
+    "howler": "^2.2.4",
+    "phaser": "^3.80.1",
     "react": "19.0.0",
-    "react-dom": "19.0.0"
+    "react-dom": "19.0.0",
+    "zustand": "^5.0.8"
   }
 }
