@@ -7,7 +7,6 @@ import {
   Position,
   GameBoard,
 } from '@summoners-grid/shared-types';
-import { randomUUID } from 'crypto';
 
 /**
  * Configuration for GameEngine initialization
@@ -89,6 +88,16 @@ export class GameEngine {
   }
 
   /**
+   * Generate a simple UUID for browser compatibility
+   */
+  private generateUUID(): string {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  /**
    * Initialize a new game with two players
    */
   public initializeGame(gameId: string, playerA: Player, playerB: Player): GameState {
@@ -107,7 +116,7 @@ export class GameEngine {
 
     // Initialize game state
     this.gameState = {
-      id: randomUUID(),
+      id: this.generateUUID(),
       gameId,
       format: this.config.format!,
       status: 'IN_PROGRESS',
