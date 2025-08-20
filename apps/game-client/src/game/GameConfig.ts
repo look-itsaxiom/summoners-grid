@@ -17,7 +17,7 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO, // Use WebGL if available, fallback to Canvas
   width: 1280,
   height: 720,
-  parent: 'phaser-game', // DOM element ID where Phaser canvas will be mounted
+  parent: 'phaser-game-container', // DOM element ID where Phaser canvas will be mounted
   backgroundColor: '#1a1a2e', // Dark blue background matching tactical theme
   scale: {
     mode: Phaser.Scale.RESIZE, // Responsive scaling
