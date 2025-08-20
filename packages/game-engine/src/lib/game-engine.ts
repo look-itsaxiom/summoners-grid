@@ -6,7 +6,11 @@ import {
   GameAction,
   Position,
   GameBoard,
+  CardEffect,
+  Speed,
+  CombatTarget,
 } from '@summoners-grid/shared-types';
+import { StackSystem } from './stack-system';
 
 /**
  * Configuration for GameEngine initialization
@@ -71,6 +75,7 @@ export class GameEngine {
   private gameState: GameState | null = null;
   private eventHandlers: Map<GameEventType, EventHandler[]> = new Map();
   private config: GameEngineConfig;
+  private stackSystem: StackSystem;
 
   constructor(config: GameEngineConfig = {}) {
     this.config = {
@@ -83,6 +88,8 @@ export class GameEngine {
       },
       ...config,
     };
+
+    this.stackSystem = new StackSystem();
 
     this.initializeEventHandlers();
   }
@@ -537,6 +544,212 @@ export class GameEngine {
     if (this.config.debugMode) {
       console.log(`[GameEngine] ${message}`, data || '');
     }
+  }
+
+  // ============================================================================
+  // STACK SYSTEM INTEGRATION
+  // ============================================================================
+
+  /**
+   * Add an effect to the stack system
+   */
+  public addEffectToStack(
+    effect: CardEffect,
+    source: string,
+    controller: 'A' | 'B',
+    speed: Speed,
+    target?: CombatTarget,
+    parameters?: Record<string, any>
+  ): ActionResult {
+    const result = this.stackSystem.addEffect(effect, source, controller, speed, target, parameters);
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: 'Failed to add effect to stack',
+        errors: [result.error || 'Unknown error']
+      };
+    }
+
+    this.log(`Effect added to stack: ${effect.name} by ${controller}`, result.effectId);
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'EFFECT_ADDED',
+      effect: effect.name,
+      controller,
+      stackSize: this.stackSystem.getStackState().size
+    });
+
+    return {
+      success: true,
+      message: `Effect ${effect.name} added to stack`,
+      newGameState: this.gameState || undefined
+    };
+  }
+
+  /**
+   * Player passes priority on the stack
+   */
+  public passPriorityOnStack(player: 'A' | 'B'): ActionResult {
+    const result = this.stackSystem.passPriority(player);
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: 'Failed to pass priority',
+        errors: [result.error || 'Unknown error']
+      };
+    }
+
+    this.log(`Player ${player} passed priority`);
+    
+    if (result.shouldResolve) {
+      this.log('Both players passed - beginning stack resolution');
+      return this.beginStackResolution();
+    }
+
+    return {
+      success: true,
+      message: `Player ${player} passed priority`,
+      newGameState: this.gameState || undefined
+    };
+  }
+
+  /**
+   * Begin resolving the effect stack
+   */
+  public beginStackResolution(): ActionResult {
+    const result = this.stackSystem.beginResolution();
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: 'Failed to begin stack resolution',
+        errors: [result.error || 'Unknown error']
+      };
+    }
+
+    this.log('Stack resolution began');
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'STACK_RESOLUTION_BEGAN',
+      stackSize: this.stackSystem.getStackState().size
+    });
+
+    return {
+      success: true,
+      message: 'Stack resolution began',
+      newGameState: this.gameState || undefined
+    };
+  }
+
+  /**
+   * Resolve the next effect on the stack
+   */
+  public resolveNextStackEffect(): ActionResult {
+    if (!this.gameState) {
+      return {
+        success: false,
+        message: 'Game not initialized',
+        errors: ['No game state available']
+      };
+    }
+
+    const result = this.stackSystem.resolveNextEffect(this.gameState);
+    
+    if (!result.success) {
+      return {
+        success: false,
+        message: 'Failed to resolve effect',
+        errors: [result.error || 'Unknown error']
+      };
+    }
+
+    // Update game state with resolution results
+    this.gameState = result.gameState;
+
+    // Add any triggered effects to the stack
+    result.triggeredEffects.forEach(triggeredEffect => {
+      this.stackSystem.addEffect(
+        triggeredEffect.effect,
+        triggeredEffect.source,
+        triggeredEffect.controller,
+        triggeredEffect.speed,
+        triggeredEffect.target,
+        triggeredEffect.parameters
+      );
+    });
+
+    this.log('Stack effect resolved', result.resolutionDetails);
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'EFFECT_RESOLVED',
+      details: result.resolutionDetails,
+      gameState: this.gameState
+    });
+
+    return {
+      success: true,
+      message: 'Effect resolved successfully',
+      newGameState: this.gameState
+    };
+  }
+
+  /**
+   * Get current stack state for inspection
+   */
+  public getStackState() {
+    return this.stackSystem.getStackState();
+  }
+
+  /**
+   * Check if a player can add an effect with the given speed
+   */
+  public canPlayerAddEffect(player: 'A' | 'B', speed: Speed): boolean {
+    return this.stackSystem.canPlayerAddEffect(player, speed);
+  }
+
+  /**
+   * Get which speeds are currently allowed
+   */
+  public getAllowedSpeeds(): Speed[] {
+    return this.stackSystem.getAllowedSpeeds();
+  }
+
+  /**
+   * Check if the stack is empty
+   */
+  public isStackEmpty(): boolean {
+    return this.stackSystem.isEmpty();
+  }
+
+  /**
+   * Clear the effect stack (emergency use)
+   */
+  public clearEffectStack(): ActionResult {
+    this.stackSystem.clearStack();
+    this.log('Effect stack cleared');
+    
+    this.emitEvent(GameEventType.STATE_CHANGED, { 
+      type: 'STACK_CLEARED'
+    });
+
+    return {
+      success: true,
+      message: 'Effect stack cleared',
+      newGameState: this.gameState || undefined
+    };
+  }
+
+  /**
+   * Validate that the stack system is in a consistent state
+   */
+  public validateStackState(): { isValid: boolean; errors: string[] } {
+    return this.stackSystem.validateStackState();
+  }
+
+  /**
+   * Create a snapshot of the current stack for debugging
+   */
+  public createStackSnapshot() {
+    return this.stackSystem.createSnapshot();
   }
 }
 
