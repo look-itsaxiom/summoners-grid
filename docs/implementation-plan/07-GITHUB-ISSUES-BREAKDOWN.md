@@ -60,6 +60,7 @@ Issues are organized by:
 - Create secure card minting and burning functions
 - **Acceptance Criteria**: Cards can be cryptographically verified and tracked
 - **Dependencies**: #004
+- **Status**: ✅ COMPLETED
 
 ### Shared Types and Utilities
 
@@ -70,6 +71,7 @@ Issues are organized by:
 - Set up shared validation schemas with Zod
 - **Acceptance Criteria**: Types are shared and consistent across frontend/backend
 - **Dependencies**: #001
+- **Status**: ✅ COMPLETED
 
 **[P1][Full Stack][Small] #007: Implement shared utility functions**
 - Create game rule validation utilities
@@ -78,6 +80,7 @@ Issues are organized by:
 - Create card effect parsing utilities
 - **Acceptance Criteria**: Utilities are tested and usable across packages
 - **Dependencies**: #006
+- **Status**: ✅ COMPLETED
 
 ## Phase 2: Core Game Implementation (Weeks 3-6)
 
