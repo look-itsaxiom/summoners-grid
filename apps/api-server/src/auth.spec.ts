@@ -7,21 +7,9 @@ import { AuthController } from '../src/controllers/AuthController.js';
 import { AuthMiddleware } from '../src/middleware/auth.js';
 import type { RegisterRequest, LoginRequest } from '@summoners-grid/shared-types';
 
-// Mock the database service
+// Mock the database service with a factory function
 jest.mock('@summoners-grid/database', () => ({
-  getPrisma: jest.fn(() => ({
-    user: {
-      findFirst: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    refreshToken: {
-      create: jest.fn(),
-      updateMany: jest.fn(),
-      update: jest.fn(),
-    },
-  }))
+  getPrisma: jest.fn()
 }));
 
 // Mock bcrypt
@@ -44,16 +32,48 @@ describe('AuthService', () => {
   let mockJwt: any;
 
   beforeEach(() => {
-    authService = new AuthService();
+    // Create fresh mock prisma instance
+    mockPrisma = {
+      user: {
+        findFirst: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+      },
+      refreshToken: {
+        create: jest.fn(),
+        updateMany: jest.fn(),
+        update: jest.fn(),
+      },
+    };
+
+    // Set up the mock to return our prisma instance
     const { getPrisma } = require('@summoners-grid/database');
-    mockPrisma = getPrisma();
+    (getPrisma as jest.Mock).mockReturnValue(mockPrisma);
+    
+    // Clear all mocks first
+    jest.clearAllMocks();
+    
+    authService = new AuthService();
     mockBcrypt = require('bcrypt');
     mockJwt = require('jsonwebtoken');
-    jest.clearAllMocks();
 
     // Setup default jwt mocks
     mockJwt.sign.mockReturnValue('mock-jwt-token');
-    mockJwt.decode.mockReturnValue({ exp: Date.now() / 1000 + 3600 });
+    mockJwt.decode.mockReturnValue({ 
+      exp: Math.floor(Date.now() / 1000) + 3600,
+      iat: Math.floor(Date.now() / 1000),
+      userId: 'user-123',
+      username: 'testuser',
+      email: 'test@example.com'
+    });
+    mockJwt.verify.mockReturnValue({
+      userId: 'user-123',
+      username: 'testuser',
+      email: 'test@example.com',
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 3600
+    });
   });
 
   describe('User Registration', () => {
@@ -83,6 +103,7 @@ describe('AuthService', () => {
         createdAt: new Date(),
         lastLogin: null
       };
+      
       mockPrisma.user.create.mockResolvedValue(mockUser);
       mockPrisma.refreshToken.create.mockResolvedValue({});
 
@@ -240,6 +261,7 @@ describe('AuthService', () => {
         isBanned: false
       });
 
+      // The JWT verification should return the expected payload
       mockJwt.verify.mockReturnValue({
         userId: 'user-123',
         username: 'testuser',
@@ -269,13 +291,14 @@ describe('AuthService', () => {
       const result = await authService.logout('refresh-token');
       expect(result).toBe(true);
       expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith({
-        where: expect.objectContaining({
+        where: {
+          tokenHash: expect.any(String),
           isRevoked: false
-        }),
-        data: expect.objectContaining({
+        },
+        data: {
           isRevoked: true,
           revokedAt: expect.any(Date)
-        })
+        }
       });
     });
 
@@ -286,10 +309,10 @@ describe('AuthService', () => {
       expect(result).toBe(true);
       expect(mockPrisma.refreshToken.updateMany).toHaveBeenCalledWith({
         where: { userId: 'user-123', isRevoked: false },
-        data: expect.objectContaining({
+        data: {
           isRevoked: true,
           revokedAt: expect.any(Date)
-        })
+        }
       });
     });
   });
