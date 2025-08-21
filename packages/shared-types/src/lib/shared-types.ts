@@ -155,6 +155,12 @@ export interface CardRequirements {
     type: string;
     amount: number;
   }[];
+  /** Require control of magician family role */
+  controlMagicianFamily?: boolean;
+  /** Require control of warrior family role */
+  controlWarriorFamily?: boolean;
+  /** Require control of scout family role */
+  controlScoutFamily?: boolean;
 }
 
 /**
@@ -383,6 +389,7 @@ export interface CombatTarget {
   type: 'summon' | 'building' | 'position' | 'player';
   id?: string; // Entity ID if targeting specific entity
   position?: Position; // Position if targeting location
+  playerId?: 'A' | 'B'; // Which player owns this target (for summons/buildings)
 }
 
 // ============================================================================

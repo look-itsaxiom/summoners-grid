@@ -4,6 +4,7 @@ import {
   GameState,
   CombatTarget,
 } from '@summoners-grid/shared-types';
+import { EffectResolver } from './effect-resolver';
 
 /**
  * Represents an effect on the stack with all necessary metadata
@@ -97,6 +98,7 @@ export interface GameStateSnapshot {
  * - Player priority alternation for response windows
  * - State rollback capabilities for complex interactions
  * - Comprehensive validation and error handling
+ * - Universal rule override system via EffectResolver
  */
 export class StackSystem {
   private effectStack: StackEffect[] = [];
@@ -104,6 +106,7 @@ export class StackSystem {
   private effectIdCounter = 0;
   private snapshotIdCounter = 0;
   private gameStateSnapshots: Map<string, GameStateSnapshot> = new Map();
+  private effectResolver: EffectResolver;
 
   constructor() {
     this.resolutionState = {
@@ -112,6 +115,7 @@ export class StackSystem {
       consecutivePasses: 0,
       isResolving: false,
     };
+    this.effectResolver = new EffectResolver();
   }
 
   /**
@@ -377,27 +381,25 @@ export class StackSystem {
   }
 
   /**
-   * Process individual effect (placeholder - would be implemented with actual effect handlers)
+   * Register a custom effect handler
+   */
+  public registerEffectHandler(resolver: string, handler: any): void {
+    this.effectResolver.registerHandler(resolver, handler);
+  }
+
+  /**
+   * Get the effect resolver for advanced usage
+   */
+  public getEffectResolver(): EffectResolver {
+    return this.effectResolver;
+  }
+
+  /**
+   * Process individual effect using the EffectResolver
    */
   private processEffect(stackEffect: StackEffect, gameState: GameState): EffectResolutionResult {
-    // This is a placeholder implementation
-    // In the full system, this would dispatch to specific effect handlers
-    // based on the effect type and resolver
-    
-    const resolutionDetails = {
-      description: `Resolved effect: ${stackEffect.effect.name}`,
-      affectedEntities: [],
-      stateChanges: []
-    };
-
-    // For now, just return success with no state changes
-    // Real implementation would modify gameState based on effect
-    return {
-      success: true,
-      gameState,
-      triggeredEffects: [], // Effects might trigger other effects
-      resolutionDetails
-    };
+    // Delegate to the EffectResolver for actual effect processing
+    return this.effectResolver.resolveEffect(stackEffect, gameState);
   }
 
   /**
@@ -561,6 +563,13 @@ export class StackSystem {
       size: this.effectStack.length,
       topEffect: this.effectStack.length > 0 ? this.effectStack[this.effectStack.length - 1] : undefined
     };
+  }
+
+  /**
+   * Get current stack size
+   */
+  public getStackSize(): number {
+    return this.effectStack.length;
   }
 
   /**
