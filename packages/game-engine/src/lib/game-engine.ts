@@ -10,7 +10,7 @@ import {
   Speed,
   CombatTarget,
 } from '@summoners-grid/shared-types';
-import { StackSystem } from './stack-system';
+import { StackSystem, StackEffect } from './stack-system.js';
 
 /**
  * Configuration for GameEngine initialization
@@ -668,7 +668,7 @@ export class GameEngine {
     this.gameState = result.gameState;
 
     // Add any triggered effects to the stack
-    result.triggeredEffects.forEach(triggeredEffect => {
+    result.triggeredEffects.forEach((triggeredEffect: StackEffect) => {
       this.stackSystem.addEffect(
         triggeredEffect.effect,
         triggeredEffect.source,
@@ -689,7 +689,7 @@ export class GameEngine {
     return {
       success: true,
       message: 'Effect resolved successfully',
-      newGameState: this.gameState
+      newGameState: this.gameState || undefined
     };
   }
 
@@ -808,7 +808,7 @@ export class GameEngine {
     return {
       success: true,
       message: `Rolled back to snapshot: ${snapshotId}`,
-      newGameState: this.gameState
+      newGameState: this.gameState || undefined
     };
   }
 
