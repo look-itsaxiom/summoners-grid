@@ -38,12 +38,17 @@ export class MainMenuScene extends Phaser.Scene {
       this.scene.start('MainGameScene');
     });
 
-    this.createMenuButton(width / 2, 320, 'Collection (Coming Soon)', () => {
+    this.createMenuButton(width / 2, 320, 'Card & Summon Test', () => {
+      // Test scene for card and summon rendering
+      this.scene.start('CardSummonTestScene');
+    });
+
+    this.createMenuButton(width / 2, 390, 'Collection (Coming Soon)', () => {
       // Future: Open collection interface
       console.log('Collection interface not yet implemented');
     });
 
-    this.createMenuButton(width / 2, 390, 'Settings (Coming Soon)', () => {
+    this.createMenuButton(width / 2, 460, 'Settings (Coming Soon)', () => {
       // Future: Open settings
       console.log('Settings not yet implemented');
     });
