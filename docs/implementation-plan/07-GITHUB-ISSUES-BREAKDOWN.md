@@ -101,6 +101,7 @@ Issues are organized by:
 - Create comprehensive effect testing framework
 - **Acceptance Criteria**: Complex nested effects resolve correctly per GDD rules
 - **Dependencies**: #008
+- **Status**: ✅ COMPLETED
 
 **[P0][Game Engine][Large] #010: Implement card effect system**
 - Create card effect definition parser from JSON data
