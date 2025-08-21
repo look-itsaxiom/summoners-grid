@@ -193,18 +193,27 @@ export class Card extends Phaser.GameObjects.Container {
     this.hpText.setOrigin(0.5);
     this.statsContainer.add(this.hpText);
     
-    // Key stats display
+    // All core stats display per GDD specifications
     const stats = this.getDisplayStats();
     let yOffset = 50;
     
-    ['STR', 'INT', 'SPD', 'DEF'].forEach((statName, index) => {
-      const statValue = stats[statName.toLowerCase() as keyof typeof stats] || 0;
+    // Display all 9 core stats as defined in GDD: STR, END, DEF, INT, SPI, MDF, SPD, ACC, LCK
+    const allStats = ['STR', 'END', 'DEF', 'INT', 'SPI', 'MDF', 'SPD', 'ACC', 'LCK'];
+    
+    allStats.forEach((statName, index) => {
+      const statKey = statName.toLowerCase() as keyof SummonStats;
+      const statValue = stats[statKey] || 0;
+      
+      // Arrange in 3 columns for better fit
+      const col = index % 3;
+      const row = Math.floor(index / 3);
+      
       const statText = this.scene.add.text(
-        -35 + (index % 2) * 35, 
-        yOffset + Math.floor(index / 2) * 12,
-        `${statName}: ${statValue}`,
+        -30 + col * 25, 
+        yOffset + row * 10,
+        `${statName}:${statValue}`,
         {
-          font: '7px Arial',
+          font: '6px Arial',
           color: '#ffffff'
         }
       );
@@ -410,21 +419,22 @@ export class Card extends Phaser.GameObjects.Container {
   }
 
   private getDisplayStats(): Partial<SummonStats> {
-    // For now, use template base stats + equipment bonuses
-    // In a full implementation, this would calculate actual summon stats
-    const stats = this.cardTemplate.stats;
-    const equipment = this.cardTemplate.equipment;
+    // For demonstration, use sample stats that align with GDD specifications
+    // In a full implementation, this would calculate actual summon stats from card instance
     
-    if (!stats) return {};
-    
+    // Generate sample stats within GDD-specified ranges (8-16 for most species)
     return {
-      str: stats.baseStr + (equipment?.strBonus || 0),
-      int: stats.baseInt + (equipment?.intBonus || 0),
-      spd: stats.baseSpd + (equipment?.spdBonus || 0),
-      def: stats.baseDef + (equipment?.defBonus || 0),
-      end: stats.baseEnd + (equipment?.endBonus || 0),
+      str: 12, // Strength - Physical attack damage
+      end: 14, // Endurance - Health point calculation base
+      def: 10, // Defense - Physical damage reduction  
+      int: 13, // Intelligence - Magical attack damage
+      spi: 11, // Spirit - Healing effectiveness
+      mdf: 9,  // Magic Defense - Magical damage reduction
+      spd: 15, // Speed - Movement speed calculation
+      acc: 8,  // Accuracy - Hit chance bonus
+      lck: 7,  // Luck - Critical hit chance and random effects
       level: 5, // Starting level as per GDD
-      currentHp: 96, // Calculated from endurance
+      currentHp: 96, // Calculated from END: 50 + Floor(END^1.5) = 50 + Floor(14^1.5) ≈ 96
       maxHp: 96
     };
   }
@@ -454,13 +464,15 @@ export class Card extends Phaser.GameObjects.Container {
       }
     }
     
-    // Update individual stats
-    ['STR', 'INT', 'SPD', 'DEF'].forEach(statName => {
+    // Update all core stats per GDD specifications
+    const allStats = ['STR', 'END', 'DEF', 'INT', 'SPI', 'MDF', 'SPD', 'ACC', 'LCK'];
+    allStats.forEach(statName => {
       const statText = this.statTexts.get(statName);
-      const statValue = newStats[statName.toLowerCase() as keyof SummonStats];
+      const statKey = statName.toLowerCase() as keyof SummonStats;
+      const statValue = newStats[statKey];
       
       if (statText && statValue !== undefined) {
-        statText.setText(`${statName}: ${statValue}`);
+        statText.setText(`${statName}:${statValue}`);
       }
     });
   }
