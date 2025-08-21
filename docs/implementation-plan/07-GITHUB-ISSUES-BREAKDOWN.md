@@ -93,6 +93,7 @@ Issues are organized by:
 - Create game state serialization/deserialization
 - **Acceptance Criteria**: Basic game state can be created, modified, and persisted
 - **Dependencies**: #006
+- **Status**: ✅ COMPLETED
 
 **[P0][Game Engine][Large] #009: Implement stack-based effect resolution system**
 - Create LIFO stack for game effects with priority handling
@@ -110,6 +111,7 @@ Issues are organized by:
 - Create effect target selection and validation
 - **Acceptance Criteria**: All card effects from Alpha Cards can be processed
 - **Dependencies**: #009
+- **Status**: ✅ COMPLETED
 
 **[P1][Game Engine][Medium] #011: Implement combat system**
 - Create damage calculation and application
@@ -170,6 +172,7 @@ Issues are organized by:
 - Set up authoritative game state synchronization
 - **Acceptance Criteria**: Multiple players can connect and maintain synchronized state
 - **Dependencies**: #006, #008
+- **Status**: ✅ COMPLETED
 
 **[P1][Backend][Medium] #018: Implement basic matchmaking system**
 - Create simple queue-based matchmaking
