@@ -161,9 +161,17 @@ export const notFoundHandler = (req: Request, res: Response): void => {
 };
 
 /**
+ * Basic validation schema interface
+ * In a real implementation, use proper validation library types like Zod or Joi
+ */
+interface ValidationSchema {
+  validate(data: any): { error?: any; value: any };
+}
+
+/**
  * Request validation middleware factory
  */
-export const validateRequest = (schema: any) => {
+export const validateRequest = (schema: ValidationSchema) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     try {
       // This is a placeholder for request validation

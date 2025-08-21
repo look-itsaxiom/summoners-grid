@@ -4,6 +4,7 @@
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { getPrisma } from '@summoners-grid/database';
 import type { 
   RegisterRequest,
@@ -374,7 +375,6 @@ export class AuthService {
    * Hash token for secure storage
    */
   private hashToken(token: string): string {
-    const crypto = require('crypto');
     return crypto.createHash('sha256').update(token).digest('hex');
   }
 

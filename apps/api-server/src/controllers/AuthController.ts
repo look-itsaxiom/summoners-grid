@@ -4,6 +4,7 @@
 
 import { Request, Response } from 'express';
 import { AuthService } from '../services/AuthService.js';
+import { config } from '../config/environment.js';
 import type { 
   RegisterRequest,
   LoginRequest,
@@ -42,7 +43,7 @@ export class AuthController {
         // Set refresh token as HTTP-only cookie for security
         res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: config.isProduction,
           sameSite: 'strict',
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
@@ -103,7 +104,7 @@ export class AuthController {
         // Set refresh token as HTTP-only cookie
         res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: config.isProduction,
           sameSite: 'strict',
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
@@ -165,7 +166,7 @@ export class AuthController {
         // Set new refresh token as HTTP-only cookie
         res.cookie('refreshToken', result.refreshToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: config.isProduction,
           sameSite: 'strict',
           maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
         });
