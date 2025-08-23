@@ -12,6 +12,7 @@ import Phaser from 'phaser';
 import { LoadingScene } from './scenes/LoadingScene';
 import { MainGameScene } from './scenes/MainGameScene';
 import { MainMenuScene } from './scenes/MainMenuScene';
+import { CardSummonTestScene } from './scenes/CardSummonTestScene';
 
 export const GameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO, // Use WebGL if available, fallback to Canvas
@@ -34,7 +35,8 @@ export const GameConfig: Phaser.Types.Core.GameConfig = {
   scene: [
     LoadingScene,
     MainMenuScene,
-    MainGameScene
+    MainGameScene,
+    CardSummonTestScene
   ],
   physics: {
     default: 'arcade',

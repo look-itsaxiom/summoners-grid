@@ -154,6 +154,7 @@ Issues are organized by:
 - Create hover states and selection feedback
 - **Acceptance Criteria**: Cards and summons display correctly with all necessary info
 - **Dependencies**: #014
+- **Status**: ✅ COMPLETED
 
 **[P1][Frontend][Medium] #016: Implement game UI overlays with React**
 - Create React components for game HUD (health, mana, turn info)

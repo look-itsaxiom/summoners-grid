@@ -455,7 +455,9 @@ export class StackSystem {
     // Limit snapshots to prevent memory leaks (keep last 50)
     if (this.gameStateSnapshots.size > 50) {
       const oldestKey = this.gameStateSnapshots.keys().next().value;
-      this.gameStateSnapshots.delete(oldestKey);
+      if (oldestKey) {
+        this.gameStateSnapshots.delete(oldestKey);
+      }
     }
 
     return snapshotId;
