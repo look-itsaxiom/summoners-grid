@@ -150,6 +150,7 @@ Issues are organized by:
 - Create comprehensive combat testing scenarios
 - **Acceptance Criteria**: Combat resolves correctly with proper effect interactions
 - **Dependencies**: #010
+- **Status**: ✅ COMPLETED
 
 **[P1][Game Engine][Medium] #012: Implement movement and positioning system**
 - Create grid-based movement validation

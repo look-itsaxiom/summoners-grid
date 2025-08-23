@@ -14,7 +14,8 @@ A tactical grid-based RPG card game with a fantasy theme designed for competitiv
 ## 🚀 Current Status (December 2024)
 
 ### ✅ Working Core Systems
-- **Game Engine**: Complete with stack-based effect resolution (140 tests passing)
+- **Game Engine**: Complete with stack-based effect resolution (160 tests passing)
+- **Combat System**: Full implementation with damage calculations, hit/crit mechanics (20 tests)
 - **Database**: Prisma schema with digital provenance and card ownership tracking
 - **Authentication**: JWT-based auth system with secure token management
 - **Matchmaking**: Basic queue-based matchmaking with WebSocket integration
@@ -27,7 +28,6 @@ A tactical grid-based RPG card game with a fantasy theme designed for competitiv
 - **Card Rendering**: Frontend card display system partially implemented
 
 ### ❌ Not Yet Implemented
-- Combat resolution system
 - Movement and positioning mechanics
 - React UI overlays
 - Real-time client synchronization
@@ -126,10 +126,12 @@ npx nx graph
 The project has comprehensive test coverage for working systems:
 
 - **Shared Types**: 42 tests passing (utilities, types, validation)
-- **Game Engine**: 140 tests passing (game state, effects, stack system)
+- **Game Engine**: 160 tests passing (game state, effects, stack system, combat)
 - **Database**: 8 tests passing (digital provenance, signatures)
 - **Game Server**: 9 tests passing (WebSocket, auth, matchmaking)
 - **API Server**: 23 tests passing (authentication, endpoints)
+
+**Total Working Tests**: 242 tests passing
 
 **Known Issue**: Game client tests fail due to Phaser.js Canvas/WebGL context issues in headless environment.
 
@@ -194,7 +196,7 @@ We welcome contributions! The project has a solid foundation but needs help with
 
 | Component | Status | Tests | Notes |
 |-----------|--------|-------|-------|
-| Game Engine | ✅ Complete | 140/140 | Stack effects, card system working |
+| Game Engine | ✅ Complete | 160/160 | Stack effects, card system, combat system working |
 | Database | ✅ Complete | 8/8 | Prisma schema, digital provenance |
 | Shared Types | ✅ Complete | 42/42 | Comprehensive type system |
 | API Server | ✅ Complete | 23/23 | Authentication, REST endpoints |
