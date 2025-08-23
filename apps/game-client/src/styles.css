@@ -33,9 +33,156 @@ html, body, #root {
   position: relative;
 }
 
+/* ============================================================================
+   AUTHENTICATED APP LAYOUT
+   ============================================================================ */
+
+.authenticated-app {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: rgba(26, 26, 46, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1000;
+  flex-shrink: 0;
+}
+
+.app-title h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, #4a90e2, #357abd);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.user-section {
+  display: flex;
+  align-items: center;
+}
+
+.app-user-profile {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  padding: 0.75rem;
+  min-width: 300px;
+}
+
+.app-user-profile .profile-header {
+  margin-bottom: 1rem;
+}
+
+.app-user-profile .profile-stats,
+.app-user-profile .profile-details {
+  margin-bottom: 0.75rem;
+}
+
+.app-user-profile .stats-grid {
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.app-user-profile .stat-item {
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.app-user-profile .stat-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.app-user-profile .stat-value {
+  color: #ffffff;
+}
+
+.app-user-profile .detail-label {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.app-user-profile .detail-value {
+  color: #ffffff;
+}
+
+.app-user-profile .user-display-name {
+  color: #ffffff;
+}
+
+.app-user-profile .user-username {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.app-user-profile .user-email {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.app-content {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
 .main-game {
   width: 100%;
   height: 100%;
+}
+
+/* ============================================================================
+   RESPONSIVE LAYOUT
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+  }
+  
+  .app-title h1 {
+    font-size: 1.25rem;
+  }
+  
+  .app-user-profile {
+    min-width: 100%;
+    max-width: 100%;
+  }
+  
+  .app-user-profile .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0.75rem;
+  }
+  
+  .app-title h1 {
+    font-size: 1.125rem;
+  }
+  
+  .app-user-profile .profile-header {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .app-user-profile .stats-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Remove default button styles */
