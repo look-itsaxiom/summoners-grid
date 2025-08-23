@@ -111,7 +111,7 @@ Issues are organized by:
 - Create effect target selection and validation
 - **Acceptance Criteria**: All card effects from Alpha Cards can be processed
 - **Dependencies**: #009
-- **Status**: ✅ COMPLETED
+- **Status**: ✅ COMPLETED (Implemented: EffectResolver, CardEffectParser, TriggerSystem, full Alpha Card support)
 
 **[P1][Game Engine][Medium] #011: Implement combat system**
 - Create damage calculation and application
@@ -182,6 +182,7 @@ Issues are organized by:
 - Create reconnection handling for dropped connections
 - **Acceptance Criteria**: Players can find matches and start games reliably
 - **Dependencies**: #017
+- **Status**: ✅ COMPLETED
 
 **[P1][Frontend][Medium] #019: Implement real-time game client**
 - Connect Phaser game client to WebSocket server
