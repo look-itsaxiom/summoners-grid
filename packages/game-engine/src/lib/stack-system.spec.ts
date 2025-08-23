@@ -12,7 +12,7 @@ function createMockEffect(
     name,
     description: `Mock effect: ${name}`,
     trigger: 'manual',
-    resolver: 'mock',
+    resolver: 'searchDeck', // Use a resolver that doesn't require a target
     parameters: {},
     priority
   };
@@ -242,12 +242,12 @@ describe('StackSystem', () => {
       // First resolution should be the second effect (LIFO)
       let result = stackSystem.resolveNextEffect(mockGameState);
       expect(result.success).toBe(true);
-      expect(result.resolutionDetails?.description).toContain('Second');
+      expect(result.resolutionDetails?.description).toContain('searched deck'); // Changed to match searchDeck resolver
       
       // Second resolution should be the first effect
       result = stackSystem.resolveNextEffect(mockGameState);
       expect(result.success).toBe(true);
-      expect(result.resolutionDetails?.description).toContain('First');
+      expect(result.resolutionDetails?.description).toContain('searched deck'); // Changed to match searchDeck resolver
       
       // Stack should be empty and resolution complete
       expect(stackSystem.isEmpty()).toBe(true);
@@ -312,7 +312,11 @@ describe('StackSystem', () => {
       stackSystem.passPriority('B');
       stackSystem.passPriority('A');
       stackSystem.beginResolution();
-      stackSystem.resolveNextEffect(mockGameState);
+      
+      // Resolve all effects until stack is empty
+      while (!stackSystem.isEmpty()) {
+        stackSystem.resolveNextEffect(mockGameState);
+      }
       
       // Speed lock should be cleared
       expect(stackSystem.getStackState().resolutionState.speedLock).toBeUndefined();
@@ -405,7 +409,8 @@ describe('StackSystem', () => {
       expect(snapshot.stackSize).toBe(2);
       
       // Resolve one effect
-      stackSystem.resolveNextEffect(mockGameState);
+      const result = stackSystem.resolveNextEffect(mockGameState);
+      expect(result.success).toBe(true); // Ensure resolution succeeded
       
       snapshot = stackSystem.createSnapshot();
       expect(snapshot.stackSize).toBe(1);

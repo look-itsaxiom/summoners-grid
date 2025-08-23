@@ -10,7 +10,7 @@ import {
   Speed,
   CombatTarget,
 } from '@summoners-grid/shared-types';
-import { StackSystem } from './stack-system';
+import { StackSystem } from './stack-system.js';
 
 /**
  * Configuration for GameEngine initialization
