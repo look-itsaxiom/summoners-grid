@@ -2,7 +2,12 @@
   "name": "@summoners-grid/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "setup": "./scripts/setup-dev.sh",
+    "test:working": "./scripts/test-working.sh",
+    "dev:services": "docker-compose up postgres redis",
+    "dev:services-with-tools": "docker-compose --profile dev-tools up postgres redis pgadmin redis-commander"
+  },
   "private": true,
   "devDependencies": {
     "@eslint/js": "^9.8.0",

@@ -1,109 +1,213 @@
-# SummonersGrid
+# Summoner's Grid
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A tactical grid-based RPG card game with a fantasy theme designed for competitive multiplayer online play. Players collect unique cards, build strategic decks, and engage in turn-based combat using a comprehensive effect system with stack-based resolution.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## 🎮 Game Overview
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+**Summoner's Grid** is a strategic card game that combines:
+- **3v3 Tactical Combat**: Players field up to 3 summons on a 12×14 grid battlefield
+- **Digital Provenance**: Unique cards with cryptographic signatures and ownership tracking
+- **Role Advancement**: Complex progression system allowing summons to advance through role trees
+- **Stack-Based Effects**: Rich card interactions with Last-In-First-Out resolution
+- **Real-time Multiplayer**: WebSocket-based gameplay with authoritative server
 
-## Generate a library
+## 🚀 Current Status (December 2024)
 
-```sh
-npx nx g @nx/js:lib packages/pkg1 --publishable --importPath=@my-org/pkg1
+### ✅ Working Core Systems
+- **Game Engine**: Complete with stack-based effect resolution (140 tests passing)
+- **Database**: Prisma schema with digital provenance and card ownership tracking
+- **Authentication**: JWT-based auth system with secure token management
+- **Matchmaking**: Basic queue-based matchmaking with WebSocket integration
+- **Card System**: Full Alpha card set support with effect parsing and resolution
+- **Shared Types**: Comprehensive type definitions for all game systems
+
+### 🔄 In Development
+- **Game Client**: Phaser.js implementation exists but has integration issues
+- **Game Board**: 12×14 grid visualization implemented but not fully testable
+- **Card Rendering**: Frontend card display system partially implemented
+
+### ❌ Not Yet Implemented
+- Combat resolution system
+- Movement and positioning mechanics
+- React UI overlays
+- Real-time client synchronization
+- Advanced game features (equipment, trading, etc.)
+
+## 🏗️ Architecture
+
+This project uses an **Nx monorepo** with the following packages:
+
+```
+apps/
+├── api-server/          # REST API server (Express.js)
+├── game-server/         # WebSocket game server (Socket.IO)
+├── game-client/         # React + Phaser.js game client
+└── game-client-e2e/     # End-to-end tests
+
+packages/
+├── shared-types/        # TypeScript definitions shared across apps
+├── game-engine/         # Core game logic and rules engine
+└── database/           # Prisma schema and database utilities
 ```
 
-## Run tasks
+### Technology Stack
+- **Backend**: Node.js, Express.js, Socket.IO, Prisma, PostgreSQL, Redis
+- **Frontend**: React, Phaser.js, TypeScript
+- **Infrastructure**: Docker, Nx, Jest, ESLint, Prettier
 
-To build the library use:
+## 🛠️ Development Setup
 
-```sh
-npx nx build pkg1
+### Prerequisites
+- Node.js 18+ 
+- Docker and Docker Compose
+- Git
+
+### Quick Start
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/look-itsaxiom/summoners-grid.git
+   cd summoners-grid
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Start infrastructure services**
+   ```bash
+   docker-compose up -d postgres redis
+   ```
+
+4. **Run database setup**
+   ```bash
+   # Set up environment variables (copy .env.example to .env)
+   cp .env.example .env
+   
+   # Run database migrations
+   npx nx run @summoners-grid/database:migrate
+   ```
+
+5. **Run tests to verify setup**
+   ```bash
+   # Run all working tests (excludes failing game-client tests)
+   npx nx run @summoners-grid/shared-types:test
+   npx nx run @summoners-grid/game-engine:test
+   npx nx run @summoners-grid/database:test
+   npx nx run @summoners-grid/game-server:test
+   npx nx run @summoners-grid/api-server:test
+   ```
+
+### Development Commands
+
+```bash
+# Start API server
+npx nx serve @summoners-grid/api-server
+
+# Start game server (WebSocket)
+npx nx serve @summoners-grid/game-server
+
+# Start game client (currently has issues)
+npx nx serve @summoners-grid/game-client
+
+# Run specific package tests
+npx nx test @summoners-grid/game-engine
+
+# Build all packages
+npx nx run-many --target=build --all
+
+# View project dependency graph
+npx nx graph
 ```
 
-To run any task with Nx use:
+## 🧪 Testing
 
-```sh
-npx nx <target> <project-name>
-```
+The project has comprehensive test coverage for working systems:
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+- **Shared Types**: 42 tests passing (utilities, types, validation)
+- **Game Engine**: 140 tests passing (game state, effects, stack system)
+- **Database**: 8 tests passing (digital provenance, signatures)
+- **Game Server**: 9 tests passing (WebSocket, auth, matchmaking)
+- **API Server**: 23 tests passing (authentication, endpoints)
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+**Known Issue**: Game client tests fail due to Phaser.js Canvas/WebGL context issues in headless environment.
 
-## Versioning and releasing
+## 🎯 Game Design
 
-To version and release the library use
+The game implements the mechanics described in:
+- `Summoner's Grid GDD.md` - Complete game design document
+- `Alpha Cards.md` - Full 42-card Alpha set with effects
+- `Summoner's Grid Play Example.md` - Detailed gameplay walkthrough
 
-```
-npx nx release
-```
+### Key Game Features
+- **12×14 Grid Board**: Tactical positioning with territory control
+- **Role System**: Three-family progression trees (Warrior/Scout/Magician)
+- **Card Effects**: Universal rule override system with complex interactions
+- **Digital Ownership**: Cryptographic card verification and trading
 
-Pass `--dry-run` to see what would happen without actually releasing the library.
+## 🤝 Contributing
 
-[Learn more about Nx release &raquo;](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+We welcome contributions! The project has a solid foundation but needs help with:
 
-## Keep TypeScript project references up to date
+### High Priority
+1. **Fix Phaser.js Integration**: Resolve Canvas/WebGL context issues preventing client tests
+2. **Combat System**: Implement damage calculation and resolution
+3. **Movement System**: Add grid-based movement validation and pathfinding
+4. **UI Integration**: Connect React overlays with Phaser game scenes
 
-Nx automatically updates TypeScript [project references](https://www.typescriptlang.org/docs/handbook/project-references.html) in `tsconfig.json` files to ensure they remain accurate based on your project dependencies (`import` or `require` statements). This sync is automatically done when running tasks such as `build` or `typecheck`, which require updated references to function correctly.
+### Medium Priority
+- Complete game client frontend
+- Real-time state synchronization
+- Game UI and UX improvements
+- Performance optimization
 
-To manually trigger the process to sync the project graph dependencies information to the TypeScript project references, run the following command:
+### Getting Started Contributing
 
-```sh
-npx nx sync
-```
+1. **Read the Documentation**
+   - Review `docs/implementation-plan/07-GITHUB-ISSUES-BREAKDOWN.md` for detailed task breakdown
+   - Understand the GDD for game mechanics
 
-You can enforce that the TypeScript project references are always in the correct state when running in CI by adding a step to your CI job configuration that runs the following command:
+2. **Set up Development Environment**
+   - Follow the development setup above
+   - Ensure all working tests pass
 
-```sh
-npx nx sync:check
-```
+3. **Pick an Issue**
+   - Check GitHub Issues for available tasks
+   - Start with issues marked as "good first issue"
 
-[Learn more about nx sync](https://nx.dev/reference/nx-commands#sync)
+4. **Development Workflow**
+   ```bash
+   # Create feature branch
+   git checkout -b feature/your-feature-name
+   
+   # Make changes and test frequently
+   npx nx test <package-name>
+   
+   # Ensure all working tests still pass
+   npm run test:all-working
+   
+   # Submit pull request
+   ```
 
-## Set up CI!
+## 📋 Project Status Summary
 
-### Step 1
+| Component | Status | Tests | Notes |
+|-----------|--------|-------|-------|
+| Game Engine | ✅ Complete | 140/140 | Stack effects, card system working |
+| Database | ✅ Complete | 8/8 | Prisma schema, digital provenance |
+| Shared Types | ✅ Complete | 42/42 | Comprehensive type system |
+| API Server | ✅ Complete | 23/23 | Authentication, REST endpoints |
+| Game Server | ✅ Complete | 9/9 | WebSocket, matchmaking |
+| Game Client | 🔄 Issues | 0/2 | Phaser.js integration problems |
 
-To connect to Nx Cloud, run the following command:
+## 📄 License
 
-```sh
-npx nx connect
-```
+MIT License - see LICENSE file for details.
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+## 🔗 Links
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-### Step 2
-
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
-```
-
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Install Nx Console
-
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
-
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-## Useful links
-
-Learn more:
-
-- [Learn more about this workspace setup](https://nx.dev/nx-api/js?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+- [Game Design Document](./Summoner's%20Grid%20GDD.md)
+- [Implementation Plan](./docs/implementation-plan/07-GITHUB-ISSUES-BREAKDOWN.md)
+- [Alpha Card Set](./Alpha%20Cards.md)
+- [Play Example](./Summoner's%20Grid%20Play%20Example.md)
