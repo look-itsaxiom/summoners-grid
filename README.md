@@ -18,6 +18,7 @@ A tactical grid-based RPG card game with a fantasy theme designed for competitiv
 - **Combat System**: Full implementation with damage calculations, hit/crit mechanics (20 tests)
 - **Database**: Prisma schema with digital provenance and card ownership tracking
 - **Authentication**: JWT-based auth system with secure token management
+- **Authentication UI**: Complete login/registration interface with user management
 - **Matchmaking**: Basic queue-based matchmaking with WebSocket integration
 - **Card System**: Full Alpha card set support with effect parsing and resolution
 - **Shared Types**: Comprehensive type definitions for all game systems
@@ -58,6 +59,26 @@ packages/
 - **Frontend**: React, Phaser.js, TypeScript
 - **Infrastructure**: Docker, Nx, Jest, ESLint, Prettier
 
+## 🔐 Authentication System
+
+The game features a comprehensive authentication system that provides secure user management:
+
+### Features
+- **Secure Registration & Login**: JWT-based authentication with HTTP-only refresh tokens
+- **User Profile Management**: Display user stats, level, rating, and game history
+- **Protected Routes**: Automatic authentication flow with session persistence
+- **Token Management**: Automatic refresh every 30 minutes with fallback handling
+- **Form Validation**: Real-time validation with comprehensive error handling
+- **Responsive Design**: Mobile-friendly interface matching the game's fantasy theme
+
+### User Interface
+- **Login Form**: Username/password authentication with show/hide password toggle
+- **Registration Form**: Comprehensive signup with email verification and password strength validation
+- **User Profile**: In-game overlay showing user statistics and account management
+- **Logout Options**: Single device logout or logout from all devices
+
+The authentication UI automatically appears when users access the game, ensuring secure access to all game features while maintaining a seamless user experience.
+
 ## 🛠️ Development Setup
 
 ### Prerequisites
@@ -88,11 +109,20 @@ packages/
    # Set up environment variables (copy .env.example to .env)
    cp .env.example .env
    
-   # Run database migrations
+   # Run database migrations (if database is available)
    npx nx run @summoners-grid/database:migrate
    ```
 
-5. **Run tests to verify setup**
+5. **Start development servers**
+   ```bash
+   # Start API server (for authentication and backend services)
+   npx nx serve @summoners-grid/api-server
+   
+   # Start game client (includes authentication UI)
+   npx nx serve @summoners-grid/game-client
+   ```
+
+6. **Run tests to verify setup**
    ```bash
    # Run all working tests (now includes game client)
    npx nx run @summoners-grid/shared-types:test
@@ -206,6 +236,7 @@ We welcome contributions! The project has a solid foundation but needs help with
 | Shared Types | ✅ Complete | 42/42 | Comprehensive type system |
 | API Server | ✅ Complete | 23/23 | Authentication, REST endpoints |
 | Game Server | ✅ Complete | 9/9 | WebSocket, matchmaking |
+| Authentication UI | ✅ Complete | Visual | Login/register forms, user profile |
 | Game Client | ✅ Complete | 16/16 | Phaser.js with React UI, fully working |
 
 ## 📄 License
