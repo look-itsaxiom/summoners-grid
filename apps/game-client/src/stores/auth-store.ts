@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { authService, type User, type AuthResult } from '../services/auth-service';
 import type { RegisterRequest, LoginRequest } from '@summoners-grid/shared-types';
+import { TOKEN_REFRESH_INTERVAL } from '../constants/validation';
 
 export interface AuthState {
   // Current state
@@ -317,15 +318,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 }));
 
 // Auto-refresh token before expiration
-let refreshInterval: NodeJS.Timeout | null = null;
+let authTokenRefreshInterval: NodeJS.Timeout | null = null;
 
 const startTokenRefreshInterval = () => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
+  if (authTokenRefreshInterval) {
+    clearInterval(authTokenRefreshInterval);
   }
   
   // Refresh token every 30 minutes
-  refreshInterval = setInterval(async () => {
+  authTokenRefreshInterval = setInterval(async () => {
     const { isAuthenticated, refreshToken } = useAuthStore.getState();
     
     if (isAuthenticated) {
@@ -334,13 +335,13 @@ const startTokenRefreshInterval = () => {
         console.warn('Automatic token refresh failed');
       }
     }
-  }, 30 * 60 * 1000); // 30 minutes
+  }, TOKEN_REFRESH_INTERVAL);
 };
 
 const stopTokenRefreshInterval = () => {
-  if (refreshInterval) {
-    clearInterval(refreshInterval);
-    refreshInterval = null;
+  if (authTokenRefreshInterval) {
+    clearInterval(authTokenRefreshInterval);
+    authTokenRefreshInterval = null;
   }
 };
 

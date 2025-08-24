@@ -8,6 +8,24 @@
 import React, { useState } from 'react';
 import { useAuthStore } from '../../stores/auth-store';
 import type { RegisterRequest } from '@summoners-grid/shared-types';
+import {
+  USERNAME_MIN_LENGTH,
+  USERNAME_MAX_LENGTH,
+  USERNAME_REGEX,
+  EMAIL_REGEX,
+  PASSWORD_MIN_LENGTH,
+  PASSWORD_MAX_LENGTH,
+  PASSWORD_REGEX,
+  PASSWORD_COMPLEXITY_MESSAGE,
+  DISPLAY_NAME_MAX_LENGTH
+} from '../../constants/validation';
+
+/**
+ * Validate password complexity requirements
+ */
+const validatePasswordComplexity = (password: string): boolean => {
+  return PASSWORD_REGEX.test(password);
+};
 
 interface RegisterFormProps {
   onSuccess?: () => void;
@@ -51,12 +69,6 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Email validation regex
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  // Username validation regex (alphanumeric and underscores only)
-  const usernameRegex = /^[a-zA-Z0-9_]+$/;
-
   // Validate form data
   const validateForm = (): boolean => {
     const errors: FormErrors = {};
@@ -64,38 +76,30 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     // Username validation
     if (!formData.username.trim()) {
       errors.username = 'Username is required';
-    } else if (formData.username.length < 3) {
-      errors.username = 'Username must be at least 3 characters';
-    } else if (formData.username.length > 20) {
-      errors.username = 'Username must be no more than 20 characters';
-    } else if (!usernameRegex.test(formData.username)) {
-      errors.username = 'Username can only contain letters, numbers, and underscores';
+    } else if (formData.username.length < USERNAME_MIN_LENGTH) {
+      errors.username = `Username must be at least ${USERNAME_MIN_LENGTH} characters`;
+    } else if (formData.username.length > USERNAME_MAX_LENGTH) {
+      errors.username = `Username must be no more than ${USERNAME_MAX_LENGTH} characters`;
+    } else if (!USERNAME_REGEX.test(formData.username)) {
+      errors.username = 'Username can only contain letters, numbers, underscores, and hyphens';
     }
     
     // Email validation
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!emailRegex.test(formData.email)) {
+    } else if (!EMAIL_REGEX.test(formData.email)) {
       errors.email = 'Please enter a valid email address';
     }
     
     // Password validation
     if (!formData.password) {
       errors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    } else if (formData.password.length > 100) {
-      errors.password = 'Password must be no more than 100 characters';
-    } else {
-      // Check for password complexity
-      const hasUpperCase = /[A-Z]/.test(formData.password);
-      const hasLowerCase = /[a-z]/.test(formData.password);
-      const hasNumbers = /\d/.test(formData.password);
-      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password);
-      
-      if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
-        errors.password = 'Password must contain uppercase, lowercase, and numbers';
-      }
+    } else if (formData.password.length < PASSWORD_MIN_LENGTH) {
+      errors.password = `Password must be at least ${PASSWORD_MIN_LENGTH} characters`;
+    } else if (formData.password.length > PASSWORD_MAX_LENGTH) {
+      errors.password = `Password must be no more than ${PASSWORD_MAX_LENGTH} characters`;
+    } else if (!validatePasswordComplexity(formData.password)) {
+      errors.password = `Password must contain ${PASSWORD_COMPLEXITY_MESSAGE}`;
     }
     
     // Confirm password validation
@@ -107,10 +111,8 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
     
     // Display name validation (optional but if provided, validate it)
     if (formData.displayName.trim()) {
-      if (formData.displayName.length < 2) {
-        errors.displayName = 'Display name must be at least 2 characters';
-      } else if (formData.displayName.length > 30) {
-        errors.displayName = 'Display name must be no more than 30 characters';
+      if (formData.displayName.length > DISPLAY_NAME_MAX_LENGTH) {
+        errors.displayName = `Display name must be no more than ${DISPLAY_NAME_MAX_LENGTH} characters`;
       }
     }
     
@@ -199,7 +201,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           {formErrors.username && (
             <span className="error-message">{formErrors.username}</span>
           )}
-          <small className="field-hint">3-20 characters, letters, numbers, and underscores only</small>
+          <small className="field-hint">{USERNAME_MIN_LENGTH}-{USERNAME_MAX_LENGTH} characters, letters, numbers, and underscores only</small>
         </div>
 
         {/* Email Field */}
@@ -274,7 +276,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
           {formErrors.password && (
             <span className="error-message">{formErrors.password}</span>
           )}
-          <small className="field-hint">8+ characters with uppercase, lowercase, and numbers</small>
+          <small className="field-hint">{PASSWORD_MIN_LENGTH}+ characters with {PASSWORD_COMPLEXITY_MESSAGE}</small>
         </div>
 
         {/* Confirm Password Field */}
