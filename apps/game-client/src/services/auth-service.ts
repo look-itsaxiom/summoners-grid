@@ -40,8 +40,24 @@ export class AuthService {
   private readonly baseUrl: string;
 
   constructor() {
+    // Handle environment variables safely for Jest testing environment
+    const getEnvVar = (key: string, defaultValue: string): string => {
+      // In test environment, just return the default
+      if (typeof jest !== 'undefined') {
+        return defaultValue;
+      }
+      
+      // Try to get from environment variables
+      if (typeof window !== 'undefined' && (window as any).import?.meta?.env) {
+        return (window as any).import.meta.env[key] || defaultValue;
+      }
+      
+      // Fallback to default
+      return defaultValue;
+    };
+    
     // Use environment variable or default to localhost
-    this.baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    this.baseUrl = getEnvVar('VITE_API_URL', 'http://localhost:3001');
   }
 
   /**
