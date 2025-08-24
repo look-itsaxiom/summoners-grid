@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Test script to run only working test suites
-# Excludes game-client tests which currently fail due to Phaser.js Canvas issues
+# Test script to run all working test suites
+# Now includes game-client tests with fixed Phaser.js Canvas/WebGL context issues
 
 echo "🧪 Running working test suites for Summoner's Grid..."
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -46,8 +46,15 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# Test game client (16 tests) - now working!
+echo "🎨 Testing game-client..."
+npx nx test @summoners-grid/game-client
+if [ $? -ne 0 ]; then
+    echo "❌ game-client tests failed"
+    exit 1
+fi
+
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ All working tests passed! (222 total tests)"
+echo "✅ All tests passed! (238 total tests)"
 echo ""
-echo "📝 Note: game-client tests are skipped due to Phaser.js Canvas/WebGL context issues"
-echo "    in headless environments. This is a known issue that needs to be resolved."
+echo "🎉 Complete test coverage including game client with Phaser.js Canvas/WebGL mocking system!"

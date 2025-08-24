@@ -6,23 +6,7 @@
  */
 
 // Mock Phaser completely to focus on architecture validation
-jest.mock('phaser', () => ({
-  AUTO: 'AUTO',
-  WEBGL: 1,
-  Scale: {
-    RESIZE: 'RESIZE',
-    CENTER_BOTH: 'CENTER_BOTH'
-  },
-  Game: jest.fn().mockImplementation(() => ({
-    events: { on: jest.fn() },
-    scene: { start: jest.fn(), pause: jest.fn(), resume: jest.fn(), getScene: jest.fn() },
-    scale: { on: jest.fn() },
-    loop: { actualFps: 60 },
-    renderer: { type: 1 },
-    destroy: jest.fn()
-  })),
-  Scene: class MockScene {}
-}));
+jest.mock('phaser');
 
 import { GameManager } from './GameManager';
 

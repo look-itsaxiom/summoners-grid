@@ -4,3 +4,4 @@ export * from './lib/game-state-manager.js';
 export * from './lib/stack-system.js';
 export * from './lib/effect-resolver.js';
 export * from './lib/card-effect-parser.js';
+export * from './lib/combat-system.js';
