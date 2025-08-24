@@ -8,32 +8,49 @@
  * - Phaser game initialization and lifecycle
  * - Communication between Phaser scenes and React components
  * - Game state management and synchronization
+ * - Real-time multiplayer integration via WebSocket
  * - Window resize handling for responsive design
  */
 
 import Phaser from 'phaser';
 import GameConfig from './GameConfig';
 import { MainGameScene } from './scenes/MainGameScene';
+import { gameWebSocketService, GameConnectionState } from '../services/game-websocket-service';
+import { GameState as ServerGameState, Position } from '@summoners-grid/shared-types';
 
-export interface GameState {
+export interface ClientGameState {
   currentTurn: 'player1' | 'player2';
   gamePhase: 'draw' | 'level' | 'action' | 'end';
   selectedTile: { x: number; y: number } | null;
   boardDimensions: { width: number; height: number };
+  isMultiplayer: boolean;
+  connectionState: GameConnectionState;
+  serverGameState: ServerGameState | null;
 }
 
 export class GameManager extends EventTarget {
   private game: Phaser.Game | null = null;
   private isInitialized: boolean = false;
-  private gameState: GameState = {
+  private gameState: ClientGameState = {
     currentTurn: 'player1',
     gamePhase: 'draw',
     selectedTile: null,
-    boardDimensions: { width: 12, height: 14 }
+    boardDimensions: { width: 12, height: 14 },
+    isMultiplayer: false,
+    connectionState: {
+      isConnected: false,
+      isAuthenticated: false,
+      isInQueue: false,
+      currentGameId: null,
+      playerRole: null,
+      latency: 0
+    },
+    serverGameState: null
   };
 
   constructor() {
     super();
+    this.setupWebSocketListeners();
   }
 
   /**
@@ -91,6 +108,164 @@ export class GameManager extends EventTarget {
   }
 
   /**
+   * Set up WebSocket event listeners for real-time multiplayer
+   */
+  private setupWebSocketListeners(): void {
+    // Connection events
+    gameWebSocketService.addEventListener('connected', () => {
+      this.updateConnectionState();
+      this.dispatchEvent(new CustomEvent('networkConnected'));
+    });
+
+    gameWebSocketService.addEventListener('authenticated', (event: any) => {
+      this.updateConnectionState();
+      this.dispatchEvent(new CustomEvent('networkAuthenticated', { detail: event.detail }));
+    });
+
+    gameWebSocketService.addEventListener('disconnected', (event: any) => {
+      this.updateConnectionState();
+      this.dispatchEvent(new CustomEvent('networkDisconnected', { detail: event.detail }));
+    });
+
+    // Matchmaking events
+    gameWebSocketService.addEventListener('queueStatus', (event: any) => {
+      this.updateConnectionState();
+      this.dispatchEvent(new CustomEvent('queueStatusChanged', { detail: event.detail }));
+    });
+
+    gameWebSocketService.addEventListener('matchFound', (event: any) => {
+      this.dispatchEvent(new CustomEvent('matchFound', { detail: event.detail }));
+    });
+
+    // Game events
+    gameWebSocketService.addEventListener('gameStarted', (event: any) => {
+      this.handleGameStarted(event.detail);
+    });
+
+    gameWebSocketService.addEventListener('gameStateUpdate', (event: any) => {
+      this.handleGameStateUpdate(event.detail);
+    });
+
+    gameWebSocketService.addEventListener('gameEnded', (event: any) => {
+      this.handleGameEnded(event.detail);
+    });
+
+    // Prediction and lag compensation events
+    gameWebSocketService.addEventListener('predictedMove', (event: any) => {
+      this.handlePredictedMove(event.detail);
+    });
+
+    gameWebSocketService.addEventListener('moveConfirmed', (event: any) => {
+      this.handleMoveConfirmed(event.detail);
+    });
+
+    gameWebSocketService.addEventListener('moveRejected', (event: any) => {
+      this.handleMoveRejected(event.detail);
+    });
+
+    // Latency monitoring
+    gameWebSocketService.addEventListener('latencyUpdate', (event: any) => {
+      this.updateConnectionState();
+      this.dispatchEvent(new CustomEvent('latencyChanged', { detail: event.detail }));
+    });
+  }
+
+  /**
+   * Update local connection state from WebSocket service
+   */
+  private updateConnectionState(): void {
+    this.gameState.connectionState = gameWebSocketService.getConnectionState();
+    this.dispatchEvent(new CustomEvent('gameStateChanged', { 
+      detail: this.gameState 
+    }));
+  }
+
+  /**
+   * Handle multiplayer game started
+   */
+  private handleGameStarted(data: any): void {
+    console.log('Multiplayer game started:', data);
+    this.gameState.isMultiplayer = true;
+    this.gameState.serverGameState = data.gameState;
+    this.gameState.connectionState.currentGameId = data.gameState.gameId;
+    this.gameState.connectionState.playerRole = data.playerRole;
+    
+    // Switch to the main game scene and sync with server state
+    this.switchScene('MainGameScene');
+    this.syncGameStateWithServer();
+    
+    this.dispatchEvent(new CustomEvent('multiplayerGameStarted', { detail: data }));
+  }
+
+  /**
+   * Handle game state updates from server
+   */
+  private handleGameStateUpdate(data: { gameState: ServerGameState; updateReason: string }): void {
+    console.log('Server game state update:', data.updateReason);
+    this.gameState.serverGameState = data.gameState;
+    
+    // Sync Phaser game with server state
+    this.syncGameStateWithServer();
+    
+    this.dispatchEvent(new CustomEvent('gameStateChanged', { 
+      detail: this.gameState 
+    }));
+  }
+
+  /**
+   * Handle multiplayer game ended
+   */
+  private handleGameEnded(data: any): void {
+    console.log('Multiplayer game ended:', data);
+    this.gameState.isMultiplayer = false;
+    this.gameState.serverGameState = null;
+    this.gameState.connectionState.currentGameId = null;
+    this.gameState.connectionState.playerRole = null;
+    
+    this.dispatchEvent(new CustomEvent('multiplayerGameEnded', { detail: data }));
+  }
+
+  /**
+   * Handle predicted moves for lag compensation
+   */
+  private handlePredictedMove(data: any): void {
+    console.log('Applying predicted move:', data);
+    // Apply the move optimistically to the Phaser game
+    this.sendCommand('applyPredictedMove', data);
+  }
+
+  /**
+   * Handle confirmed moves
+   */
+  private handleMoveConfirmed(data: any): void {
+    console.log('Move confirmed by server:', data);
+    // Remove any visual indicators of unconfirmed moves
+    this.sendCommand('confirmMove', data);
+  }
+
+  /**
+   * Handle rejected moves
+   */
+  private handleMoveRejected(data: any): void {
+    console.log('Move rejected by server:', data);
+    // Rollback the predicted move in the Phaser game
+    this.sendCommand('rollbackMove', data);
+  }
+
+  /**
+   * Sync Phaser game state with server game state
+   */
+  private syncGameStateWithServer(): void {
+    if (!this.gameState.serverGameState) return;
+    
+    const activeScene = this.game?.scene.getScene('MainGameScene') as MainGameScene;
+    if (activeScene && activeScene.scene.isActive()) {
+      // Send the server game state to the Phaser scene
+      activeScene.executeCommand('syncServerState', this.gameState.serverGameState);
+    }
+  }
+
+  /**
    * Set up specific listeners for the main game scene
    */
   private setupMainGameSceneListeners(scene: MainGameScene): void {
@@ -124,8 +299,140 @@ export class GameManager extends EventTarget {
   /**
    * Get the current game state for React components
    */
-  public getGameState(): GameState {
+  public getGameState(): ClientGameState {
     return { ...this.gameState };
+  }
+
+  /**
+   * Connect to the multiplayer game server
+   */
+  public async connectToGameServer(authToken: string): Promise<void> {
+    try {
+      await gameWebSocketService.connect(authToken);
+      console.log('Connected to game server successfully');
+    } catch (error) {
+      console.error('Failed to connect to game server:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Disconnect from the multiplayer game server
+   */
+  public disconnectFromGameServer(): void {
+    gameWebSocketService.disconnect();
+    this.gameState.isMultiplayer = false;
+    this.gameState.serverGameState = null;
+  }
+
+  /**
+   * Join matchmaking queue
+   */
+  public joinQueue(gameMode: 'RANKED' | 'CASUAL' | 'PRIVATE' = 'CASUAL', deckId: string = 'default-deck'): void {
+    gameWebSocketService.joinQueue(gameMode, deckId);
+  }
+
+  /**
+   * Leave matchmaking queue
+   */
+  public leaveQueue(): void {
+    gameWebSocketService.leaveQueue();
+  }
+
+  /**
+   * Accept a found match
+   */
+  public acceptMatch(gameId: string): void {
+    gameWebSocketService.acceptMatch(gameId);
+  }
+
+  /**
+   * Decline a found match
+   */
+  public declineMatch(gameId: string): void {
+    gameWebSocketService.declineMatch(gameId);
+  }
+
+  /**
+   * Signal ready for game start
+   */
+  public playerReady(): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId) {
+      gameWebSocketService.playerReady(gameId);
+    }
+  }
+
+  /**
+   * Play a card in multiplayer game
+   */
+  public playCard(cardId: string, position?: Position, target?: any): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId && this.gameState.isMultiplayer) {
+      gameWebSocketService.playCard(gameId, cardId, position, target);
+    } else {
+      // Single-player mode - execute locally
+      this.sendCommand('playCard', { cardId, position, target });
+    }
+  }
+
+  /**
+   * Move a summon in multiplayer game
+   */
+  public moveSummon(summonId: string, fromPosition: Position, toPosition: Position): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId && this.gameState.isMultiplayer) {
+      gameWebSocketService.moveSummon(gameId, summonId, fromPosition, toPosition);
+    } else {
+      // Single-player mode - execute locally
+      this.sendCommand('moveSummon', { summonId, fromPosition, toPosition });
+    }
+  }
+
+  /**
+   * Attack with a summon in multiplayer game
+   */
+  public attack(attackerId: string, target: any): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId && this.gameState.isMultiplayer) {
+      gameWebSocketService.attack(gameId, attackerId, target);
+    } else {
+      // Single-player mode - execute locally
+      this.sendCommand('attack', { attackerId, target });
+    }
+  }
+
+  /**
+   * End the current phase
+   */
+  public endPhase(phase: string): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId && this.gameState.isMultiplayer) {
+      gameWebSocketService.endPhase(gameId, phase);
+    } else {
+      // Single-player mode - execute locally
+      this.sendCommand('endPhase', { phase });
+    }
+  }
+
+  /**
+   * Surrender the current game
+   */
+  public surrender(): void {
+    const gameId = this.gameState.connectionState.currentGameId;
+    if (gameId && this.gameState.isMultiplayer) {
+      gameWebSocketService.surrender(gameId);
+    } else {
+      // Single-player mode - handle locally
+      this.sendCommand('surrender', {});
+    }
+  }
+
+  /**
+   * Get current network latency
+   */
+  public getLatency(): number {
+    return gameWebSocketService.getLatency();
   }
 
   /**
