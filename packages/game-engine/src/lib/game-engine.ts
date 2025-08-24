@@ -9,8 +9,15 @@ import {
   CardEffect,
   Speed,
   CombatTarget,
+  SummonStats,
+  CombatAction as CombatActionEnum,
+  CardInstance,
+  Role,
+  EquipmentLoadout,
+  StatusEffect,
 } from '@summoners-grid/shared-types';
 import { StackSystem, StackEffect } from './stack-system.js';
+import { CombatSystem, CombatActionType, WeaponData, CombatAction } from './combat-system.js';
 
 /**
  * Configuration for GameEngine initialization
@@ -76,6 +83,7 @@ export class GameEngine {
   private eventHandlers: Map<GameEventType, EventHandler[]> = new Map();
   private config: GameEngineConfig;
   private stackSystem: StackSystem;
+  private combatSystem: CombatSystem;
 
   constructor(config: GameEngineConfig = {}) {
     this.config = {
@@ -90,6 +98,7 @@ export class GameEngine {
     };
 
     this.stackSystem = new StackSystem();
+    this.combatSystem = new CombatSystem(config.randomSeed);
 
     this.initializeEventHandlers();
   }
@@ -197,6 +206,13 @@ export class GameEngine {
    */
   public getGameState(): GameState | null {
     return this.gameState ? { ...this.gameState } : null;
+  }
+
+  /**
+   * Get the CombatSystem instance for external use
+   */
+  public getCombatSystem(): CombatSystem {
+    return this.combatSystem;
   }
 
   /**
@@ -524,9 +540,131 @@ export class GameEngine {
   }
 
   private applyAttack(gameState: GameState, action: GameAction): GameState {
-    // Implementation for attack action
-    // This is a placeholder - full implementation would handle combat resolution
-    this.log('Attack action applied', action.id);
+    // Implementation for attack action using the CombatSystem
+    if (!action.target || !action.cardId) {
+      this.log('Attack action failed: Missing target or attacker ID');
+      return gameState;
+    }
+
+    // Find the attacking summon
+    const attackingPlayer = gameState.currentPlayer === 'A' ? gameState.playerA : gameState.playerB;
+    if (!attackingPlayer) {
+      this.log('Attack action failed: No attacking player found');
+      return gameState;
+    }
+
+    const attackingSummon = attackingPlayer.activeSummons.get(action.cardId);
+    if (!attackingSummon) {
+      this.log('Attack action failed: Attacking summon not found');
+      return gameState;
+    }
+
+    // Find the target summon
+    let targetPlayer: Player | undefined;
+    let targetSummon: { cardInstance: any; currentStats: SummonStats; position: Position } | undefined;
+
+    if (action.target.type === 'summon' && action.target.id) {
+      if (action.target.playerId === 'A') {
+        targetPlayer = gameState.playerA;
+      } else if (action.target.playerId === 'B') {
+        targetPlayer = gameState.playerB;
+      }
+
+      if (targetPlayer) {
+        targetSummon = targetPlayer.activeSummons.get(action.target.id);
+      }
+    }
+
+    if (!targetSummon || !targetPlayer) {
+      this.log('Attack action failed: Target summon not found');
+      return gameState;
+    }
+
+    // Create a basic weapon from equipment (simplified for now)
+    const weapon: WeaponData = {
+      power: 30, // Default weapon power
+      type: 'melee', // Default weapon type
+      range: 1,
+      attribute: 'NEUTRAL' as any
+    };
+
+    // Create combat action
+    const combatAction: CombatAction = {
+      type: CombatActionType.BASIC_ATTACK,
+      attackerId: action.cardId,
+      targetId: action.target.id,
+      weapon
+    };
+
+    // Resolve combat using CombatSystem
+    const combatResult = this.combatSystem.resolveCombat(
+      combatAction,
+      attackingSummon.currentStats,
+      targetSummon.currentStats,
+      attackingSummon.position,
+      targetSummon.position
+    );
+
+    // Log combat result
+    this.log('Combat resolved:', {
+      success: combatResult.success,
+      damage: combatResult.damage.amount,
+      defeated: combatResult.defeated,
+      log: combatResult.log
+    });
+
+    // If combat was successful, apply the results to game state
+    if (combatResult.success) {
+      // Update target summon's HP
+      const updatedTargetStats = this.combatSystem.applyDamage(targetSummon.currentStats, combatResult.damage);
+      
+      // Create updated game state with new summon stats
+      const newGameState = { ...gameState };
+      
+      // Update the target player's summon data
+      if (targetPlayer === gameState.playerA) {
+        newGameState.playerA = {
+          ...targetPlayer,
+          activeSummons: new Map(targetPlayer.activeSummons)
+        };
+        newGameState.playerA.activeSummons.set(action.target.id!, {
+          ...targetSummon,
+          currentStats: updatedTargetStats
+        });
+      } else {
+        newGameState.playerB = {
+          ...targetPlayer,
+          activeSummons: new Map(targetPlayer.activeSummons)
+        };
+        newGameState.playerB.activeSummons.set(action.target.id!, {
+          ...targetSummon,
+          currentStats: updatedTargetStats
+        });
+      }
+
+      // If the target was defeated, remove it from the board and award victory points
+      if (combatResult.defeated) {
+        this.log('Summon defeated:', action.target.id);
+        
+        // Remove summon from active summons
+        if (targetPlayer === gameState.playerA) {
+          newGameState.playerA!.activeSummons.delete(action.target.id!);
+        } else {
+          newGameState.playerB!.activeSummons.delete(action.target.id!);
+        }
+
+        // Award victory points to the attacking player
+        if (gameState.currentPlayer === 'A' && newGameState.playerA) {
+          newGameState.playerA.victoryPoints += 1; // Simplified - should check tier for 1 or 2 VP
+        } else if (gameState.currentPlayer === 'B' && newGameState.playerB) {
+          newGameState.playerB.victoryPoints += 1; // Simplified - should check tier for 1 or 2 VP
+        }
+      }
+
+      return newGameState;
+    }
+
+    // Combat failed (miss, out of range, etc.)
     return gameState;
   }
 
