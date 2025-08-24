@@ -23,7 +23,7 @@ export class LoadingScene extends Phaser.Scene {
   preload(): void {
     this.createLoadingUI();
     this.setupLoadingEvents();
-    this.loadAssets();
+    this.createAssets();
   }
 
   private createLoadingUI(): void {
@@ -36,7 +36,7 @@ export class LoadingScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Loading text
-    this.loadingText = this.add.text(width / 2, height / 2, 'Loading...', {
+    this.loadingText = this.add.text(width / 2, height / 2, 'Creating game assets...', {
       font: '24px Arial',
       color: '#ffffff'
     }).setOrigin(0.5);
@@ -55,12 +55,8 @@ export class LoadingScene extends Phaser.Scene {
       this.updateProgress(value);
     });
 
-    this.load.on('fileprogress', (file: Phaser.Loader.File) => {
-      this.loadingText.setText(`Loading: ${file.key}`);
-    });
-
     this.load.on('complete', () => {
-      this.loadingText.setText('Loading Complete!');
+      this.loadingText.setText('Assets created! Starting game...');
       // Transition to main menu after a brief delay
       this.time.delayedCall(1000, () => {
         this.scene.start('MainMenuScene');
@@ -76,103 +72,79 @@ export class LoadingScene extends Phaser.Scene {
     this.progressBar.fillRect(width / 2 - 150, height / 2 + 60, 300 * value, 10);
   }
 
-  private loadAssets(): void {
-    // For now, create simple colored rectangles as placeholder assets
-    // In a full implementation, these would be actual image files
+  /**
+   * Create assets using Phaser's built-in graphics system
+   */
+  private createAssets(): void {
+    // Create game assets directly using graphics
+    this.createTileTextures();
+    this.createCardTextures();
+    this.createUITextures();
     
-    // Create simple colored rectangles for game board tiles
-    this.load.image('tile-neutral', 'data:image/png;base64,' + this.createColoredSquare('#444444'));
-    this.load.image('tile-player1', 'data:image/png;base64,' + this.createColoredSquare('#4a90e2'));
-    this.load.image('tile-player2', 'data:image/png;base64,' + this.createColoredSquare('#e24a4a'));
-    this.load.image('tile-selected', 'data:image/png;base64,' + this.createColoredSquare('#ffff00'));
-    this.load.image('tile-highlighted', 'data:image/png;base64,' + this.createColoredSquare('#90ee90'));
-
-    // Card placeholder
-    this.load.image('card-back', 'data:image/png;base64,' + this.createCardBack());
+    this.loadingText.setText('All assets created!');
     
-    // UI elements
-    this.load.image('button', 'data:image/png;base64,' + this.createButton());
-
-    // Simulate some loading time for demonstration
-    for (let i = 0; i < 10; i++) {
-      this.load.image(`placeholder-${i}`, 'data:image/png;base64,' + this.createColoredSquare('#' + Math.floor(Math.random()*16777215).toString(16)));
-    }
+    // Trigger the complete event since we're creating assets directly
+    this.time.delayedCall(500, () => {
+      this.events.emit('complete');
+    });
   }
 
   /**
-   * Creates a base64 encoded colored square for placeholder graphics
+   * Create tile textures for the game board using graphics
    */
-  private createColoredSquare(color: string): string {
-    // Create a simple 64x64 colored square
-    const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 64;
-    const ctx = canvas.getContext('2d')!;
+  private createTileTextures(): void {
+    this.createColoredTexture('tile-neutral', 64, 64, 0x444444, 0x666666);
+    this.createColoredTexture('tile-player1', 64, 64, 0x4a90e2, 0x6ba3e8);
+    this.createColoredTexture('tile-player2', 64, 64, 0xe24a4a, 0xe86b6b);
+    this.createColoredTexture('tile-selected', 64, 64, 0xffff00, 0xffff66);
+    this.createColoredTexture('tile-highlighted', 64, 64, 0x90ee90, 0xaaf2aa);
     
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, 64, 64);
-    
-    // Add a border
-    ctx.strokeStyle = '#000000';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, 62, 62);
-    
-    return canvas.toDataURL().split(',')[1];
+    this.updateProgress(0.4);
+    this.loadingText.setText('Tile textures created...');
   }
 
   /**
-   * Creates a base64 encoded card back design
+   * Create card textures
    */
-  private createCardBack(): string {
-    const canvas = document.createElement('canvas');
-    canvas.width = 100;
-    canvas.height = 140;
-    const ctx = canvas.getContext('2d')!;
+  private createCardTextures(): void {
+    this.createColoredTexture('card-back', 100, 140, 0x2c3e50, 0x34495e);
     
-    // Card background
-    ctx.fillStyle = '#2c3e50';
-    ctx.fillRect(0, 0, 100, 140);
+    this.updateProgress(0.7);
+    this.loadingText.setText('Card textures created...');
+  }
+
+  /**
+   * Create UI element textures
+   */
+  private createUITextures(): void {
+    this.createColoredTexture('button', 200, 50, 0x5a67d8, 0x4c51bf);
     
-    // Border
-    ctx.strokeStyle = '#34495e';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(3, 3, 94, 134);
-    
-    // Pattern
-    ctx.fillStyle = '#34495e';
-    for (let i = 0; i < 5; i++) {
-      for (let j = 0; j < 7; j++) {
-        if ((i + j) % 2 === 0) {
-          ctx.fillRect(10 + i * 16, 10 + j * 16, 12, 12);
-        }
-      }
+    this.updateProgress(1.0);
+    this.loadingText.setText('UI textures created...');
+  }
+
+  /**
+   * Create a colored texture with border using Phaser's graphics
+   */
+  private createColoredTexture(key: string, width: number, height: number, fillColor: number, borderColor?: number): void {
+    // Check if texture already exists
+    if (this.textures.exists(key)) {
+      return;
     }
     
-    return canvas.toDataURL().split(',')[1];
-  }
-
-  /**
-   * Creates a base64 encoded button
-   */
-  private createButton(): string {
-    const canvas = document.createElement('canvas');
-    canvas.width = 200;
-    canvas.height = 50;
-    const ctx = canvas.getContext('2d')!;
+    const graphics = this.add.graphics();
     
-    // Button background
-    const gradient = ctx.createLinearGradient(0, 0, 0, 50);
-    gradient.addColorStop(0, '#5a67d8');
-    gradient.addColorStop(1, '#4c51bf');
-    
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 200, 50);
+    // Fill
+    graphics.fillStyle(fillColor);
+    graphics.fillRect(0, 0, width, height);
     
     // Border
-    ctx.strokeStyle = '#3c366b';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(1, 1, 198, 48);
+    const useColor = borderColor !== undefined ? borderColor : 0x000000;
+    graphics.lineStyle(2, useColor);
+    graphics.strokeRect(1, 1, width - 2, height - 2);
     
-    return canvas.toDataURL().split(',')[1];
+    // Generate texture and clean up
+    graphics.generateTexture(key, width, height);
+    graphics.destroy();
   }
 }

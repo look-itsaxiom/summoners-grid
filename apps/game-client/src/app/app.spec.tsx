@@ -8,11 +8,18 @@ describe('App', () => {
     expect(baseElement).toBeTruthy();
   });
 
-  it('should have a greeting as the title', () => {
-    const { getAllByText } = render(<App />);
-    expect(
-      getAllByText(new RegExp('Welcome @summoners-grid/game-client', 'gi'))
-        .length > 0
-    ).toBeTruthy();
+  it('should render the game component', () => {
+    const { container } = render(<App />);
+    const gameContainer = container.querySelector('#phaser-game-container');
+    expect(gameContainer).toBeTruthy();
+  });
+
+  it('should have the correct app structure', () => {
+    const { container } = render(<App />);
+    const appContainer = container.querySelector('.app-container');
+    const gameComponent = container.querySelector('.game-component-container');
+    
+    expect(appContainer).toBeTruthy();
+    expect(gameComponent).toBeTruthy();
   });
 });
