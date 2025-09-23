@@ -1,0 +1,16 @@
+{
+  "name": "@summoners-grid/common",
+  "version": "1.0.0",
+  "private": true,
+  "main": "build/index.js",
+  "types": "build/index.d.ts",
+  "scripts": {
+    "build": "../../node_modules/.bin/tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@colyseus/schema": "^2.0.0"
+  }
+}

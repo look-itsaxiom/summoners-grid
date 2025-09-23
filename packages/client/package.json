@@ -1,0 +1,20 @@
+{
+  "name": "@summoners-grid/client",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "npx vite",
+    "build": "tsc && npx vite build",
+    "preview": "npx vite preview"
+  },
+  "dependencies": {
+    "@summoners-grid/common": "1.0.0",
+    "phaser": "^3.60.0",
+    "colyseus.js": "^0.15.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.2",
+    "vite": "^4.3.9"
+  }
+}
