@@ -1,4 +1,4 @@
-import { SummonInstance } from ".";
+import { SummonInstance } from "..";
 import { cardData } from "./data/card-data";
 import { SummonCard } from "./schemas/Card";
 import { GROWTH_RATE_VALUES, Stat } from "./types";
@@ -18,7 +18,8 @@ export function recalculateSummonStats(summon: SummonInstance) {
     const equipmentBonus = { STR: 0, END: 0, DEF: 0, INT: 0, SPI: 0, MDF: 0, SPD: 0, ACC: 0, LCK: 0 };
 
     // Final Stat Calculation
-    for (const stat in Stat) {
+    for (const statKey in Stat) {
+        const stat = statKey as keyof typeof Stat;
         const growthRateValue = GROWTH_RATE_VALUES[growthRates[stat]];
         const finalStat = (baseStats[stat] + Math.floor((level - 1) * growthRateValue)) * roleModifier[stat] + equipmentBonus[stat];
         summon.calculatedStats[stat] = finalStat;
