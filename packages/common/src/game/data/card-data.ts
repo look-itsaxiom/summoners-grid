@@ -3,7 +3,33 @@ import { CardType, Attribute, ActionSpeed, Stat, RoleFamily, GrowthRate } from '
 // This file represents the hardcoded "database" of all card definitions
 // for the playable demo, based on the Play Example and Alpha Cards documents.
 
-export const cardData = {
+interface CardDefinition {
+    id: string;
+    name: string;
+    type: CardType;
+    rarity: string;
+    attribute: Attribute;
+    description: string;
+    slot?: string;
+    power?: number;
+    range?: number;
+    damageStat?: Stat;
+    statBonuses?: { [key in Stat]?: number };
+    species?: string;
+    role?: string;
+    baseStats?: { [key in Stat]?: number };
+    growthRates?: { [key in Stat]?: GrowthRate };
+    equipment?: string[];
+    speed?: ActionSpeed;
+    width?: number;
+    height?: number;
+}
+
+type CardData = {
+    [key: string]: CardDefinition;
+}
+
+export const cardData: CardData = {
   // --- WEAPON CARDS ---
   '034-heirloom-sword': {
     id: '034-heirloom-sword',
