@@ -71,22 +71,22 @@ describe('Complete Engine Functionality', () => {
     let state = engine.getState();
     expect(state.turnState.phase).toBe(Phase.Action);
 
-    // Verify card is in hand (should be in main deck initially)
+    // Verify card distribution according to new GDD-compliant behavior
     const player1 = state.players['player1'];
-    expect(player1.zones.mainDeck.length).toBe(2); // Both cards should be in deck initially
+    expect(player1.zones.hand.length).toBe(1); // Summon card should be in hand per GDD
+    expect(player1.zones.mainDeck.length).toBe(1); // Non-summon card should be in main deck
     
-    // For this test, let's manually move a card to hand to test the play functionality
-    // In a real game, cards would be drawn during draw phase
-    const cardToPlay = player1.zones.mainDeck.find(c => c.type === CardType.Summon);
+    // Find the summon card in hand (should be there per GDD)
+    const cardToPlay = player1.zones.hand.find(c => c.type === CardType.Summon);
     expect(cardToPlay).toBeDefined();
 
-    // Move card from deck to hand for testing
-    let updatedEngine = engine;
-    // We'll test that the engine validates properly instead of forcing the card play
+    // Verify that card is ready to be played (in hand, not deck)
+    const summonInHand = player1.zones.hand.filter(c => c.type === CardType.Summon);
+    expect(summonInHand.length).toBe(1);
     
     console.log('✅ Card validation working correctly');
-    console.log('✅ Game state management functional');
-    console.log('✅ Deck loading system working');
+    console.log('✅ Game state management functional'); 
+    console.log('✅ Deck loading system working per GDD (summons in hand)');
     console.log('✅ Turn progression implemented');
   });
 

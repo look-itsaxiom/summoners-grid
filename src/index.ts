@@ -91,12 +91,26 @@ export function createGameEngine(config?: Partial<GameConfig>): GameEngine {
     },
 
     loadDeck(playerId: PlayerId, deck: Card[]): void {
-      // Shuffle deck and set as main deck
-      const shuffledDeck = [...deck].sort(() => Math.random() - 0.5);
+      // Separate summon cards from other cards
+      // According to GDD: Each player starts with 3 summon cards in hand
+      const summonCards = deck.filter(card => card.type === 'summon');
+      const otherCards = deck.filter(card => card.type !== 'summon');
+      
+      // Validate summon count (should be exactly 3 per GDD)
+      if (summonCards.length !== 3) {
+        console.warn(`Warning: Player ${playerId} has ${summonCards.length} summon cards, expected 3`);
+      }
+      
+      // Shuffle the main deck (non-summon cards)
+      const shuffledMainDeck = [...otherCards].sort(() => Math.random() - 0.5);
+      
+      // Update player with summon cards in hand and other cards in main deck
+      const currentZones = gameState.getState().players[playerId].zones;
       const updatedState = gameState.updatePlayer(playerId, {
         zones: {
-          ...gameState.getState().players[playerId].zones,
-          mainDeck: shuffledDeck
+          ...currentZones,
+          hand: [...currentZones.hand, ...summonCards], // Add summons to starting hand
+          mainDeck: shuffledMainDeck // Only non-summon cards in main deck
         }
       });
       updateManagers(updatedState);

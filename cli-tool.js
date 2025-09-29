@@ -246,8 +246,14 @@ class SummonersGridCLI {
 
     // For now, load a simple default deck
     const defaultDeck = this.createDefaultDeck();
+    const summons = defaultDeck.filter(card => card.type === 'summon');
+    const mainDeck = defaultDeck.filter(card => card.type !== 'summon');
+    
     this.engine.loadDeck(playerId, defaultDeck);
-    console.log(`✅ Loaded default deck for ${playerId} (${defaultDeck.length} cards)`);
+    console.log(`✅ Loaded deck for ${playerId}:`);
+    console.log(`   📋 ${summons.length} summon cards → starting hand`);
+    console.log(`   🎴 ${mainDeck.length} main deck cards → draw pile`);
+    console.log(`   💡 According to GDD, players start with all 3 summons in hand`);
   }
 
   startGame() {
@@ -458,16 +464,22 @@ class SummonersGridCLI {
   }
 
   createDefaultDeck() {
-    // Create a simple default deck with available cards
+    // Create a deck according to GDD: exactly 3 summon cards + main deck cards
     const deck = [];
     
-    // Add some summons
-    const summons = this.cardDatabase.filter(card => card.type === 'summon').slice(0, 3);
-    deck.push(...summons);
+    // Add exactly 3 summons (these will go to starting hand per GDD)
+    // Use the first 3 summons for consistency
+    const allSummons = this.cardDatabase.filter(card => card.type === 'summon');
+    const selectedSummons = allSummons.slice(0, 3);
+    deck.push(...selectedSummons);
     
-    // Add some action cards
-    const actions = this.cardDatabase.filter(card => card.type === 'action').slice(0, 5);
-    deck.push(...actions);
+    // Add main deck cards (actions, buildings, quests, counters)
+    // These go to the main deck for drawing during the game
+    const mainDeckCards = this.cardDatabase.filter(card => 
+      card.type !== 'summon' && 
+      ['action', 'building', 'quest', 'counter'].includes(card.type)
+    );
+    deck.push(...mainDeckCards);
     
     return deck;
   }
@@ -491,12 +503,26 @@ class SummonersGridCLI {
       return;
     }
 
-    player.zones.hand.forEach((card, index) => {
-      const cost = card.cost?.type === 'role_requirement' ? 
-        `Req: ${card.cost.requirements.roles.join(', ')}` : 
-        'No cost';
-      console.log(`  ${index + 1}. ${card.name} (${card.type}) - ${cost}`);
-    });
+    // Group cards by type for better display
+    const summons = player.zones.hand.filter(card => card.type === 'summon');
+    const others = player.zones.hand.filter(card => card.type !== 'summon');
+
+    if (summons.length > 0) {
+      console.log(`  🏹 Summon Cards (${summons.length}):`);
+      summons.forEach((card, index) => {
+        console.log(`    ${index + 1}. ${card.name} (${card.species} ${card.role})`);
+      });
+    }
+
+    if (others.length > 0) {
+      console.log(`  🎴 Other Cards (${others.length}):`);
+      others.forEach((card, index) => {
+        const cost = card.cost?.type === 'role_requirement' ? 
+          `Req: ${card.cost.requirements.roles.join(', ')}` : 
+          'No cost';
+        console.log(`    ${summons.length + index + 1}. ${card.name} (${card.type}) - ${cost}`);
+      });
+    }
   }
 
   debugPlayer(playerId) {
