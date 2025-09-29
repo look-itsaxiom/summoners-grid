@@ -1,0 +1,306 @@
+[
+  {
+    "id": "gignen-warrior-001",
+    "name": "Gignen Warrior",
+    "type": "summon",
+    "attribute": "neutral",
+    "speed": "action", 
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "A sturdy warrior summon from the Gignen species",
+    "species": "Gignen",
+    "role": "warrior",
+    "baseStats": {
+      "str": 18,
+      "end": 13,
+      "def": 15,
+      "int": 15,
+      "spi": 13,
+      "mdf": 11,
+      "spd": 12,
+      "lck": 19,
+      "acc": 12
+    },
+    "growthRates": {
+      "str": 1.33,
+      "end": 1,
+      "def": 1,
+      "int": 0.66,
+      "spi": 1,
+      "mdf": 0.66,
+      "spd": 0.5,
+      "lck": 2,
+      "acc": 0.66
+    },
+    "equipment": [
+      {
+        "id": "034-heirloom-sword",
+        "name": "Heirloom Sword",
+        "slot": "weapon",
+        "basePower": 30,
+        "statModifiers": {
+          "str": 5
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  },
+  {
+    "id": "gignen-scout-001", 
+    "name": "Gignen Scout",
+    "type": "summon",
+    "attribute": "neutral",
+    "speed": "action",
+    "rarity": "common", 
+    "cost": {
+      "type": "none"
+    },
+    "text": "A nimble scout summon from the Gignen species",
+    "species": "Gignen",
+    "role": "scout",
+    "baseStats": {
+      "str": 14,
+      "end": 11,
+      "def": 12,
+      "int": 13,
+      "spi": 12,
+      "mdf": 10,
+      "spd": 16,
+      "lck": 17,
+      "acc": 15
+    },
+    "growthRates": {
+      "str": 0.8,
+      "end": 0.9,
+      "def": 0.8,
+      "int": 1.0,
+      "spi": 0.9,
+      "mdf": 0.7,
+      "spd": 1.8,
+      "lck": 1.5,
+      "acc": 1.2
+    },
+    "equipment": [
+      {
+        "id": "hunting-bow-basic",
+        "name": "Hunting Bow",
+        "slot": "weapon",
+        "basePower": 22,
+        "statModifiers": {
+          "acc": 3,
+          "spd": 2
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  },
+  {
+    "id": "gignen-magician-001",
+    "name": "Gignen Magician", 
+    "type": "summon",
+    "attribute": "neutral",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "A wise magician summon from the Gignen species",
+    "species": "Gignen", 
+    "role": "magician",
+    "baseStats": {
+      "str": 10,
+      "end": 12,
+      "def": 11,
+      "int": 18,
+      "spi": 16,
+      "mdf": 14,
+      "spd": 13,
+      "lck": 15,
+      "acc": 11
+    },
+    "growthRates": {
+      "str": 0.5,
+      "end": 1.0,
+      "def": 0.7,
+      "int": 1.6,
+      "spi": 1.4,
+      "mdf": 1.2,
+      "spd": 0.8,
+      "lck": 1.1,
+      "acc": 0.8
+    },
+    "equipment": [
+      {
+        "id": "apprentice-wand-basic",
+        "name": "Apprentice Wand",
+        "slot": "weapon", 
+        "basePower": 18,
+        "statModifiers": {
+          "int": 4,
+          "spi": 2
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  },
+  {
+    "id": "wilderling-scout-001",
+    "name": "Wilderling Scout",
+    "type": "summon",
+    "attribute": "earth",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    }, 
+    "text": "A forest-dwelling scout from the Wilderling species",
+    "species": "Wilderling",
+    "role": "scout",
+    "baseStats": {
+      "str": 12,
+      "end": 14,
+      "def": 13,
+      "int": 11,
+      "spi": 13,
+      "mdf": 12,
+      "spd": 18,
+      "lck": 20,
+      "acc": 25
+    },
+    "growthRates": {
+      "str": 0.9,
+      "end": 1.1,
+      "def": 0.9,
+      "int": 0.7,
+      "spi": 1.0,
+      "mdf": 0.8,
+      "spd": 2.0,
+      "lck": 2.2,
+      "acc": 1.8
+    },
+    "equipment": [
+      {
+        "id": "hunting-bow-wilderling",
+        "name": "Hunting Bow",
+        "slot": "weapon",
+        "basePower": 20,
+        "statModifiers": {
+          "acc": 5,
+          "spd": 1
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  },
+  {
+    "id": "stoneheart-warrior-001", 
+    "name": "Stoneheart Warrior",
+    "type": "summon",
+    "attribute": "earth",
+    "speed": "action",
+    "rarity": "uncommon",
+    "cost": {
+      "type": "none"
+    },
+    "text": "A resilient stone-skinned warrior",
+    "species": "Stoneheart",
+    "role": "warrior",
+    "baseStats": {
+      "str": 20,
+      "end": 18,
+      "def": 22,
+      "int": 8,
+      "spi": 10,
+      "mdf": 15,
+      "spd": 8,
+      "lck": 12,
+      "acc": 10
+    },
+    "growthRates": {
+      "str": 1.5,
+      "end": 1.8,
+      "def": 1.6,
+      "int": 0.4,
+      "spi": 0.6,
+      "mdf": 1.0,
+      "spd": 0.3,
+      "lck": 0.8,
+      "acc": 0.5
+    },
+    "equipment": [
+      {
+        "id": "034-heirloom-sword",
+        "name": "Heirloom Sword", 
+        "slot": "weapon",
+        "basePower": 30,
+        "statModifiers": {
+          "str": 5
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  },
+  {
+    "id": "fae-magician-001",
+    "name": "Fae Magician",
+    "type": "summon",
+    "attribute": "light",
+    "speed": "action", 
+    "rarity": "rare",
+    "cost": {
+      "type": "none"
+    },
+    "text": "A mystical fae with powerful magical abilities",
+    "species": "Fae",
+    "role": "magician",
+    "baseStats": {
+      "str": 6,
+      "end": 10,
+      "def": 8,
+      "int": 24,
+      "spi": 22,
+      "mdf": 18,
+      "spd": 14,
+      "lck": 20,
+      "acc": 12
+    },
+    "growthRates": {
+      "str": 0.3,
+      "end": 0.8,
+      "def": 0.5,
+      "int": 2.2,
+      "spi": 2.0,
+      "mdf": 1.6,
+      "spd": 1.0,
+      "lck": 1.8,
+      "acc": 0.9
+    },
+    "equipment": [
+      {
+        "id": "apprentice-wand-fae",
+        "name": "Apprentice's Wand",
+        "slot": "weapon",
+        "basePower": 16,
+        "statModifiers": {
+          "int": 6,
+          "spi": 4
+        },
+        "effects": []
+      }
+    ],
+    "triggers": [],
+    "passiveEffects": []
+  }
+]

@@ -1,0 +1,289 @@
+[
+  {
+    "id": "001-blast-bolt",
+    "name": "Blast Bolt",
+    "type": "action",
+    "attribute": "fire",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "role_requirement",
+      "requirements": {
+        "roles": ["magician", "elementMage", "lightMage", "darkMage", "warlock"]
+      }
+    },
+    "text": "Deal fire damage to target opponent summon",
+    "effects": [
+      {
+        "id": "blast_bolt_damage",
+        "name": "Fire Damage",
+        "description": "Deal fire damage to target",
+        "effectId": "deal_damage",
+        "parameters": {
+          "damage": 25,
+          "damageType": "fire"
+        }
+      }
+    ],
+    "targetType": "summon",
+    "range": "any"
+  },
+  {
+    "id": "005-sharpened-blade",
+    "name": "Sharpened Blade", 
+    "type": "action",
+    "attribute": "neutral",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "role_requirement",
+      "requirements": {
+        "roles": ["warrior", "berserker", "knight", "paladin", "sentinel"]
+      }
+    },
+    "text": "Target Weapon equipped to a Warrior based Summon gains +10 Base Power",
+    "effects": [
+      {
+        "id": "sharpen_weapon",
+        "name": "Weapon Enhancement",
+        "description": "Increase weapon base power permanently",
+        "effectId": "weapon_enhancement",
+        "parameters": {
+          "power": 10,
+          "duration": "permanent"
+        }
+      }
+    ],
+    "targetType": "summon"
+  },
+  {
+    "id": "006-healing-hands",
+    "name": "Healing Hands",
+    "type": "action", 
+    "attribute": "light",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "role_requirement",
+      "requirements": {
+        "roles": ["magician", "lightMage", "paladin"]
+      }
+    },
+    "text": "Restore HP to target summon",
+    "effects": [
+      {
+        "id": "healing_effect",
+        "name": "Heal",
+        "description": "Restore HP to target summon",
+        "effectId": "heal",
+        "parameters": {
+          "healing": 30
+        }
+      }
+    ],
+    "targetType": "summon"
+  },
+  {
+    "id": "007-rush",
+    "name": "Rush",
+    "type": "action",
+    "attribute": "neutral", 
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "role_requirement",
+      "requirements": {
+        "roles": ["warrior", "scout", "berserker", "explorer", "rogue"]
+      }
+    },
+    "text": "Double target's movement speed until end of turn, then cut DEF in half until end of opponent's next turn",
+    "effects": [
+      {
+        "id": "movement_boost",
+        "name": "Movement Boost",
+        "description": "Double movement speed",
+        "effectId": "movement_boost", 
+        "parameters": {
+          "multiplier": 2,
+          "duration": "end_of_turn"
+        }
+      },
+      {
+        "id": "defense_penalty",
+        "name": "Defense Reduction", 
+        "description": "Halve defense",
+        "effectId": "defense_reduction",
+        "parameters": {
+          "reduction": 0.5,
+          "duration": "end_of_opponent_turn"
+        }
+      }
+    ],
+    "targetType": "summon"
+  },
+  {
+    "id": "009-ensnare",
+    "name": "Ensnare",
+    "type": "action",
+    "attribute": "earth",
+    "speed": "action", 
+    "rarity": "common",
+    "cost": {
+      "type": "role_requirement",
+      "requirements": {
+        "roles": ["scout", "explorer", "rogue"]
+      }
+    },
+    "text": "Scout-based summon performs ranged attack with entangle effect",
+    "effects": [
+      {
+        "id": "ensnare_attack",
+        "name": "Ensnare Attack",
+        "description": "Ranged attack with entangle",
+        "effectId": "ranged_attack",
+        "parameters": {
+          "damageType": "physical",
+          "statusEffect": "entangled"
+        }
+      }
+    ],
+    "targetType": "summon"
+  },
+  {
+    "id": "002-taste-of-battle",
+    "name": "Taste of Battle",
+    "type": "quest",
+    "attribute": "fire",
+    "speed": "action",
+    "rarity": "uncommon",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Quest: Control a summon under level 10 that deals damage to an enemy this turn",
+    "objective": "Control a summon under level 10 that deals damage to an enemy this turn",
+    "failureCondition": "Any of your summons under level 10 takes damage from an enemy",
+    "reward": {
+      "id": "level_reward",
+      "name": "Level Gain",
+      "description": "Target qualifying summon gains 2 levels",
+      "effectId": "level_up",
+      "parameters": {
+        "levels": 2
+      }
+    },
+    "failurePenalty": {
+      "id": "quest_failure",
+      "name": "Quest Failed",
+      "description": "Quest goes to discard pile",
+      "effectId": "discard_self",
+      "parameters": {}
+    },
+    "canActivate": "owner"
+  },
+  {
+    "id": "037-nearwood-forest-expedition", 
+    "name": "Nearwood Forest Expedition",
+    "type": "quest",
+    "attribute": "earth",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Safe exploration quest providing guaranteed progression for base role families",
+    "objective": "Control a Warrior, Scout, or Magician summon under level 10",
+    "reward": {
+      "id": "safe_level_reward",
+      "name": "Safe Level Gain", 
+      "description": "Target qualifying summon gains 2 levels",
+      "effectId": "level_up",
+      "parameters": {
+        "levels": 2
+      }
+    },
+    "canActivate": "owner"
+  },
+  {
+    "id": "003-dramatic-return",
+    "name": "Dramatic Return!",
+    "type": "counter", 
+    "attribute": "light",
+    "speed": "counter",
+    "rarity": "uncommon",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Counter: When a summon would be defeated, return it to play with 1 HP instead",
+    "triggerCondition": "summon_about_to_be_defeated",
+    "effect": {
+      "id": "prevent_defeat",
+      "name": "Prevent Defeat",
+      "description": "Prevent summon defeat and restore to 1 HP",
+      "effectId": "prevent_defeat",
+      "parameters": {
+        "restoreHP": 1
+      }
+    },
+    "isFaceDown": false
+  },
+  {
+    "id": "020-warrior-role",
+    "name": "Warrior",
+    "type": "role",
+    "attribute": "neutral",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Tier 1 base role focused on physical combat",
+    "roleType": "warrior",
+    "tier": 1,
+    "statModifiers": {
+      "str": 2,
+      "end": 1,
+      "def": 1
+    },
+    "abilities": []
+  },
+  {
+    "id": "021-magician-role",
+    "name": "Magician",
+    "type": "role", 
+    "attribute": "neutral",
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Tier 1 base role focused on magical abilities",
+    "roleType": "magician",
+    "tier": 1,
+    "statModifiers": {
+      "int": 2,
+      "spi": 1,
+      "mdf": 1
+    },
+    "abilities": []
+  },
+  {
+    "id": "022-scout-role",
+    "name": "Scout",
+    "type": "role",
+    "attribute": "neutral", 
+    "speed": "action",
+    "rarity": "common",
+    "cost": {
+      "type": "none"
+    },
+    "text": "Tier 1 base role focused on mobility and ranged combat",
+    "roleType": "scout",
+    "tier": 1,
+    "statModifiers": {
+      "spd": 2,
+      "acc": 1,
+      "lck": 1
+    },
+    "abilities": []
+  }
+]
