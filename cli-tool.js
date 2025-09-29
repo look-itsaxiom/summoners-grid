@@ -30,23 +30,26 @@ class SummonersGridCLI {
 
   loadCardDatabase() {
     try {
-      // Load alpha set cards
-      const alphaSetPath = path.join(__dirname, 'dist/data/cards/alpha-set.json');
-      const summonsPath = path.join(__dirname, 'dist/data/cards/summons.json');
+      // Load alpha set cards - use src directory since data files aren't copied to dist
+      const alphaSetPath = path.join(__dirname, 'src/data/cards/alpha-set.json');
+      const summonsPath = path.join(__dirname, 'src/data/cards/summons.json');
       
       if (fs.existsSync(alphaSetPath)) {
         const alphaCards = JSON.parse(fs.readFileSync(alphaSetPath, 'utf8'));
         this.cardDatabase.push(...alphaCards);
+        console.log(`📚 Loaded ${alphaCards.length} alpha set cards`);
       }
 
       if (fs.existsSync(summonsPath)) {
         const summonCards = JSON.parse(fs.readFileSync(summonsPath, 'utf8'));
         this.cardDatabase.push(...summonCards);
+        console.log(`📚 Loaded ${summonCards.length} summon cards`);
       }
 
-      console.log(`📚 Loaded ${this.cardDatabase.length} cards from database`);
+      console.log(`📚 Total cards loaded: ${this.cardDatabase.length}`);
     } catch (error) {
-      console.warn('⚠️  Could not load card database, using empty database');
+      console.warn('⚠️  Could not load card database:', error.message);
+      console.warn('⚠️  Using empty database - you can still test basic engine functionality');
       this.cardDatabase = [];
     }
   }
@@ -116,12 +119,34 @@ class SummonersGridCLI {
           this.listCards(args[0]);
           break;
 
+        case 'play':
+          this.playCard(args);
+          break;
+
         case 'current':
           this.setCurrentPlayer(args[0]);
           break;
 
+        case 'hand':
+          this.showHand(args[0] || this.currentPlayerId);
+          break;
+
+        case 'debug':
+          this.debugPlayer(args[0] || this.currentPlayerId);
+          break;
+
+        case 'draw':
+          this.drawCard(args[0] || this.currentPlayerId);
+          break;
+
         case 'clear':
           console.clear();
+          break;
+
+        case 'quit':
+        case 'exit':
+          console.log('\n👋 Goodbye!');
+          process.exit(0);
           break;
 
         case '':
@@ -143,33 +168,55 @@ class SummonersGridCLI {
     console.log(`
 🎮 Summoner's Grid Engine CLI Commands:
 
-Game Management:
+=== Quick Start Guide ===
+1. new                      # Create game engine
+2. player alice "Alice"     # Add first player
+3. player bob "Bob"         # Add second player  
+4. deck alice               # Load default deck for Alice
+5. deck bob                 # Load default deck for Bob
+6. start                    # Start the game
+7. state                    # See current game state
+8. phase                    # Advance through phases
+
+=== Game Management ===
   new, create              Create a new game engine instance
   player <id> [name]       Add a player to the game
-  deck <playerId> [cards]  Load deck for player
+  deck <playerId>          Load default deck for player
   start                    Start the game
   current <playerId>       Set current player context
 
-Game State:
-  state, status            Show current game state summary
+=== Turn Phases (GDD-based) ===
   phase, advance           Advance to next phase
-  actions [playerId]       Show legal actions for player
+  state, status            Show game state with phase guidance
+  
+  Phase Flow: DRAW → LEVEL → ACTION → END
+  • Draw: Draw 1 card (skipped first turn)
+  • Level: All summons gain 1 level  
+  • Action: Play cards, move, attack
+  • End: Discard to 6 cards, pass turn
 
-Card Database:
-  cards [filter]           List available cards
-  list-cards [filter]      Same as cards
+=== Action Phase Commands ===
+  actions [playerId]       Show legal actions for current phase
+  hand [playerId]          Show player's cards in hand
+  play <cardName>          Play a card by name (e.g. "Gignen Warrior")
+  summons [playerId]       Show deployed summons
+  cards [filter]           Browse available cards
 
-Utilities:
+=== Card Database ===
+  cards                    List all available cards
+  cards summon             Show only summon cards
+  cards action             Show only action cards
+
+=== Examples from Play Example ===
+  play "Gignen Warrior"    # Deploy summon (triggers draw 3)
+  play "Rush"              # Play action card
+  play "Blast Bolt"        # Play magic attack
+
+=== Utilities ===
   clear                    Clear screen
   help, h                  Show this help message
 
-Examples:
-  new
-  player alice "Alice Player"
-  player bob "Bob Player"  
-  start
-  phase
-  actions alice
+💡 Tip: Start with the Quick Start Guide above!
 `);
   }
 
@@ -222,9 +269,9 @@ Examples:
     const state = this.engine.getState();
     console.log(`
 🎮 Game State:
-  Game ID: ${state.gameId}
+  Game ID: ${state.gameId.substring(0, 8)}...
   Turn: ${state.turnState.turnNumber}
-  Phase: ${state.turnState.phase}
+  Phase: ${state.turnState.phase.toUpperCase()}
   Current Player: ${state.turnState.currentPlayer}
   Effect Stack: ${state.effectStack.length} effects
 
@@ -233,7 +280,46 @@ Examples:
     for (const [playerId, player] of Object.entries(state.players)) {
       const priority = player.priority ? '🎯' : '  ';
       const vp = player.victoryPoints.length;
-      console.log(`  ${priority} ${player.name} (${playerId}): ${vp} VP, ${player.summons.length} summons`);
+      const handSize = player.zones.hand.length;
+      console.log(`  ${priority} ${player.name} (${playerId}): ${vp} VP, ${player.summons.length} summons, ${handSize} cards in hand`);
+    }
+
+    // Show phase-specific guidance
+    this.showPhaseGuidance(state.turnState.phase, state.turnState.currentPlayer);
+  }
+
+  showPhaseGuidance(phase, currentPlayer) {
+    console.log(`\n💡 Phase Guidance (${phase.toUpperCase()}):`);
+    
+    switch (phase) {
+      case 'draw':
+        console.log('  → Draw 1 card from Main Deck (or shuffle Recharge Pile if needed)');
+        console.log('  → Use "phase" command to advance to Level Phase');
+        break;
+      
+      case 'level':
+        console.log('  → All your summons automatically gain 1 level');
+        console.log('  → HP damage is retained (not proportional to new max HP)');
+        console.log('  → Use "phase" command to advance to Action Phase');
+        break;
+      
+      case 'action':
+        console.log('  → Play ONE summon per turn (triggers draw 3 cards)');
+        console.log('  → Play action cards, buildings, quests');
+        console.log('  → Move summons (split movement before/after actions)');
+        console.log('  → Attack with summons (once per summon per turn)');
+        console.log('  → Available commands: play, move, attack, actions');
+        break;
+      
+      case 'end':
+        console.log('  → Discard down to 6 cards if hand size > 6');
+        console.log('  → Turn passes to opponent');
+        console.log('  → Use "phase" command to end turn');
+        break;
+    }
+    
+    if (currentPlayer === this.currentPlayerId) {
+      console.log(`  🎯 It's your turn! Try "actions ${currentPlayer}" to see what you can do.`);
     }
   }
 
@@ -297,6 +383,80 @@ Examples:
     console.log(`🎯 Set current player context to: ${playerId}`);
   }
 
+  playCard(args) {
+    if (!this.engine) {
+      throw new Error('No game engine created. Use "new" command first.');
+    }
+
+    if (args.length < 1) {
+      console.log('❌ Usage: play <cardName>');
+      console.log('💡 Examples:');
+      console.log('   play "Gignen Warrior"');
+      console.log('   play "Rush"');
+      console.log('   play "Blast Bolt"');
+      console.log('💡 Use "cards" to see available cards');
+      return;
+    }
+
+    const cardName = args.join(' ').replace(/"/g, ''); // Remove quotes and join args
+    const playerId = this.currentPlayerId;
+
+    if (!playerId) {
+      throw new Error('No current player set. Use "current <playerId>" first.');
+    }
+
+    // Find card by name in player's hand
+    const state = this.engine.getState();
+    const player = state.players[playerId];
+    
+    if (!player) {
+      throw new Error(`Player ${playerId} not found`);
+    }
+
+    // Look for card in hand by name
+    const cardInHand = player.zones.hand.find(card => 
+      card.name.toLowerCase() === cardName.toLowerCase() ||
+      card.id.toLowerCase() === cardName.toLowerCase()
+    );
+
+    if (!cardInHand) {
+      console.log(`❌ Card "${cardName}" not found in ${player.name}'s hand`);
+      console.log(`💡 Cards in hand:`);
+      player.zones.hand.forEach(card => {
+        console.log(`   • ${card.name} (${card.type})`);
+      });
+      return;
+    }
+
+    try {
+      // Create play action - for now using basic structure
+      const action = {
+        type: 'playCard',
+        playerId,
+        cardId: cardInHand.id,
+        timestamp: Date.now()
+      };
+
+      this.engine.submitAction(action);
+      console.log(`✅ ${player.name} played "${cardInHand.name}"`);
+      
+      // Show updated state
+      this.showGameState();
+      
+      // Show updated hand
+      console.log(`\n🃏 ${player.name}'s remaining hand:`);
+      const updatedState = this.engine.getState();
+      const updatedPlayer = updatedState.players[playerId];
+      updatedPlayer.zones.hand.forEach(card => {
+        console.log(`   • ${card.name} (${card.type})`);
+      });
+      
+    } catch (error) {
+      console.log(`❌ Cannot play "${cardInHand.name}": ${error.message}`);
+      console.log(`💡 Try "actions ${playerId}" to see what you can do right now`);
+    }
+  }
+
   createDefaultDeck() {
     // Create a simple default deck with available cards
     const deck = [];
@@ -310,6 +470,75 @@ Examples:
     deck.push(...actions);
     
     return deck;
+  }
+
+  showHand(playerId) {
+    if (!this.engine) {
+      throw new Error('No game engine created');
+    }
+
+    const state = this.engine.getState();
+    const player = state.players[playerId];
+
+    if (!player) {
+      throw new Error(`Player ${playerId} not found`);
+    }
+
+    console.log(`\n🃏 ${player.name}'s Hand (${player.zones.hand.length} cards):`);
+    
+    if (player.zones.hand.length === 0) {
+      console.log('  No cards in hand');
+      return;
+    }
+
+    player.zones.hand.forEach((card, index) => {
+      const cost = card.cost?.type === 'role_requirement' ? 
+        `Req: ${card.cost.requirements.roles.join(', ')}` : 
+        'No cost';
+      console.log(`  ${index + 1}. ${card.name} (${card.type}) - ${cost}`);
+    });
+  }
+
+  debugPlayer(playerId) {
+    if (!this.engine) {
+      throw new Error('No game engine created');
+    }
+
+    const state = this.engine.getState();
+    const player = state.players[playerId];
+
+    if (!player) {
+      throw new Error(`Player ${playerId} not found`);
+    }
+
+    console.log(`\n🔧 Debug Info for ${player.name}:`);
+    console.log(`  Hand: ${player.zones.hand.length} cards`);
+    console.log(`  Main Deck: ${player.zones.mainDeck.length} cards`);
+    console.log(`  Recharge Pile: ${player.zones.rechargePile.length} cards`);
+    console.log(`  Discard Pile: ${player.zones.discardPile.length} cards`);
+    console.log(`  Summons: ${player.summons.length}`);
+    
+    if (player.zones.mainDeck.length > 0) {
+      console.log(`  Top card of deck: ${player.zones.mainDeck[0].name}`);
+    }
+  }
+
+  drawCard(playerId) {
+    if (!this.engine) {
+      throw new Error('No game engine created');
+    }
+
+    console.log(`💡 Manual draw functionality - this should normally be handled by phase progression`);
+    console.log(`💡 According to GDD: Draw 1 card in Draw phase (skipped first turn)`);
+    console.log(`💡 Players should have starting hands - this might be an engine issue`);
+    
+    // Show the player some cards manually for testing
+    const state = this.engine.getState();
+    const player = state.players[playerId];
+    
+    if (player && player.zones.mainDeck.length > 0) {
+      console.log(`🃏 ${player.name} would draw: ${player.zones.mainDeck[0].name}`);
+    }
   }
 }
 
