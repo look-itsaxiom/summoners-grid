@@ -38,7 +38,12 @@ export interface StatusEffect {
   sourceCardId: CardId;
   duration: 'permanent' | 'endOfTurn' | 'endOfOpponentTurn' | number;
   statModifiers?: Partial<BaseStats>;
-  combatModifiers?: Partial<CombatStats>;
+  combatModifiers?: Partial<CombatStats> & {
+    weaponPower?: number;
+    movementMultiplier?: number;
+    defenseMultiplier?: number;
+    attackMultiplier?: number;
+  };
   effects: string[]; // References to active effects
 }
 

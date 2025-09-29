@@ -52,7 +52,7 @@ export interface Cost {
   type: 'none' | 'role_requirement' | 'resource' | 'sacrifice';
   requirements?: {
     roles?: RoleType[];
-    boardState?: string; // TODO: Define specific board state conditions
+    boardState?: string; // Specific board state conditions like "control 2+ summons"
     resources?: Record<string, number>;
   };
 }
@@ -69,7 +69,7 @@ export interface EffectDefinition {
 // Trigger definition from GDD: Effect System - Trigger System  
 export interface TriggerDefinition {
   event: TriggerEvent;
-  condition?: string; // TODO: Define condition system
+  condition?: string; // Condition expression for trigger activation
   effectRef: string;
   timing: 'immediate' | 'stack';
 }

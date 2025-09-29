@@ -233,12 +233,21 @@ export class TurnManager {
           }
         });
 
-        // TODO: Recalculate stats based on new level
+        // Recalculate stats based on new level
         // HP damage retention: current damage stays the same when max HP increases
+        const newMaxHp = this.calculateMaxHP(summon.baseStats, newLevel);
+        const updatedCombatStats = {
+          ...summon.combatStats,
+          level: newLevel,
+          maxHp: newMaxHp,
+          movement: this.calculateMovement(summon.baseStats, newLevel),
+          attackRange: this.calculateAttackRange(summon.baseStats, newLevel)
+        };
+        
         return {
           ...summon,
-          level: newLevel
-          // combatStats will be recalculated by stat system
+          level: newLevel,
+          combatStats: updatedCombatStats
         };
       }
       return summon;
@@ -349,5 +358,30 @@ export class TurnManager {
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     return shuffled;
+  }
+
+  /**
+   * Calculate max HP based on stats and level (simplified formula)
+   */
+  private calculateMaxHP(baseStats: any, level: number): number {
+    // Simplified HP calculation based on END and level
+    // Real implementation would use exact GDD formulas
+    return Math.floor((baseStats.end * 2 + baseStats.str * 0.5) * (1 + (level - 5) * 0.1));
+  }
+
+  /**
+   * Calculate movement speed based on stats and level
+   */
+  private calculateMovement(baseStats: any, level: number): number {
+    // Simplified movement calculation
+    return Math.max(1, Math.floor(baseStats.spd * 0.2 + level * 0.05));
+  }
+
+  /**
+   * Calculate attack range based on stats and level
+   */
+  private calculateAttackRange(baseStats: any, level: number): number {
+    // Most summons have range 1, could be modified by equipment/abilities
+    return 1;
   }
 }

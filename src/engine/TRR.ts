@@ -302,24 +302,145 @@ export class TRRManager {
    * Get triggers defined on a card
    */
   private getTriggersForCard(card: import('../types/card').CardInPlay): any[] {
-    // TODO: Extract triggers from card definition
-    return [];
+    // Extract triggers from different card types
+    const triggers: any[] = [];
+    
+    // Check for common trigger properties (this would be expanded based on card structure)
+    if ('triggers' in card && Array.isArray(card.triggers)) {
+      triggers.push(...card.triggers);
+    }
+    
+    // Check for passive effects that might contain triggers
+    if ('passiveEffects' in card && Array.isArray(card.passiveEffects)) {
+      // Passive effects might have trigger conditions
+      for (const effect of card.passiveEffects) {
+        if (effect.parameters && effect.parameters.triggerEvent) {
+          triggers.push({
+            event: effect.parameters.triggerEvent,
+            condition: effect.parameters.condition,
+            effectRef: effect.effectId,
+            parameters: effect.parameters
+          });
+        }
+      }
+    }
+    
+    return triggers;
   }
 
   /**
    * Check if event matches trigger condition
    */
   private doesEventMatchTrigger(event: GameEvent, trigger: any): boolean {
-    // TODO: Implement trigger matching logic
-    return false;
+    // Basic event type matching
+    if (trigger.event !== event.type) {
+      return false;
+    }
+    
+    // If there's a condition, evaluate it
+    if (trigger.condition) {
+      // For now, implement basic condition checking
+      // This would be expanded with a proper condition evaluation system
+      try {
+        return this.evaluateCondition(trigger.condition, event, trigger);
+      } catch (error) {
+        console.warn('Error evaluating trigger condition:', error);
+        return false;
+      }
+    }
+    
+    return true; // No condition means it always triggers on matching event type
+  }
+
+  /**
+   * Basic condition evaluation (would be expanded in full implementation)
+   */
+  private evaluateCondition(condition: string, event: GameEvent, trigger: any): boolean {
+    // This is a simplified condition evaluator
+    // A full implementation would have a proper expression parser
+    
+    if (condition === 'always') return true;
+    if (condition === 'never') return false;
+    
+    // Example conditions that could be expanded:
+    if (condition.includes('player_id')) {
+      const expectedPlayer = condition.match(/player_id\s*==\s*'([^']+)'/)?.[1];
+      return expectedPlayer === event.playerId;
+    }
+    
+    if (condition.includes('summon_level')) {
+      const levelCheck = condition.match(/summon_level\s*([<>]=?)\s*(\d+)/);
+      if (levelCheck && event.data?.summon?.level) {
+        const operator = levelCheck[1];
+        const targetLevel = parseInt(levelCheck[2]);
+        const summonLevel = event.data.summon.level;
+        
+        switch (operator) {
+          case '<': return summonLevel < targetLevel;
+          case '<=': return summonLevel <= targetLevel;
+          case '>': return summonLevel > targetLevel;
+          case '>=': return summonLevel >= targetLevel;
+          default: return false;
+        }
+      }
+    }
+    
+    // Default: assume condition is met for unrecognized conditions
+    return true;
   }
 
   /**
    * Resolve targets for a trigger based on event data
    */
   private resolveTargetsForTrigger(trigger: any, event: GameEvent): any[] {
-    // TODO: Implement target resolution
-    return [];
+    const targets: any[] = [];
+    
+    // If trigger has explicit target specification
+    if (trigger.parameters && trigger.parameters.targets) {
+      return trigger.parameters.targets;
+    }
+    
+    // Auto-resolve targets based on event type and data
+    switch (event.type) {
+      case 'summonDeployed':
+      case 'summonDefeated':
+      case 'summonAttacked':
+      case 'summonDamaged':
+      case 'summonLeveled':
+        if (event.data?.summonId) {
+          targets.push(event.data.summonId);
+        }
+        break;
+        
+      case 'cardPlayed':
+      case 'cardEntersPlay':
+        if (event.data?.card?.id) {
+          targets.push(event.data.card.id);
+        }
+        break;
+        
+      case 'phaseStarted':
+      case 'phaseEnded':
+        // Phase triggers might target the current player
+        targets.push(event.playerId);
+        break;
+        
+      default:
+        // For other events, try to extract targets from event data
+        if (event.data?.targets) {
+          targets.push(...event.data.targets);
+        } else if (event.data?.target) {
+          targets.push(event.data.target);
+        }
+        break;
+    }
+    
+    // If no targets resolved, use the event source as target
+    if (targets.length === 0 && event.playerId) {
+      targets.push(event.playerId);
+    }
+    
+    return targets;
   }
 
   /**

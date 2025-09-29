@@ -5,7 +5,25 @@
  * Based on GDD: Game Board & Zones, Turn Structure, Victory Conditions
  */
 
-import crypto from 'crypto';
+// Simple UUID generator without crypto dependency
+function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+// Simple hash function without crypto dependency
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32bit integer
+  }
+  return Math.abs(hash).toString(16);
+}
 import { 
   GameState, 
   Player, 
@@ -176,11 +194,11 @@ export class GameStateManager {
 
   /**
    * Generate a deterministic hash of the current state
-   * @returns SHA-256 hash of the serialized state
+   * @returns Simple hash of the serialized state
    */
   getStateHash(): string {
     const stateJson = this.serialize();
-    return crypto.createHash('sha256').update(stateJson).digest('hex');
+    return simpleHash(stateJson);
   }
 
   /**
@@ -212,7 +230,7 @@ export class GameStateManager {
    */
   private createInitialState(overrides?: Partial<GameState>): GameState {
     const defaultState: GameState = {
-      gameId: crypto.randomUUID(),
+      gameId: generateUUID(),
       players: {},
       playerOrder: [],
       sharedZones: {

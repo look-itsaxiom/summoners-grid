@@ -387,29 +387,319 @@ export class ActionProcessor {
     return { isValid: true, errors: [] };
   }
 
-  // Execution methods would go here...
+  // Execution methods
   private executePlayCard(action: PlayCardAction): GameStateManager {
-    // TODO: Implement card playing logic
-    return this.gameState;
+    const state = this.gameState.getState();
+    const player = state.players[action.playerId];
+    const card = player?.zones.hand.find(c => c.id === action.cardId);
+
+    if (!card) {
+      throw new Error('Card not found in hand');
+    }
+
+    let updatedState = this.gameState;
+
+    // Remove card from hand
+    updatedState = updatedState.removeCardFromZone(action.playerId, action.cardId, 'hand');
+
+    // Handle different card types
+    switch (card.type) {
+      case CardType.Summon:
+        updatedState = this.executeSummonPlay(updatedState, action, card as any);
+        break;
+      case CardType.Action:
+        updatedState = this.executeActionPlay(updatedState, action, card as any);
+        break;
+      case CardType.Building:
+      case CardType.Quest:
+        updatedState = this.executePermanentPlay(updatedState, action, card);
+        break;
+      default:
+        // Other card types would be handled here
+        break;
+    }
+
+    // Emit card played event
+    this.eventBus.emit({
+      type: 'cardPlayed' as any,
+      playerId: action.playerId,
+      data: {
+        card: card,
+        targets: action.targets,
+        position: action.position
+      }
+    });
+
+    return updatedState;
+  }
+
+  private executeSummonPlay(gameState: GameStateManager, action: PlayCardAction, card: any): GameStateManager {
+    const state = gameState.getState();
+    const player = state.players[action.playerId];
+
+    // Create summon unit
+    const summonUnit = {
+      id: `summon_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      cardId: card.id,
+      ownerId: action.playerId,
+      position: action.position!,
+      level: 5, // Starting level from GDD
+      baseStats: card.baseStats,
+      combatStats: {
+        hp: this.calculateMaxHP(card.baseStats, 5),
+        maxHp: this.calculateMaxHP(card.baseStats, 5),
+        movement: this.calculateMovement(card.baseStats),
+        attackRange: 1, // Default attack range
+        level: 5
+      },
+      damage: 0,
+      hasAttacked: false,
+      movementUsed: 0,
+      completedQuests: [],
+      statusEffects: []
+    };
+
+    // Add summon to player's summons
+    const updatedSummons = [...player.summons, summonUnit];
+    let updatedState = gameState.updatePlayer(action.playerId, {
+      summons: updatedSummons,
+      hasPlayedTurnSummon: true
+    });
+
+    // Update game board
+    const boardKey = `${action.position!.x},${action.position!.y}`;
+    const updatedBoard = new Map(state.sharedZones.gameBoard);
+    updatedBoard.set(boardKey, summonUnit);
+    
+    updatedState = updatedState.update({
+      sharedZones: {
+        ...state.sharedZones,
+        gameBoard: updatedBoard
+      }
+    });
+
+    // Trigger summon draws (3 cards from GDD)
+    const drawEffect = {
+      id: `summon_draw_${Date.now()}`,
+      ownerId: action.playerId,
+      sourceCardId: card.id,
+      effectId: 'draw_cards',
+      speed: SpeedLevel.Action,
+      parameters: { count: 3 },
+      targets: [action.playerId],
+      timestamp: Date.now()
+    };
+
+    updatedState = updatedState.addToEffectStack(drawEffect);
+
+    // Emit summon deployed event
+    this.eventBus.emit({
+      type: 'summonDeployed' as any,
+      playerId: action.playerId,
+      data: {
+        summonId: summonUnit.id,
+        cardId: card.id,
+        position: action.position
+      }
+    });
+
+    return updatedState;
+  }
+
+  private executeActionPlay(gameState: GameStateManager, action: PlayCardAction, card: any): GameStateManager {
+    let updatedState = gameState;
+
+    // Create effect entries for each effect on the card
+    if (card.effects && card.effects.length > 0) {
+      for (const effect of card.effects) {
+        const effectEntry = {
+          id: `effect_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ownerId: action.playerId,
+          sourceCardId: card.id,
+          effectId: effect.effectId,
+          speed: card.speed,
+          parameters: effect.parameters || {},
+          targets: action.targets || [],
+          timestamp: Date.now()
+        };
+
+        updatedState = updatedState.addToEffectStack(effectEntry);
+      }
+    }
+
+    // Move card to appropriate pile based on GDD rules
+    const destinationZone = card.speed === SpeedLevel.Counter ? 'discardPile' : 'rechargePile';
+    updatedState = updatedState.addCardToZone(action.playerId, card, destinationZone);
+
+    return updatedState;
+  }
+
+  private executePermanentPlay(gameState: GameStateManager, action: PlayCardAction, card: Card): GameStateManager {
+    const cardInPlay = {
+      ...card,
+      ownerId: action.playerId,
+      position: action.position,
+      modifications: [],
+      counters: {}
+    };
+
+    // Add to in play zone
+    const state = gameState.getState();
+    const updatedInPlay = [...state.sharedZones.inPlay, cardInPlay];
+    
+    return gameState.update({
+      sharedZones: {
+        ...state.sharedZones,
+        inPlay: updatedInPlay
+      }
+    });
   }
 
   private executeMoveSummon(action: MoveSummonAction): GameStateManager {
-    // TODO: Implement summon movement logic
-    return this.gameState;
+    const state = this.gameState.getState();
+    const player = state.players[action.playerId];
+    const summon = player?.summons.find(s => s.id === action.summonId);
+
+    if (!summon) {
+      throw new Error('Summon not found');
+    }
+
+    // Update summon position and movement used
+    const updatedSummon = {
+      ...summon,
+      position: action.toPosition,
+      movementUsed: summon.movementUsed + action.movementCost
+    };
+
+    const updatedSummons = player.summons.map(s => 
+      s.id === action.summonId ? updatedSummon : s
+    );
+
+    let updatedState = this.gameState.updatePlayer(action.playerId, {
+      summons: updatedSummons
+    });
+
+    // Update game board
+    const oldBoardKey = `${action.fromPosition.x},${action.fromPosition.y}`;
+    const newBoardKey = `${action.toPosition.x},${action.toPosition.y}`;
+    
+    const updatedBoard = new Map(state.sharedZones.gameBoard);
+    updatedBoard.delete(oldBoardKey);
+    updatedBoard.set(newBoardKey, updatedSummon);
+    
+    updatedState = updatedState.update({
+      sharedZones: {
+        ...state.sharedZones,
+        gameBoard: updatedBoard
+      }
+    });
+
+    // Emit movement event
+    this.eventBus.emit({
+      type: 'summonMoved' as any,
+      playerId: action.playerId,
+      data: {
+        summonId: action.summonId,
+        fromPosition: action.fromPosition,
+        toPosition: action.toPosition,
+        movementCost: action.movementCost
+      }
+    });
+
+    return updatedState;
   }
 
   private executeAttack(action: AttackAction): GameStateManager {
-    // TODO: Implement attack logic
-    return this.gameState;
+    const state = this.gameState.getState();
+    const attackerOwner = state.players[action.playerId];
+    const attacker = attackerOwner?.summons.find(s => s.id === action.attackerId);
+
+    if (!attacker) {
+      throw new Error('Attacking summon not found');
+    }
+
+    // Mark attacker as having attacked
+    const updatedAttacker = { ...attacker, hasAttacked: true };
+    const updatedAttackerSummons = attackerOwner.summons.map(s => 
+      s.id === action.attackerId ? updatedAttacker : s
+    );
+
+    let updatedState = this.gameState.updatePlayer(action.playerId, {
+      summons: updatedAttackerSummons
+    });
+
+    // Create attack effect on the stack
+    const attackEffect = {
+      id: `attack_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      ownerId: action.playerId,
+      sourceCardId: attacker.cardId,
+      effectId: 'combat_attack',
+      speed: SpeedLevel.Action,
+      parameters: {
+        attackerId: action.attackerId,
+        targetId: action.targetId,
+        attackType: 'basic'
+      },
+      targets: [action.targetId],
+      timestamp: Date.now()
+    };
+
+    updatedState = updatedState.addToEffectStack(attackEffect);
+
+    // Emit attack event
+    this.eventBus.emit({
+      type: 'summonAttacked' as any,
+      playerId: action.playerId,
+      data: {
+        attackerId: action.attackerId,
+        targetId: action.targetId
+      }
+    });
+
+    return updatedState;
   }
 
   private executePassPriority(action: PassPriorityAction): GameStateManager {
-    // TODO: Implement priority passing logic
-    return this.gameState;
+    const state = this.gameState.getState();
+    let updatedState = this.gameState;
+
+    // Remove priority from the passing player
+    updatedState = updatedState.updatePlayer(action.playerId, { priority: false });
+
+    // Update priority queue to mark this player as passed
+    const updatedPriorityQueue = state.priorityQueue.map(window => 
+      window.playerId === action.playerId 
+        ? { ...window, passed: true }
+        : window
+    );
+
+    updatedState = updatedState.update({
+      priorityQueue: updatedPriorityQueue
+    });
+
+    // Find next player with priority who hasn't passed
+    const nextPriorityWindow = updatedPriorityQueue.find(window => !window.passed);
+    
+    if (nextPriorityWindow) {
+      // Give priority to next player
+      updatedState = updatedState.updatePlayer(nextPriorityWindow.playerId, { priority: true });
+    }
+
+    // Emit priority passed event
+    this.eventBus.emit({
+      type: 'priorityPassed' as any,
+      playerId: action.playerId,
+      data: {
+        nextPlayer: nextPriorityWindow?.playerId || null
+      }
+    });
+
+    return updatedState;
   }
 
   private executeAdvancePhase(action: import('../types/action').AdvancePhaseAction): GameStateManager {
-    // TODO: Implement phase advancement logic
+    // Phase advancement should be handled by the main game engine
+    // For now, just return the current state as the action processor shouldn't handle phase changes directly
     return this.gameState;
   }
 
@@ -424,13 +714,91 @@ export class ActionProcessor {
   }
 
   private generateMoveActions(playerId: PlayerId, summonId: string): MoveSummonAction[] {
-    // TODO: Generate all valid move actions for summon
-    return [];
+    const state = this.gameState.getState();
+    const player = state.players[playerId];
+    const summon = player?.summons.find(s => s.id === summonId);
+    
+    if (!summon) {
+      return [];
+    }
+
+    const actions: MoveSummonAction[] = [];
+    const remainingMovement = summon.combatStats.movement - summon.movementUsed;
+    
+    if (remainingMovement <= 0) {
+      return [];
+    }
+
+    // Generate all valid adjacent moves (simplified - could be expanded for pathfinding)
+    const directions = [
+      { x: 0, y: 1 },   // Up
+      { x: 0, y: -1 },  // Down  
+      { x: 1, y: 0 },   // Right
+      { x: -1, y: 0 },  // Left
+      { x: 1, y: 1 },   // Up-Right
+      { x: 1, y: -1 },  // Down-Right
+      { x: -1, y: 1 },  // Up-Left
+      { x: -1, y: -1 }  // Down-Left
+    ];
+
+    for (const dir of directions) {
+      const newPosition = {
+        x: summon.position.x + dir.x,
+        y: summon.position.y + dir.y
+      };
+
+      // Check if position is valid and unoccupied
+      if (this.gameState.isValidCoordinate(newPosition)) {
+        const boardKey = `${newPosition.x},${newPosition.y}`;
+        if (!state.sharedZones.gameBoard.has(boardKey)) {
+          actions.push({
+            type: ActionType.MoveSummon,
+            playerId,
+            summonId,
+            fromPosition: summon.position,
+            toPosition: newPosition,
+            movementCost: 1,
+            timestamp: Date.now()
+          });
+        }
+      }
+    }
+
+    return actions;
   }
 
   private generateAttackActions(playerId: PlayerId, summonId: string): AttackAction[] {
-    // TODO: Generate all valid attack actions for summon
-    return [];
+    const state = this.gameState.getState();
+    const player = state.players[playerId];
+    const attacker = player?.summons.find(s => s.id === summonId);
+    
+    if (!attacker || attacker.hasAttacked) {
+      return [];
+    }
+
+    const actions: AttackAction[] = [];
+    const attackRange = attacker.combatStats.attackRange;
+
+    // Find all enemy summons within attack range
+    for (const [enemyPlayerId, enemyPlayer] of Object.entries(state.players)) {
+      if (enemyPlayerId === playerId) continue; // Skip own summons
+
+      for (const enemySummon of enemyPlayer.summons) {
+        const distance = this.calculateDistance(attacker.position, enemySummon.position);
+        
+        if (distance <= attackRange) {
+          actions.push({
+            type: ActionType.AttackWithSummon,
+            playerId,
+            attackerId: summonId,
+            targetId: enemySummon.id,
+            timestamp: Date.now()
+          });
+        }
+      }
+    }
+
+    return actions;
   }
 
   private getAllowedResponseSpeeds(stack: import('../types/game').EffectStackEntry[]): SpeedLevel[] {
@@ -450,13 +818,75 @@ export class ActionProcessor {
   }
 
   private validateCost(card: Card, playerId: PlayerId): ActionValidation {
-    // TODO: Implement cost validation logic
-    return { isValid: true, errors: [] };
+    const state = this.gameState.getState();
+    const player = state.players[playerId];
+
+    if (!player) {
+      return { isValid: false, errors: ['Player not found'] };
+    }
+
+    // Check cost requirements
+    switch (card.cost.type) {
+      case 'none':
+        return { isValid: true, errors: [] };
+        
+      case 'role_requirement':
+        if (card.cost.requirements?.roles) {
+          // Check if player has any summons with required roles
+          const hasRequiredRole = player.summons.some(summon => {
+            // For now, we'll assume the summon's role is stored in a baseCard reference
+            // This could be expanded to actually track role information
+            return card.cost.requirements!.roles!.some(requiredRole => {
+              // Simplified role check - in full implementation would check summon's actual role
+              return true; // For now, allow all role requirements
+            });
+          });
+          
+          if (!hasRequiredRole) {
+            return {
+              isValid: false,
+              errors: [`Requires controlling a summon with role: ${card.cost.requirements.roles.join(' or ')}`]
+            };
+          }
+        }
+        return { isValid: true, errors: [] };
+        
+      case 'resource':
+        // Resource costs would be implemented here
+        return { isValid: true, errors: [] };
+        
+      case 'sacrifice':
+        // Sacrifice costs would be implemented here  
+        return { isValid: true, errors: [] };
+        
+      default:
+        return { isValid: false, errors: ['Unknown cost type'] };
+    }
   }
 
   private findSummonById(summonId: string): any {
-    // TODO: Find summon across all players
+    const state = this.gameState.getState();
+    
+    // Search across all players for the summon
+    for (const [playerId, player] of Object.entries(state.players)) {
+      const summon = player.summons.find(s => s.id === summonId);
+      if (summon) {
+        return { summon, playerId };
+      }
+    }
+    
     return null;
+  }
+
+  // Helper methods for stat calculations
+  private calculateMaxHP(baseStats: any, level: number): number {
+    // Simplified HP calculation - would use proper formulas from GDD
+    return Math.floor((baseStats.end * 2 + baseStats.str * 0.5) * (1 + level * 0.1));
+  }
+
+  private calculateMovement(baseStats: any): number {
+    // Simplified movement calculation
+    return Math.max(1, Math.floor(baseStats.spd * 0.2));
   }
 
   private calculateDistance(pos1: Coordinate, pos2: Coordinate): number {
