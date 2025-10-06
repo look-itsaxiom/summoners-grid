@@ -1,0 +1,46 @@
+// Game constants based on the GDD
+
+export const BOARD_CONFIG = {
+  WIDTH: 12,
+  HEIGHT: 14,
+  CELL_SIZE: 48,
+  PLAYER_A_TERRITORY_END: 2,  // rows 0-2
+  PLAYER_B_TERRITORY_START: 11,  // rows 11-13
+};
+
+export const GAME_CONFIG = {
+  MAX_SUMMONS_PER_PLAYER: 3,
+  STARTING_LEVEL: 5,
+  MAX_LEVEL: 20,
+  VICTORY_POINTS_TO_WIN: 3,
+  STARTING_HAND_SIZE: 0,  // No initial draw, summons start in hand
+};
+
+export const COLORS = {
+  BACKGROUND: 0x1a1a2e,
+  GRID_LINE: 0x444444,
+  PLAYER_A_TERRITORY: 0x2a4d69,
+  PLAYER_B_TERRITORY: 0x692a2a,
+  NEUTRAL_TERRITORY: 0x2a4d2a,
+  CARD_BACKGROUND: 0x2d3436,
+  CARD_BORDER: 0xffffff,
+  TEXT_PRIMARY: 0xffffff,
+  TEXT_SECONDARY: 0xaaaaaa,
+  HIGHLIGHT: 0xffff00,
+  SUMMON_PLAYER_A: 0x4dabf7,
+  SUMMON_PLAYER_B: 0xf76d6d,
+};
+
+export const UI_CONFIG = {
+  PADDING: 10,
+  CARD_WIDTH: 120,
+  CARD_HEIGHT: 160,
+  HAND_Y_OFFSET: 20,
+  INFO_PANEL_WIDTH: 300,
+};
+
+export const GROWTH_RATE_VALUES = {
+  SLOW: 0.75,
+  NORMAL: 1.0,
+  FAST: 1.25,
+};
