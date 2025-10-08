@@ -2,14 +2,27 @@ import { CardData } from './Card';
 
 export class Deck {
   private cards: CardData[] = [];
+  private summonCards: CardData[] = [];
 
   constructor() {
     this.initializeDeck();
   }
 
   private initializeDeck(): void {
-    // Initialize with sample cards based on the game design
-    const cardTypes = ['Action', 'Summon', 'Counter', 'Quest', 'Building'];
+    // Initialize 3 summon cards for initial hand (3v3 format)
+    const summonNames = ['Gignen Warrior', 'Fae Magician', 'Wilderling Scout'];
+    
+    for (let i = 0; i < 3; i++) {
+      this.summonCards.push({
+        id: `summon-${i}`,
+        name: summonNames[i],
+        type: 'Summon',
+        description: `A Summon card`
+      });
+    }
+
+    // Initialize main deck with other card types
+    const cardTypes = ['Action', 'Counter', 'Quest', 'Building', 'Action'];
     const cardNames = [
       'Sharpened Blade',
       'Healing Hands',
@@ -48,7 +61,15 @@ export class Deck {
     return this.cards.pop() || null;
   }
 
+  public drawSummon(): CardData | null {
+    return this.summonCards.pop() || null;
+  }
+
   public getRemainingCount(): number {
     return this.cards.length;
+  }
+
+  public getSummonCount(): number {
+    return this.summonCards.length;
   }
 }

@@ -15,6 +15,8 @@ export class GameScene extends Phaser.Scene {
   private playButton!: Phaser.GameObjects.Rectangle;
   private playButtonText!: Phaser.GameObjects.Text;
   private deckVisual!: Phaser.GameObjects.Container;
+  private discardPile: CardData[] = [];
+  private discardVisual!: Phaser.GameObjects.Container;
 
   constructor() {
     super('GameScene');
@@ -30,7 +32,10 @@ export class GameScene extends Phaser.Scene {
     // Create visual deck
     this.createDeckVisual();
 
-    // Draw initial hand
+    // Create discard pile visual
+    this.createDiscardVisual();
+
+    // Draw initial hand (3 summon cards only)
     this.drawInitialHand();
 
     // Add UI text
@@ -164,10 +169,59 @@ export class GameScene extends Phaser.Scene {
     this.deckVisual.add(instructionText);
   }
 
-  private drawInitialHand(): void {
-    for (let i = 0; i < this.HAND_SIZE; i++) {
-      this.drawCard();
+  private createDiscardVisual(): void {
+    const discardX = 900;
+    const discardY = 200;
+
+    // Create discard container
+    this.discardVisual = this.add.container(discardX, discardY);
+
+    // Create discard pile background
+    const discardBack = this.add.rectangle(0, 0, 80, 110, 0x3a3a1a);
+    discardBack.setStrokeStyle(2, 0x6a6a4a);
+    this.discardVisual.add(discardBack);
+
+    // Add discard text
+    const discardText = this.add.text(0, -70, 'DISCARD', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    this.discardVisual.add(discardText);
+
+    // Add card count text
+    const countText = this.add.text(0, 70, '0 cards', {
+      fontSize: '14px',
+      color: '#aaaaaa'
+    }).setOrigin(0.5);
+    this.discardVisual.add(countText);
+  }
+
+  private updateDiscardVisual(): void {
+    // Update the discard pile visuals to show cards
+    const countText = this.discardVisual.list[2] as Phaser.GameObjects.Text;
+    countText.setText(`${this.discardPile.length} cards`);
+
+    // Make the discard background more prominent if there are cards
+    const discardBack = this.discardVisual.list[0] as Phaser.GameObjects.Rectangle;
+    if (this.discardPile.length > 0) {
+      discardBack.setFillStyle(0x4a4a2a);
+      discardBack.setStrokeStyle(2, 0x7a7a5a);
+    } else {
+      discardBack.setFillStyle(0x3a3a1a);
+      discardBack.setStrokeStyle(2, 0x6a6a4a);
     }
+  }
+
+  private drawInitialHand(): void {
+    // Draw 3 summon cards for initial hand (3v3 format)
+    for (let i = 0; i < 3; i++) {
+      const cardData = this.deck.drawSummon();
+      if (cardData) {
+        this.addCardToHand(cardData);
+      }
+    }
+    this.repositionHand();
   }
 
   private drawCard(): void {
@@ -177,6 +231,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    this.addCardToHand(cardData);
+    this.repositionHand();
+  }
+
+  private addCardToHand(cardData: CardData): void {
     const handY = 780;
     const handStartX = 250;
     const cardSpacing = 100;
@@ -290,6 +349,10 @@ export class GameScene extends Phaser.Scene {
     const cardData = this.selectedCard.getCardData();
     console.log('Playing card:', cardData);
 
+    // Add card to discard pile
+    this.discardPile.push(cardData);
+    this.updateDiscardVisual();
+
     // Remove card from hand
     const cardIndex = this.hand.indexOf(this.selectedCard);
     if (cardIndex !== -1) {
@@ -306,11 +369,7 @@ export class GameScene extends Phaser.Scene {
       // Stub function for playing a card
       this.onPlayCard(cardData);
 
-      // Draw a new card if available
-      if (this.hand.length < this.HAND_SIZE && this.deck.getRemainingCount() > 0) {
-        this.drawCard();
-        this.repositionHand();
-      }
+      // Note: Do NOT automatically draw a new card - player must click deck to draw
     }
   }
 
