@@ -1,8 +1,8 @@
-import Phaser from 'phaser';
-import { Card, CardData } from './Card';
-import { Deck } from './Deck';
-import { CardPlayHandlerRegistry, SummonPlayHandler } from './cardHandlers';
-import { PlayerInfo } from './types/GameTypes';
+import Phaser from "phaser";
+import { Card, CardData } from "./Card";
+import { Deck } from "./Deck";
+import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
+import { PlayerInfo } from "./types/GameTypes";
 
 export class GameScene extends Phaser.Scene {
   private readonly GRID_COLS = 12;
@@ -23,7 +23,7 @@ export class GameScene extends Phaser.Scene {
   private playerInfo: PlayerInfo = { playerId: 0, color: 0x4a6fa5 }; // Player A (blue)
 
   constructor() {
-    super('GameScene');
+    super("GameScene");
   }
 
   create(): void {
@@ -72,7 +72,8 @@ export class GameScene extends Phaser.Scene {
       this.grid[row] = [];
       for (let col = 0; col < this.GRID_COLS; col++) {
         const x = offsetX + col * this.CELL_SIZE;
-        const y = offsetY + row * this.CELL_SIZE;
+        // Flip Y coordinate so row 0 appears at bottom (Player A territory faces player)
+        const y = offsetY + (this.GRID_ROWS - 1 - row) * this.CELL_SIZE;
 
         // Determine cell color based on territory
         let cellColor = 0x333333; // Neutral territory
@@ -82,13 +83,7 @@ export class GameScene extends Phaser.Scene {
           cellColor = 0x7a3a3a; // Opponent territory (top 3 rows)
         }
 
-        const cell = this.add.rectangle(
-          x + this.CELL_SIZE / 2,
-          y + this.CELL_SIZE / 2,
-          this.CELL_SIZE - 2,
-          this.CELL_SIZE - 2,
-          cellColor
-        );
+        const cell = this.add.rectangle(x + this.CELL_SIZE / 2, y + this.CELL_SIZE / 2, this.CELL_SIZE - 2, this.CELL_SIZE - 2, cellColor);
         cell.setStrokeStyle(1, 0x666666);
 
         this.grid[row][col] = cell;
@@ -104,20 +99,25 @@ export class GameScene extends Phaser.Scene {
     for (let col = 0; col < this.GRID_COLS; col++) {
       const x = offsetX + col * this.CELL_SIZE + this.CELL_SIZE / 2;
       const y = offsetY - 15;
-      this.add.text(x, y, col.toString(), {
-        fontSize: '10px',
-        color: '#888888'
-      }).setOrigin(0.5);
+      this.add
+        .text(x, y, (col + 1).toString(), {
+          fontSize: "10px",
+          color: "#888888",
+        })
+        .setOrigin(0.5);
     }
 
-    // Row labels (0-13)
+    // Row labels (0-13) - flip to match visual layout
     for (let row = 0; row < this.GRID_ROWS; row++) {
       const x = offsetX - 15;
-      const y = offsetY + row * this.CELL_SIZE + this.CELL_SIZE / 2;
-      this.add.text(x, y, row.toString(), {
-        fontSize: '10px',
-        color: '#888888'
-      }).setOrigin(0.5);
+      // Use flipped Y coordinate to match visual grid position
+      const y = offsetY + (this.GRID_ROWS - 1 - row) * this.CELL_SIZE + this.CELL_SIZE / 2;
+      this.add
+        .text(x, y, (row + 1).toString(), {
+          fontSize: "10px",
+          color: "#888888",
+        })
+        .setOrigin(0.5);
     }
   }
 
@@ -136,18 +136,22 @@ export class GameScene extends Phaser.Scene {
     }
 
     // Add deck text
-    const deckText = this.add.text(0, -70, 'DECK', {
-      fontSize: '16px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const deckText = this.add
+      .text(0, -70, "DECK", {
+        fontSize: "16px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
     this.deckVisual.add(deckText);
 
     // Add card count text
-    const countText = this.add.text(0, 70, '', {
-      fontSize: '14px',
-      color: '#aaaaaa'
-    }).setOrigin(0.5);
+    const countText = this.add
+      .text(0, 70, "", {
+        fontSize: "14px",
+        color: "#aaaaaa",
+      })
+      .setOrigin(0.5);
     this.deckVisual.add(countText);
 
     // Update count text continuously
@@ -156,37 +160,39 @@ export class GameScene extends Phaser.Scene {
       callback: () => {
         countText.setText(`${this.deck.getRemainingCount()} cards`);
       },
-      loop: true
+      loop: true,
     });
 
     // Make deck interactive
     const topCard = this.deckVisual.list[2] as Phaser.GameObjects.Rectangle;
     topCard.setInteractive();
 
-    topCard.on('pointerdown', () => {
+    topCard.on("pointerdown", () => {
       if (this.hand.length < this.HAND_SIZE) {
         this.drawCard();
         this.repositionHand();
       } else {
-        console.log('Hand is full (6 cards max)');
+        console.log("Hand is full (6 cards max)");
       }
     });
 
-    topCard.on('pointerover', () => {
+    topCard.on("pointerover", () => {
       topCard.setFillStyle(0x2a4a6a);
       this.deckVisual.setScale(1.05);
     });
 
-    topCard.on('pointerout', () => {
+    topCard.on("pointerout", () => {
       topCard.setFillStyle(0x1a3a5a);
       this.deckVisual.setScale(1.0);
     });
 
     // Add "Click to Draw" instruction
-    const instructionText = this.add.text(0, 100, 'Click to Draw', {
-      fontSize: '12px',
-      color: '#6a9fc5'
-    }).setOrigin(0.5);
+    const instructionText = this.add
+      .text(0, 100, "Click to Draw", {
+        fontSize: "12px",
+        color: "#6a9fc5",
+      })
+      .setOrigin(0.5);
     this.deckVisual.add(instructionText);
   }
 
@@ -203,18 +209,22 @@ export class GameScene extends Phaser.Scene {
     this.discardVisual.add(discardBack);
 
     // Add discard text
-    const discardText = this.add.text(0, -70, 'DISCARD', {
-      fontSize: '16px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    const discardText = this.add
+      .text(0, -70, "DISCARD", {
+        fontSize: "16px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
     this.discardVisual.add(discardText);
 
     // Add card count text
-    const countText = this.add.text(0, 70, '0 cards', {
-      fontSize: '14px',
-      color: '#aaaaaa'
-    }).setOrigin(0.5);
+    const countText = this.add
+      .text(0, 70, "0 cards", {
+        fontSize: "14px",
+        color: "#aaaaaa",
+      })
+      .setOrigin(0.5);
     this.discardVisual.add(countText);
   }
 
@@ -248,7 +258,7 @@ export class GameScene extends Phaser.Scene {
   private drawCard(): void {
     const cardData = this.deck.draw();
     if (!cardData) {
-      console.log('No more cards in deck');
+      console.log("No more cards in deck");
       return;
     }
 
@@ -261,18 +271,13 @@ export class GameScene extends Phaser.Scene {
     const handStartX = 250;
     const cardSpacing = 100;
 
-    const card = new Card(
-      this,
-      handStartX + this.hand.length * cardSpacing,
-      handY,
-      cardData
-    );
+    const card = new Card(this, handStartX + this.hand.length * cardSpacing, handY, cardData);
 
-    card.on('cardSelected', (data: CardData) => {
+    card.on("cardSelected", (data: CardData) => {
       this.onCardSelected(card);
     });
 
-    card.on('cardDeselected', () => {
+    card.on("cardDeselected", () => {
       this.onCardDeselected(card);
     });
 
@@ -285,8 +290,8 @@ export class GameScene extends Phaser.Scene {
       this.selectedCard.deselect();
     }
     this.selectedCard = card;
-    console.log('Card selected:', card.getCardData());
-    
+    console.log("Card selected:", card.getCardData());
+
     // Show play button above the selected card
     this.showPlayButton();
   }
@@ -296,22 +301,26 @@ export class GameScene extends Phaser.Scene {
       this.selectedCard = null;
       this.hidePlayButton();
     }
-    console.log('Card deselected');
+    console.log("Card deselected");
   }
 
   private createUI(): void {
     // Title
-    this.add.text(600, 30, "Summoner's Grid", {
-      fontSize: '32px',
-      color: '#ffffff',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
+    this.add
+      .text(600, 30, "Summoner's Grid", {
+        fontSize: "32px",
+        color: "#ffffff",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
 
     // Instructions
-    this.add.text(600, 720, 'Hand (Click to Select):', {
-      fontSize: '18px',
-      color: '#ffffff'
-    }).setOrigin(0.5);
+    this.add
+      .text(600, 720, "Hand (Click to Select):", {
+        fontSize: "18px",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
 
     // Create Play button (initially hidden)
     this.playButton = this.add.rectangle(0, 0, 120, 40, 0x4a6fa5);
@@ -319,21 +328,23 @@ export class GameScene extends Phaser.Scene {
     this.playButton.setInteractive();
     this.playButton.setVisible(false);
 
-    this.playButtonText = this.add.text(0, 0, 'Play Card', {
-      fontSize: '14px',
-      color: '#ffffff'
-    }).setOrigin(0.5);
+    this.playButtonText = this.add
+      .text(0, 0, "Play Card", {
+        fontSize: "14px",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
     this.playButtonText.setVisible(false);
 
-    this.playButton.on('pointerdown', () => {
+    this.playButton.on("pointerdown", () => {
       this.playSelectedCard();
     });
 
-    this.playButton.on('pointerover', () => {
+    this.playButton.on("pointerover", () => {
       this.playButton.setFillStyle(0x5a7fb5);
     });
 
-    this.playButton.on('pointerout', () => {
+    this.playButton.on("pointerout", () => {
       this.playButton.setFillStyle(0x4a6fa5);
     });
   }
@@ -343,10 +354,10 @@ export class GameScene extends Phaser.Scene {
       // Position button above the selected card
       const cardX = this.selectedCard.x;
       const cardY = this.selectedCard.y;
-      
+
       this.playButton.setPosition(cardX, cardY - 80);
       this.playButtonText.setPosition(cardX, cardY - 80);
-      
+
       this.playButton.setVisible(true);
       this.playButtonText.setVisible(true);
 
@@ -363,12 +374,12 @@ export class GameScene extends Phaser.Scene {
 
   private playSelectedCard(): void {
     if (!this.selectedCard) {
-      console.log('No card selected');
+      console.log("No card selected");
       return;
     }
 
     const cardData = this.selectedCard.getCardData();
-    console.log('Playing card:', cardData);
+    console.log("Playing card:", cardData);
 
     // Add card to discard pile
     this.discardPile.push(cardData);
@@ -404,7 +415,7 @@ export class GameScene extends Phaser.Scene {
         targets: card,
         x: handStartX + index * cardSpacing,
         duration: 200,
-        ease: 'Power2'
+        ease: "Power2",
       });
     });
   }
@@ -414,17 +425,13 @@ export class GameScene extends Phaser.Scene {
     console.log(`[GameScene] Playing card: ${cardData.name} (${cardData.type})`);
 
     // Try to execute using the appropriate handler
-    const handled = this.cardPlayHandlerRegistry.executePlay(
-      cardData,
-      this,
-      (success: boolean) => {
-        if (success) {
-          console.log(`[GameScene] Card played successfully: ${cardData.name}`);
-        } else {
-          console.log(`[GameScene] Card play failed: ${cardData.name}`);
-        }
+    const handled = this.cardPlayHandlerRegistry.executePlay(cardData, this, (success: boolean) => {
+      if (success) {
+        console.log(`[GameScene] Card played successfully: ${cardData.name}`);
+      } else {
+        console.log(`[GameScene] Card play failed: ${cardData.name}`);
       }
-    );
+    });
 
     if (!handled) {
       // No handler available for this card type yet
