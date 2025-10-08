@@ -24,6 +24,7 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private placedSummons: Map<string, SummonUnit> = new Map();
   private currentActionMenu: SummonActionMenu | null = null;
   private availableActions: ISummonAction[];
+  private activeAction: ISummonAction | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
@@ -267,6 +268,13 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private onSummonClicked(scene: Phaser.Scene, summon: SummonUnit): void {
     console.log(`[SummonPlayHandler] Summon clicked: ${summon.cardData.name}`);
 
+    // Cancel any active action before showing new menu
+    if (this.activeAction && this.activeAction.cancel) {
+      console.log('[SummonPlayHandler] Canceling previous active action');
+      this.activeAction.cancel();
+      this.activeAction = null;
+    }
+
     // Hide any existing menu
     if (this.currentActionMenu) {
       this.currentActionMenu.hide();
@@ -291,6 +299,15 @@ export class SummonPlayHandler implements ICardPlayHandler {
   ): void {
     console.log(`[SummonPlayHandler] Executing action: ${action.getName()}`);
 
+    // Cancel any previously active action before starting a new one
+    if (this.activeAction && this.activeAction.cancel) {
+      console.log('[SummonPlayHandler] Canceling previous active action before executing new one');
+      this.activeAction.cancel();
+    }
+
+    // Track the currently active action
+    this.activeAction = action;
+
     // Update the occupied positions map before moving
     const oldKey = this.getPositionKey(summon.position);
 
@@ -306,6 +323,11 @@ export class SummonPlayHandler implements ICardPlayHandler {
         }
       } else {
         console.log(`[SummonPlayHandler] Action failed: ${action.getName()}`);
+      }
+
+      // Clear the active action when complete
+      if (this.activeAction === action) {
+        this.activeAction = null;
       }
     });
   }

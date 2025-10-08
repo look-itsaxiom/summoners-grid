@@ -18,6 +18,8 @@ export class MoveAction implements ISummonAction {
   private occupiedPositions: Map<string, SummonUnit>;
   private highlightedCells: Phaser.GameObjects.Rectangle[] = [];
   private instructionText: Phaser.GameObjects.Text | null = null;
+  private isActive: boolean = false;
+  private currentScene: Phaser.Scene | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
@@ -42,6 +44,10 @@ export class MoveAction implements ISummonAction {
   ): void {
     console.log(`[MoveAction] Moving summon: ${summon.cardData.name}`);
 
+    // Mark this action as active
+    this.isActive = true;
+    this.currentScene = scene;
+
     // Show instruction text
     this.showInstructions(scene);
 
@@ -50,6 +56,18 @@ export class MoveAction implements ISummonAction {
 
     // Set up click handlers for grid cells
     this.setupGridCellHandlers(scene, summon, onComplete);
+  }
+
+  /**
+   * Cancel the move action and clean up all UI elements
+   */
+  cancel(): void {
+    if (this.isActive && this.currentScene) {
+      console.log('[MoveAction] Canceling active move action');
+      this.cleanup(this.currentScene);
+      this.isActive = false;
+      this.currentScene = null;
+    }
   }
 
   private showInstructions(scene: Phaser.Scene): void {
@@ -230,6 +248,10 @@ export class MoveAction implements ISummonAction {
         cell.setStrokeStyle(1, 0x666666);
       }
     }
+
+    // Mark as no longer active
+    this.isActive = false;
+    this.currentScene = null;
   }
 
   private getPositionKey(position: GridPosition): string {

@@ -28,4 +28,10 @@ export interface ISummonAction {
     scene: Phaser.Scene,
     onComplete: (success: boolean) => void
   ): void;
+
+  /**
+   * Cancel the action if it's currently in progress
+   * This allows proper cleanup when switching between actions
+   */
+  cancel?(): void;
 }
