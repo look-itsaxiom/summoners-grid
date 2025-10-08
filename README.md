@@ -34,11 +34,22 @@ summoners-grid/
   - Interactive card selection with hover effects
   - Click to select/deselect cards
 
-- **Card Play Mechanic**:
-  - Select a card by clicking on it
-  - Click "Play Card" button to play the selected card
-  - Playing a card calls a stubbed `onPlayCard()` function
-  - Card is removed from hand and a new card is drawn from deck
+- **Summon Play System**:
+  - Select a summon card by clicking on it
+  - Click "Play Card" button to initiate placement
+  - Valid placement cells are highlighted in player territory
+  - Summon units materialize on the board as colored tokens
+  - Card is removed from hand and discarded
+
+- **Summon Action Mechanics**:
+  - Click on placed summon tokens to open action menu
+  - **Move Action**: Move summons to any empty space on the board
+    - Green highlights show valid movement destinations
+    - Smooth animation to new position
+  - **Attack Action**: Initiate attacks (currently stubbed for testing)
+    - Shows attack notification message
+  - Action availability based on summon state
+  - Hover effects on summons and action buttons
 
 ## Getting Started
 
@@ -85,15 +96,28 @@ This starter implements the basic structure for Summoner's Grid based on the Gam
 
 ## Next Steps for Development
 
-The stubbed `onPlayCard()` function in `GameScene.ts` is where you can add:
+### Implemented Features:
+- ✅ Summon placement on the board
+- ✅ Summon action mechanics (Move and Attack)
+- ✅ Interactive summon tokens with action menus
 
-- Card effect implementation
-- Summon placement on the board
-- Combat mechanics
-- Turn phase management
+### Remaining Development Areas:
+
+The game foundation is now in place with basic summon interactions. Future enhancements include:
+
+- Full attack system with target selection and damage calculation
+- Movement range restrictions based on summon stats
+- Turn phase management (Draw, Level, Action, End phases)
+- Action restrictions based on turn rules (one attack per turn, movement limits)
+- Card effect implementation for Action, Quest, Building cards
 - Role advancement system
 - Equipment system
 - Victory conditions
+- Multiplayer support
+
+## Testing
+
+See [TESTING_SUMMON_ACTIONS.md](TESTING_SUMMON_ACTIONS.md) for detailed testing instructions for the summon action mechanics.
 
 ## Technologies Used
 
