@@ -247,7 +247,7 @@ export class SummonUnit {
 - Verify state updates correctly
 
 ### Manual Testing
-- See [TESTING_SUMMON_ACTIONS.md](TESTING_SUMMON_ACTIONS.md)
+- See [TESTING.md](TESTING.md) for comprehensive testing guide
 - Use [demo-actions.js](demo-actions.js) for automated browser testing
 
 ## Performance Considerations
@@ -263,6 +263,72 @@ export class SummonUnit {
 ### State Management
 - Summon state is centralized in `SummonUnit`
 - Efficient lookup using Map for position-based queries
+
+## Bug Fixes and Improvements
+
+### Multiple Summon Selection Fix
+
+**Issue:** Previously, users could select two summons simultaneously and accidentally move them both to the same location.
+
+**Root Cause:**
+1. User clicks first summon and selects "Move"
+2. Before completing the move, user clicks second summon
+3. Both move actions became active simultaneously
+4. Clicking a destination would move both summons to the same location
+
+**Solution Implemented:**
+
+1. **Added `cancel()` method to ISummonAction interface:**
+```typescript
+export interface ISummonAction {
+  getName(): string;
+  canExecute(summon: SummonUnit): boolean;
+  execute(...): void;
+  cancel?(): void;  // Optional method for cleanup
+}
+```
+
+2. **Implemented cancel() in MoveAction:**
+```typescript
+export class MoveAction implements ISummonAction {
+  private isActive: boolean = false;
+  private currentScene: Phaser.Scene | null = null;
+  
+  cancel(): void {
+    if (this.isActive && this.currentScene) {
+      this.cleanup(this.currentScene); // Removes handlers and UI
+      this.isActive = false;
+      this.currentScene = null;
+    }
+  }
+}
+```
+
+3. **Track active action in SummonPlayHandler:**
+```typescript
+export class SummonPlayHandler {
+  private activeAction: ISummonAction | null = null;
+  
+  private onSummonClicked(scene: Phaser.Scene, summon: SummonUnit): void {
+    // Cancel any active action before showing new menu
+    if (this.activeAction && this.activeAction.cancel) {
+      this.activeAction.cancel();
+      this.activeAction = null;
+    }
+    // ... show new menu
+  }
+}
+```
+
+**What Gets Cleaned Up:**
+- ✅ Green highlight rectangles are destroyed
+- ✅ Instruction text is removed
+- ✅ Grid cell event handlers are removed
+- ✅ Cell stroke styles are reset
+- ✅ Action is marked as inactive
+
+**Verification:**
+The fix ensures only one action can be active at a time. When a new action starts, any previous action is properly canceled and cleaned up. See [TESTING.md](TESTING.md) for test scenarios.
 
 ## Future Architecture Enhancements
 
