@@ -314,14 +314,6 @@ export class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    // Instructions
-    this.add
-      .text(600, 720, "Hand (Click to Select):", {
-        fontSize: "18px",
-        color: "#ffffff",
-      })
-      .setOrigin(0.5);
-
     // Create Play button (initially hidden)
     this.playButton = this.add.rectangle(0, 0, 120, 40, 0x4a6fa5);
     this.playButton.setStrokeStyle(2, 0x6a9fc5);
@@ -408,7 +400,7 @@ export class GameScene extends Phaser.Scene {
   private repositionHand(): void {
     const handY = 780;
     const handStartX = 250;
-    const cardSpacing = 100;
+    const cardSpacing = 130;
 
     this.hand.forEach((card, index) => {
       this.tweens.add({
