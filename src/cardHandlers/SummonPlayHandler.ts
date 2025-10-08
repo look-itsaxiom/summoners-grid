@@ -1,6 +1,9 @@
 import { CardData } from '../Card';
 import { ICardPlayHandler } from './ICardPlayHandler';
 import { GridPosition, PlayerInfo } from '../types/GameTypes';
+import { SummonUnit } from '../types/SummonUnit';
+import { ISummonAction, MoveAction, AttackAction } from '../summonActions';
+import { SummonActionMenu } from '../ui/SummonActionMenu';
 
 /**
  * Handler for playing Summon cards.
@@ -18,7 +21,9 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private playerInfo: PlayerInfo;
   private highlightedCells: Phaser.GameObjects.Rectangle[] = [];
   private instructionText: Phaser.GameObjects.Text | null = null;
-  private placedTokens: Map<string, Phaser.GameObjects.Arc> = new Map();
+  private placedSummons: Map<string, SummonUnit> = new Map();
+  private currentActionMenu: SummonActionMenu | null = null;
+  private availableActions: ISummonAction[];
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
@@ -26,6 +31,12 @@ export class SummonPlayHandler implements ICardPlayHandler {
   ) {
     this.grid = grid;
     this.playerInfo = playerInfo;
+    
+    // Initialize available actions (can be expanded in the future)
+    this.availableActions = [
+      new MoveAction(this.grid, this.placedSummons),
+      new AttackAction()
+    ];
   }
 
   canHandle(cardData: CardData): boolean {
@@ -215,11 +226,92 @@ export class SummonPlayHandler implements ICardPlayHandler {
       ease: 'Back.easeOut'
     });
 
-    // Store the token with a unique key
-    const tokenKey = `${position.col}-${position.row}`;
-    this.placedTokens.set(tokenKey, token);
+    // Create SummonUnit object
+    const summonUnit = new SummonUnit(
+      cardData,
+      position,
+      this.playerInfo.playerId,
+      token
+    );
 
-    console.log(`[SummonPlayHandler] Token placed at (${position.col},${position.row})`);
+    // Store the summon with a unique key
+    const tokenKey = this.getPositionKey(position);
+    this.placedSummons.set(tokenKey, summonUnit);
+
+    // Make token interactive
+    this.makeTokenInteractive(scene, summonUnit);
+
+    console.log(`[SummonPlayHandler] Summon placed at (${position.col},${position.row})`);
+  }
+
+  private makeTokenInteractive(scene: Phaser.Scene, summon: SummonUnit): void {
+    summon.token.setInteractive();
+
+    // Add hover effect
+    summon.token.on('pointerover', () => {
+      summon.token.setScale(1.2);
+      summon.token.setStrokeStyle(3, 0xffff00);
+    });
+
+    summon.token.on('pointerout', () => {
+      summon.token.setScale(1.0);
+      summon.token.setStrokeStyle(2, 0xffffff);
+    });
+
+    // Add click handler to show action menu
+    summon.token.on('pointerdown', () => {
+      this.onSummonClicked(scene, summon);
+    });
+  }
+
+  private onSummonClicked(scene: Phaser.Scene, summon: SummonUnit): void {
+    console.log(`[SummonPlayHandler] Summon clicked: ${summon.cardData.name}`);
+
+    // Hide any existing menu
+    if (this.currentActionMenu) {
+      this.currentActionMenu.hide();
+    }
+
+    // Show action menu
+    this.currentActionMenu = new SummonActionMenu(
+      scene,
+      summon,
+      this.availableActions
+    );
+
+    this.currentActionMenu.show((action: ISummonAction) => {
+      this.executeSummonAction(scene, summon, action);
+    });
+  }
+
+  private executeSummonAction(
+    scene: Phaser.Scene,
+    summon: SummonUnit,
+    action: ISummonAction
+  ): void {
+    console.log(`[SummonPlayHandler] Executing action: ${action.getName()}`);
+
+    // Update the occupied positions map before moving
+    const oldKey = this.getPositionKey(summon.position);
+
+    action.execute(summon, scene, (success: boolean) => {
+      if (success) {
+        console.log(`[SummonPlayHandler] Action completed: ${action.getName()}`);
+
+        // Update the map if position changed (for move action)
+        const newKey = this.getPositionKey(summon.position);
+        if (oldKey !== newKey) {
+          this.placedSummons.delete(oldKey);
+          this.placedSummons.set(newKey, summon);
+        }
+      } else {
+        console.log(`[SummonPlayHandler] Action failed: ${action.getName()}`);
+      }
+    });
+  }
+
+  private getPositionKey(position: GridPosition): string {
+    return `${position.col}-${position.row}`;
   }
 
   private cleanup(scene: Phaser.Scene): void {
