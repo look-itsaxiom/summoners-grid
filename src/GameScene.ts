@@ -1,6 +1,8 @@
 import Phaser from 'phaser';
 import { Card, CardData } from './Card';
 import { Deck } from './Deck';
+import { CardPlayHandlerRegistry, SummonPlayHandler } from './cardHandlers';
+import { PlayerInfo } from './types/GameTypes';
 
 export class GameScene extends Phaser.Scene {
   private readonly GRID_COLS = 12;
@@ -17,6 +19,8 @@ export class GameScene extends Phaser.Scene {
   private deckVisual!: Phaser.GameObjects.Container;
   private discardPile: CardData[] = [];
   private discardVisual!: Phaser.GameObjects.Container;
+  private cardPlayHandlerRegistry!: CardPlayHandlerRegistry;
+  private playerInfo: PlayerInfo = { playerId: 0, color: 0x4a6fa5 }; // Player A (blue)
 
   constructor() {
     super('GameScene');
@@ -29,6 +33,9 @@ export class GameScene extends Phaser.Scene {
     // Create the game board
     this.createBoard();
 
+    // Initialize card play handler registry (after grid is created)
+    this.initializeCardHandlers();
+
     // Create visual deck
     this.createDeckVisual();
 
@@ -40,6 +47,20 @@ export class GameScene extends Phaser.Scene {
 
     // Add UI text
     this.createUI();
+  }
+
+  private initializeCardHandlers(): void {
+    // Create the handler registry
+    this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
+
+    // Register the summon play handler
+    const summonHandler = new SummonPlayHandler(this.grid, this.playerInfo);
+    this.cardPlayHandlerRegistry.registerHandler(summonHandler);
+
+    // Future handlers can be registered here:
+    // this.cardPlayHandlerRegistry.registerHandler(new ActionPlayHandler(...));
+    // this.cardPlayHandlerRegistry.registerHandler(new BuildingPlayHandler(...));
+    // etc.
   }
 
   private createBoard(): void {
@@ -388,11 +409,27 @@ export class GameScene extends Phaser.Scene {
     });
   }
 
-  // Stubbed out function for playing a card
+  // Handler for playing a card
   private onPlayCard(cardData: CardData): void {
-    console.log(`[STUB] Playing card: ${cardData.name} (${cardData.type})`);
-    console.log(`[STUB] Card effect would be applied here`);
-    // This is where game logic for playing the card would go
-    // For example: applying effects, placing summons, etc.
+    console.log(`[GameScene] Playing card: ${cardData.name} (${cardData.type})`);
+
+    // Try to execute using the appropriate handler
+    const handled = this.cardPlayHandlerRegistry.executePlay(
+      cardData,
+      this,
+      (success: boolean) => {
+        if (success) {
+          console.log(`[GameScene] Card played successfully: ${cardData.name}`);
+        } else {
+          console.log(`[GameScene] Card play failed: ${cardData.name}`);
+        }
+      }
+    );
+
+    if (!handled) {
+      // No handler available for this card type yet
+      console.log(`[GameScene] No handler implemented yet for ${cardData.type} cards`);
+      console.log(`[GameScene] Card effect would be applied here in future implementation`);
+    }
   }
 }
