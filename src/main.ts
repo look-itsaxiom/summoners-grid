@@ -3,8 +3,8 @@ import { GameScene } from './GameScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
-  width: 800,
-  height: 720,
+  width: 1200,
+  height: 900,
   parent: 'game',
   backgroundColor: '#1a1a1a',
   scene: [GameScene],

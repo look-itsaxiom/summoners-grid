@@ -12,6 +12,9 @@ export class GameScene extends Phaser.Scene {
   private hand: Card[] = [];
   private deck!: Deck;
   private selectedCard: Card | null = null;
+  private playButton!: Phaser.GameObjects.Rectangle;
+  private playButtonText!: Phaser.GameObjects.Text;
+  private deckVisual!: Phaser.GameObjects.Container;
 
   constructor() {
     super('GameScene');
@@ -24,6 +27,9 @@ export class GameScene extends Phaser.Scene {
     // Create the game board
     this.createBoard();
 
+    // Create visual deck
+    this.createDeckVisual();
+
     // Draw initial hand
     this.drawInitialHand();
 
@@ -32,8 +38,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private createBoard(): void {
-    const offsetX = 100;
-    const offsetY = 50;
+    const offsetX = 200;
+    const offsetY = 100;
 
     // Create 12x14 grid
     for (let row = 0; row < this.GRID_ROWS; row++) {
@@ -89,6 +95,75 @@ export class GameScene extends Phaser.Scene {
     }
   }
 
+  private createDeckVisual(): void {
+    const deckX = 900;
+    const deckY = 400;
+
+    // Create deck container
+    this.deckVisual = this.add.container(deckX, deckY);
+
+    // Create multiple card backs to show stack effect
+    for (let i = 0; i < 3; i++) {
+      const cardBack = this.add.rectangle(i * 2, i * 2, 80, 110, 0x1a3a5a);
+      cardBack.setStrokeStyle(2, 0x4a6fa5);
+      this.deckVisual.add(cardBack);
+    }
+
+    // Add deck text
+    const deckText = this.add.text(0, -70, 'DECK', {
+      fontSize: '16px',
+      color: '#ffffff',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    this.deckVisual.add(deckText);
+
+    // Add card count text
+    const countText = this.add.text(0, 70, '', {
+      fontSize: '14px',
+      color: '#aaaaaa'
+    }).setOrigin(0.5);
+    this.deckVisual.add(countText);
+
+    // Update count text continuously
+    this.time.addEvent({
+      delay: 100,
+      callback: () => {
+        countText.setText(`${this.deck.getRemainingCount()} cards`);
+      },
+      loop: true
+    });
+
+    // Make deck interactive
+    const topCard = this.deckVisual.list[2] as Phaser.GameObjects.Rectangle;
+    topCard.setInteractive();
+
+    topCard.on('pointerdown', () => {
+      if (this.hand.length < this.HAND_SIZE) {
+        this.drawCard();
+        this.repositionHand();
+      } else {
+        console.log('Hand is full (6 cards max)');
+      }
+    });
+
+    topCard.on('pointerover', () => {
+      topCard.setFillStyle(0x2a4a6a);
+      this.deckVisual.setScale(1.05);
+    });
+
+    topCard.on('pointerout', () => {
+      topCard.setFillStyle(0x1a3a5a);
+      this.deckVisual.setScale(1.0);
+    });
+
+    // Add "Click to Draw" instruction
+    const instructionText = this.add.text(0, 100, 'Click to Draw', {
+      fontSize: '12px',
+      color: '#6a9fc5'
+    }).setOrigin(0.5);
+    this.deckVisual.add(instructionText);
+  }
+
   private drawInitialHand(): void {
     for (let i = 0; i < this.HAND_SIZE; i++) {
       this.drawCard();
@@ -102,8 +177,8 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const handY = 650;
-    const handStartX = 150;
+    const handY = 780;
+    const handStartX = 250;
     const cardSpacing = 100;
 
     const card = new Card(
@@ -131,64 +206,79 @@ export class GameScene extends Phaser.Scene {
     }
     this.selectedCard = card;
     console.log('Card selected:', card.getCardData());
+    
+    // Show play button above the selected card
+    this.showPlayButton();
   }
 
   private onCardDeselected(card: Card): void {
     if (this.selectedCard === card) {
       this.selectedCard = null;
+      this.hidePlayButton();
     }
     console.log('Card deselected');
   }
 
   private createUI(): void {
     // Title
-    this.add.text(400, 20, "Summoner's Grid", {
-      fontSize: '24px',
+    this.add.text(600, 30, "Summoner's Grid", {
+      fontSize: '32px',
       color: '#ffffff',
       fontStyle: 'bold'
     }).setOrigin(0.5);
 
     // Instructions
-    this.add.text(650, 100, 'Hand (Click to Select):', {
-      fontSize: '16px',
+    this.add.text(600, 720, 'Hand (Click to Select):', {
+      fontSize: '18px',
       color: '#ffffff'
     }).setOrigin(0.5);
 
-    // Play button
-    const playButton = this.add.rectangle(650, 650, 120, 40, 0x4a6fa5);
-    playButton.setStrokeStyle(2, 0x6a9fc5);
-    playButton.setInteractive();
+    // Create Play button (initially hidden)
+    this.playButton = this.add.rectangle(0, 0, 120, 40, 0x4a6fa5);
+    this.playButton.setStrokeStyle(2, 0x6a9fc5);
+    this.playButton.setInteractive();
+    this.playButton.setVisible(false);
 
-    const playButtonText = this.add.text(650, 650, 'Play Card', {
+    this.playButtonText = this.add.text(0, 0, 'Play Card', {
       fontSize: '14px',
       color: '#ffffff'
     }).setOrigin(0.5);
+    this.playButtonText.setVisible(false);
 
-    playButton.on('pointerdown', () => {
+    this.playButton.on('pointerdown', () => {
       this.playSelectedCard();
     });
 
-    playButton.on('pointerover', () => {
-      playButton.setFillStyle(0x5a7fb5);
+    this.playButton.on('pointerover', () => {
+      this.playButton.setFillStyle(0x5a7fb5);
     });
 
-    playButton.on('pointerout', () => {
-      playButton.setFillStyle(0x4a6fa5);
+    this.playButton.on('pointerout', () => {
+      this.playButton.setFillStyle(0x4a6fa5);
     });
+  }
 
-    // Deck info
-    const deckText = this.add.text(650, 200, '', {
-      fontSize: '12px',
-      color: '#aaaaaa'
-    }).setOrigin(0.5);
+  private showPlayButton(): void {
+    if (this.selectedCard) {
+      // Position button above the selected card
+      const cardX = this.selectedCard.x;
+      const cardY = this.selectedCard.y;
+      
+      this.playButton.setPosition(cardX, cardY - 80);
+      this.playButtonText.setPosition(cardX, cardY - 80);
+      
+      this.playButton.setVisible(true);
+      this.playButtonText.setVisible(true);
 
-    this.time.addEvent({
-      delay: 100,
-      callback: () => {
-        deckText.setText(`Cards in Deck: ${this.deck.getRemainingCount()}`);
-      },
-      loop: true
-    });
+      // Bring button to front
+      this.playButton.setDepth(1000);
+      this.playButtonText.setDepth(1001);
+    }
+  }
+
+  private hidePlayButton(): void {
+    this.playButton.setVisible(false);
+    this.playButtonText.setVisible(false);
   }
 
   private playSelectedCard(): void {
@@ -207,6 +297,9 @@ export class GameScene extends Phaser.Scene {
       this.selectedCard.destroy();
       this.selectedCard = null;
 
+      // Hide play button
+      this.hidePlayButton();
+
       // Reposition remaining cards
       this.repositionHand();
 
@@ -214,7 +307,7 @@ export class GameScene extends Phaser.Scene {
       this.onPlayCard(cardData);
 
       // Draw a new card if available
-      if (this.hand.length < this.HAND_SIZE) {
+      if (this.hand.length < this.HAND_SIZE && this.deck.getRemainingCount() > 0) {
         this.drawCard();
         this.repositionHand();
       }
@@ -222,8 +315,8 @@ export class GameScene extends Phaser.Scene {
   }
 
   private repositionHand(): void {
-    const handY = 650;
-    const handStartX = 150;
+    const handY = 780;
+    const handStartX = 250;
     const cardSpacing = 100;
 
     this.hand.forEach((card, index) => {
