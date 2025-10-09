@@ -40,4 +40,23 @@ export interface IUIManager {
    * @param player Current player (0 or 1)
    */
   updatePhaseIndicator(phase: TurnPhase, player: number): void;
+
+  /**
+   * Shows the discard selection UI
+   * @param count Number of cards to discard
+   * @param onConfirm Callback when discard is confirmed
+   */
+  showDiscardUI(count: number, onConfirm: () => void): void;
+
+  /**
+   * Updates the discard count display
+   * @param selected Number of cards selected
+   * @param required Number of cards required
+   */
+  updateDiscardCount(selected: number, required: number): void;
+
+  /**
+   * Hides the discard UI
+   */
+  hideDiscardUI(): void;
 }

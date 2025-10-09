@@ -19,6 +19,12 @@ export class UIManager implements IUIManager {
   private nextPhaseButton!: Phaser.GameObjects.Rectangle;
   private nextPhaseButtonText!: Phaser.GameObjects.Text;
 
+  // Discard UI elements
+  private discardContainer!: Phaser.GameObjects.Container;
+  private discardText!: Phaser.GameObjects.Text;
+  private discardConfirmButton!: Phaser.GameObjects.Rectangle;
+  private discardConfirmText!: Phaser.GameObjects.Text;
+
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
   }
@@ -172,5 +178,88 @@ export class UIManager implements IUIManager {
     const showButton = player === 0 || phase === TurnPhase.Action;
     this.nextPhaseButton.setVisible(showButton);
     this.nextPhaseButtonText.setVisible(showButton);
+  }
+
+  /**
+   * Shows the discard UI
+   */
+  public showDiscardUI(count: number, onConfirm: () => void): void {
+    const x = 600;
+    const y = 350;
+
+    // Create container for discard UI
+    this.discardContainer = this.scene.add.container(x, y);
+
+    // Background panel
+    const bg = this.scene.add.rectangle(0, 0, 400, 150, 0x2a2a2a);
+    bg.setStrokeStyle(3, 0xff6666);
+    this.discardContainer.add(bg);
+
+    // Title text
+    const title = this.scene.add
+      .text(0, -50, "Hand Limit Exceeded", {
+        fontSize: "20px",
+        color: "#ff6666",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    this.discardContainer.add(title);
+
+    // Instruction text
+    this.discardText = this.scene.add
+      .text(0, -10, `Select ${count} card(s) to discard\n(0/${count} selected)`, {
+        fontSize: "16px",
+        color: "#ffffff",
+        align: "center",
+      })
+      .setOrigin(0.5);
+    this.discardContainer.add(this.discardText);
+
+    // Confirm button
+    this.discardConfirmButton = this.scene.add.rectangle(0, 45, 150, 35, 0x4a6fa5);
+    this.discardConfirmButton.setStrokeStyle(2, 0x6a9fc5);
+    this.discardConfirmButton.setInteractive();
+    this.discardContainer.add(this.discardConfirmButton);
+
+    this.discardConfirmText = this.scene.add
+      .text(0, 45, "Confirm", {
+        fontSize: "14px",
+        color: "#ffffff",
+      })
+      .setOrigin(0.5);
+    this.discardContainer.add(this.discardConfirmText);
+
+    // Button interactions
+    this.discardConfirmButton.on("pointerdown", () => {
+      onConfirm();
+    });
+
+    this.discardConfirmButton.on("pointerover", () => {
+      this.discardConfirmButton.setFillStyle(0x5a7fb5);
+    });
+
+    this.discardConfirmButton.on("pointerout", () => {
+      this.discardConfirmButton.setFillStyle(0x4a6fa5);
+    });
+
+    this.discardContainer.setDepth(1000);
+  }
+
+  /**
+   * Updates the discard count display
+   */
+  public updateDiscardCount(selected: number, required: number): void {
+    if (this.discardText) {
+      this.discardText.setText(`Select ${required} card(s) to discard\n(${selected}/${required} selected)`);
+    }
+  }
+
+  /**
+   * Hides the discard UI
+   */
+  public hideDiscardUI(): void {
+    if (this.discardContainer) {
+      this.discardContainer.destroy();
+    }
   }
 }

@@ -63,26 +63,26 @@ export class Card extends Phaser.GameObjects.Container {
   private onCardHover(): void {
     if (!this.isSelected) {
       this.background.setFillStyle(0x3a3a3a);
-      this.setScale(1.05);
     }
+    // Emit event for hand manager
+    this.emit("pointerover");
   }
 
   private onCardOut(): void {
     if (!this.isSelected) {
       this.background.setFillStyle(0x2a2a2a);
-      this.setScale(1.0);
     }
+    // Emit event for hand manager
+    this.emit("pointerout");
   }
 
   private updateVisuals(): void {
     if (this.isSelected) {
       this.background.setFillStyle(0x4a6fa5);
       this.background.setStrokeStyle(2, 0x6a9fc5);
-      this.setScale(1.05);
     } else {
       this.background.setFillStyle(0x2a2a2a);
       this.background.setStrokeStyle(2, 0x666666);
-      this.setScale(1.0);
     }
   }
 
@@ -92,6 +92,11 @@ export class Card extends Phaser.GameObjects.Container {
 
   public deselect(): void {
     this.isSelected = false;
+    this.updateVisuals();
+  }
+
+  public select(): void {
+    this.isSelected = true;
     this.updateVisuals();
   }
 }

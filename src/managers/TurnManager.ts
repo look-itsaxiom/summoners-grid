@@ -18,6 +18,7 @@ export class TurnManager {
   
   private onCardDrawn: ((cardData: any) => void) | null = null;
   private onPhaseChanged: ((phase: TurnPhase, player: number) => void) | null = null;
+  private onRequestDiscard: ((count: number) => void) | null = null;
 
   constructor(scene: Phaser.Scene, deck: Deck, handManager: IHandManager) {
     this.scene = scene;
@@ -73,6 +74,40 @@ export class TurnManager {
   }
 
   /**
+   * Sets callback for when discard is requested
+   */
+  public setOnRequestDiscard(callback: (count: number) => void): void {
+    this.onRequestDiscard = callback;
+  }
+
+  /**
+   * Completes the discard process and continues turn progression
+   */
+  public completeDiscard(): void {
+    console.log('[TurnManager] Discard completed, switching player');
+    this.switchPlayer();
+    this.currentPhase = TurnPhase.Draw;
+    this.notifyPhaseChanged();
+
+    // Auto-progress through Player B's phases
+    if (this.currentPlayer === 1) {
+      this.scene.time.delayedCall(1000, () => {
+        this.nextPhase();
+      });
+    }
+  }
+
+  /**
+   * Discards a specific card to the recharge pile
+   */
+  public discardCard(card: any): void {
+    const cardData = card.getCardData();
+    console.log(`[TurnManager] Discarding: ${cardData.name}`);
+    this.deck.addToRechargePile(cardData);
+    this.handManager.removeCard(card);
+  }
+
+  /**
    * Advances to the next phase
    */
   public nextPhase(): void {
@@ -90,9 +125,17 @@ export class TurnManager {
         break;
       case TurnPhase.End:
         this.executeEndPhase();
-        // End phase transitions to next player's draw phase
-        this.switchPlayer();
-        this.currentPhase = TurnPhase.Draw;
+        // Note: If discard is required, executeEndPhase will handle it
+        // and completeDiscard() will be called later to switch players
+        // If no discard required, we switch immediately
+        const needsDiscard = this.currentPlayer === 0 && this.handManager.getHandSize() > 6;
+        if (!needsDiscard) {
+          this.switchPlayer();
+          this.currentPhase = TurnPhase.Draw;
+        } else {
+          // Stay in End phase until discard is complete
+          return; // Don't notify phase change or auto-progress yet
+        }
         break;
     }
     
@@ -160,20 +203,15 @@ export class TurnManager {
         const cardsToDiscard = handSize - maxHandSize;
         console.log(`[TurnManager] Hand size ${handSize} exceeds limit of ${maxHandSize}, need to discard ${cardsToDiscard} cards`);
         
-        // For now, auto-discard from the end of hand (should be player choice in full implementation)
-        const cards = this.handManager.getCards();
-        for (let i = 0; i < cardsToDiscard; i++) {
-          const card = cards[cards.length - 1 - i];
-          if (card) {
-            const cardData = card.getCardData();
-            console.log(`[TurnManager] Auto-discarding: ${cardData.name}`);
-            this.deck.addToRechargePile(cardData);
-            this.handManager.removeCard(card);
-          }
+        // Trigger card discard selection (GameScene will handle UI)
+        // For now, we'll need to wait for user to select cards to discard
+        // This will be handled by a callback
+        if (this.onRequestDiscard) {
+          this.onRequestDiscard(cardsToDiscard);
         }
-        this.handManager.repositionCards();
       } else {
         console.log(`[TurnManager] Hand size ${handSize} is within limit, no discard needed`);
+        // Continue to next phase immediately if no discard needed
       }
     }
   }
