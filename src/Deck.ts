@@ -1,4 +1,5 @@
 import { CardData } from './Card';
+import { GrowthRate, BaseStats, StatGrowthRates } from './types/Stats';
 
 export class Deck {
   private cards: CardData[] = [];
@@ -11,16 +12,103 @@ export class Deck {
 
   private initializeDeck(): void {
     // Initialize 3 summon cards for initial hand (3v3 format)
-    const summonNames = ['Gignen Warrior', 'Fae Magician', 'Wilderling Scout'];
+    // Based on the Play Example.md, we'll use realistic stats for these summons
     
-    for (let i = 0; i < 3; i++) {
-      this.summonCards.push({
-        id: `summon-${i}`,
-        name: summonNames[i],
-        type: 'Summon',
-        description: `A Summon card`
-      });
-    }
+    // Gignen Warrior - Balanced fighter
+    this.summonCards.push({
+      id: 'summon-0',
+      name: 'Gignen Warrior',
+      type: 'Summon',
+      description: 'A Summon card',
+      summonData: {
+        baseStats: {
+          STR: 14,
+          END: 9,
+          DEF: 11,
+          INT: 10,
+          SPI: 9,
+          MDF: 6,
+          SPD: 8,
+          ACC: 10,
+          LCK: 16
+        },
+        growthRates: {
+          STR: GrowthRate.Normal,      // 1.0
+          END: GrowthRate.Normal,      // 1.0
+          DEF: GrowthRate.Normal,      // 1.0
+          INT: GrowthRate.Normal,      // 1.0
+          SPI: GrowthRate.Normal,      // 1.0
+          MDF: GrowthRate.Normal,      // 1.0
+          SPD: GrowthRate.Normal,      // 1.0
+          ACC: GrowthRate.Steady,      // 0.67
+          LCK: GrowthRate.Normal       // 1.0
+        }
+      }
+    });
+
+    // Fae Magician - High INT and SPI
+    this.summonCards.push({
+      id: 'summon-1',
+      name: 'Fae Magician',
+      type: 'Summon',
+      description: 'A Summon card',
+      summonData: {
+        baseStats: {
+          STR: 9,
+          END: 9,
+          DEF: 11,
+          INT: 21,
+          SPI: 22,
+          MDF: 12,
+          SPD: 11,
+          ACC: 13,
+          LCK: 9
+        },
+        growthRates: {
+          STR: GrowthRate.Normal,      // 1.0
+          END: GrowthRate.Normal,      // 1.0
+          DEF: GrowthRate.Normal,      // 1.0
+          INT: GrowthRate.Normal,      // 1.0
+          SPI: GrowthRate.Normal,      // 1.0
+          MDF: GrowthRate.Normal,      // 1.0
+          SPD: GrowthRate.Normal,      // 1.0
+          ACC: GrowthRate.Steady,      // 0.67
+          LCK: GrowthRate.Normal       // 1.0
+        }
+      }
+    });
+
+    // Wilderling Scout - High SPD and ACC
+    this.summonCards.push({
+      id: 'summon-2',
+      name: 'Wilderling Scout',
+      type: 'Summon',
+      description: 'A Summon card',
+      summonData: {
+        baseStats: {
+          STR: 10,
+          END: 9,
+          DEF: 8,
+          INT: 10,
+          SPI: 11,
+          MDF: 9,
+          SPD: 16,
+          ACC: 13,
+          LCK: 20
+        },
+        growthRates: {
+          STR: GrowthRate.Normal,      // 1.0
+          END: GrowthRate.Normal,      // 1.0
+          DEF: GrowthRate.Normal,      // 1.0
+          INT: GrowthRate.Normal,      // 1.0
+          SPI: GrowthRate.Normal,      // 1.0
+          MDF: GrowthRate.Normal,      // 1.0
+          SPD: GrowthRate.Gradual,     // 1.33
+          ACC: GrowthRate.Normal,      // 1.0
+          LCK: GrowthRate.Normal       // 1.0
+        }
+      }
+    });
 
     // Initialize main deck with other card types
     const cardTypes = ['Action', 'Counter', 'Quest', 'Building', 'Action'];

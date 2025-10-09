@@ -1,8 +1,11 @@
+import { SummonData } from './types/Stats';
+
 export interface CardData {
   id: string;
   name: string;
   type: string;
   description: string;
+  summonData?: SummonData; // Optional - only for Summon type cards
 }
 
 export class Card extends Phaser.GameObjects.Container {
