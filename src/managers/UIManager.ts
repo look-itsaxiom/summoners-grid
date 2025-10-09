@@ -1,12 +1,13 @@
-import { Card } from '../Card';
-import { GameConfig } from '../config/GameConfig';
+import { Card } from "../Card";
+import { GameConfig } from "../config/GameConfig";
+import { IUIManager } from "./IUIManager";
 
 /**
  * Manages general UI elements like title, play button, and instructions.
  * Single Responsibility: Only handles general UI creation and visibility.
  */
-export class UIManager {
-  private scene: Phaser.Scene;
+export class UIManager implements IUIManager {
+  private readonly scene: Phaser.Scene;
   private playButton!: Phaser.GameObjects.Rectangle;
   private playButtonText!: Phaser.GameObjects.Text;
 
@@ -21,9 +22,9 @@ export class UIManager {
     // Title
     this.scene.add
       .text(GameConfig.TITLE_X, GameConfig.TITLE_Y, "Summoner's Grid", {
-        fontSize: '32px',
-        color: '#ffffff',
-        fontStyle: 'bold',
+        fontSize: "32px",
+        color: "#ffffff",
+        fontStyle: "bold",
       })
       .setOrigin(0.5);
   }
@@ -38,22 +39,22 @@ export class UIManager {
     this.playButton.setVisible(false);
 
     this.playButtonText = this.scene.add
-      .text(0, 0, 'Play Card', {
-        fontSize: '14px',
-        color: '#ffffff',
+      .text(0, 0, "Play Card", {
+        fontSize: "14px",
+        color: "#ffffff",
       })
       .setOrigin(0.5);
     this.playButtonText.setVisible(false);
 
-    this.playButton.on('pointerdown', () => {
+    this.playButton.on("pointerdown", () => {
       onPlay();
     });
 
-    this.playButton.on('pointerover', () => {
+    this.playButton.on("pointerover", () => {
       this.playButton.setFillStyle(0x5a7fb5);
     });
 
-    this.playButton.on('pointerout', () => {
+    this.playButton.on("pointerout", () => {
       this.playButton.setFillStyle(0x4a6fa5);
     });
   }

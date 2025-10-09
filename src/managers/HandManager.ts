@@ -1,13 +1,14 @@
-import { Card, CardData } from '../Card';
-import { GameConfig } from '../config/GameConfig';
+import { Card, CardData } from "../Card";
+import { GameConfig } from "../config/GameConfig";
+import { IHandManager } from "./IHandManager";
 
 /**
  * Manages the player's hand of cards.
  * Single Responsibility: Only handles hand operations (add, remove, reposition).
  */
-export class HandManager {
-  private scene: Phaser.Scene;
-  private hand: Card[] = [];
+export class HandManager implements IHandManager {
+  private readonly scene: Phaser.Scene;
+  private readonly hand: Card[] = [];
   private selectedCard: Card | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -18,15 +19,10 @@ export class HandManager {
    * Adds a card to the hand
    */
   public addCard(cardData: CardData, onSelected: (card: Card) => void, onDeselected: (card: Card) => void): void {
-    const card = new Card(
-      this.scene,
-      GameConfig.HAND_START_X + this.hand.length * GameConfig.CARD_SPACING,
-      GameConfig.HAND_Y,
-      cardData
-    );
+    const card = new Card(this.scene, GameConfig.HAND_START_X + this.hand.length * GameConfig.CARD_SPACING, GameConfig.HAND_Y, cardData);
 
-    card.on('cardSelected', () => onSelected(card));
-    card.on('cardDeselected', () => onDeselected(card));
+    card.on("cardSelected", () => onSelected(card));
+    card.on("cardDeselected", () => onDeselected(card));
 
     this.hand.push(card);
   }
@@ -51,7 +47,7 @@ export class HandManager {
         targets: card,
         x: GameConfig.HAND_START_X + index * GameConfig.CARD_SPACING,
         duration: 200,
-        ease: 'Power2',
+        ease: "Power2",
       });
     });
   }

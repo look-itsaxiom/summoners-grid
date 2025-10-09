@@ -1,11 +1,12 @@
-import { GameConfig } from '../config/GameConfig';
+import { GameConfig } from "../config/GameConfig";
+import { IGridManager } from "./IGridManager";
 
 /**
  * Manages the game grid/board creation and coordinate system.
  * Single Responsibility: Only handles grid creation and coordinate labeling.
  */
-export class GridManager {
-  private scene: Phaser.Scene;
+export class GridManager implements IGridManager {
+  private readonly scene: Phaser.Scene;
   private grid: Phaser.GameObjects.Rectangle[][];
 
   constructor(scene: Phaser.Scene) {
@@ -70,8 +71,8 @@ export class GridManager {
       const y = GameConfig.GRID_OFFSET_Y - 15;
       this.scene.add
         .text(x, y, (col + 1).toString(), {
-          fontSize: '10px',
-          color: '#888888',
+          fontSize: "10px",
+          color: "#888888",
         })
         .setOrigin(0.5);
     }
@@ -83,8 +84,8 @@ export class GridManager {
       const y = GameConfig.GRID_OFFSET_Y + (GameConfig.GRID_ROWS - 1 - row) * GameConfig.CELL_SIZE + GameConfig.CELL_SIZE / 2;
       this.scene.add
         .text(x, y, (row + 1).toString(), {
-          fontSize: '10px',
-          color: '#888888',
+          fontSize: "10px",
+          color: "#888888",
         })
         .setOrigin(0.5);
     }
