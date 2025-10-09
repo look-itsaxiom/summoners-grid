@@ -4,6 +4,7 @@ import { GridPosition, PlayerInfo } from '../types/GameTypes';
 import { SummonUnit } from '../types/SummonUnit';
 import { ISummonAction, MoveAction, AttackAction } from '../summonActions';
 import { SummonActionMenu } from '../ui/SummonActionMenu';
+import { SummonDetailBox } from '../ui/SummonDetailBox';
 import { GameConfig } from '../config/GameConfig';
 
 /**
@@ -18,6 +19,7 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private instructionText: Phaser.GameObjects.Text | null = null;
   private placedSummons: Map<string, SummonUnit> = new Map();
   private currentActionMenu: SummonActionMenu | null = null;
+  private summonDetailBox: SummonDetailBox | null = null;
   private availableActions: ISummonAction[];
   private activeAction: ISummonAction | null = null;
   private canPerformActionsCheck: (() => boolean) | null = null;
@@ -263,6 +265,14 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private onSummonClicked(scene: Phaser.Scene, summon: SummonUnit): void {
     console.log(`[SummonPlayHandler] Summon clicked: ${summon.cardData.name}`);
 
+    // Initialize detail box if not already created
+    if (!this.summonDetailBox) {
+      this.summonDetailBox = new SummonDetailBox(scene);
+    }
+
+    // Show detail box for this summon
+    this.summonDetailBox.show(summon);
+
     // Check if actions can be performed (phase/turn restriction)
     if (this.canPerformActionsCheck && !this.canPerformActionsCheck()) {
       console.log('[SummonPlayHandler] Cannot interact with summons during this phase or turn');
@@ -335,6 +345,29 @@ export class SummonPlayHandler implements ICardPlayHandler {
 
   private getPositionKey(position: GridPosition): string {
     return `${position.col}-${position.row}`;
+  }
+
+  /**
+   * Level up all summons owned by a specific player
+   */
+  public levelUpPlayerSummons(playerId: number): void {
+    console.log(`[SummonPlayHandler] Leveling up summons for player ${playerId}`);
+    this.placedSummons.forEach((summon, key) => {
+      if (summon.playerId === playerId) {
+        summon.levelUp();
+        // Update detail box if it's showing this summon
+        if (this.summonDetailBox && this.summonDetailBox.visible()) {
+          this.summonDetailBox.update(summon);
+        }
+      }
+    });
+  }
+
+  /**
+   * Get all placed summons (for external access if needed)
+   */
+  public getPlacedSummons(): Map<string, SummonUnit> {
+    return this.placedSummons;
   }
 
   private cleanup(scene: Phaser.Scene): void {

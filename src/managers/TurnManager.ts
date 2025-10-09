@@ -1,6 +1,7 @@
 import { TurnPhase } from "../types/GameTypes";
 import { Deck } from "../Deck";
 import { IHandManager } from "./IHandManager";
+import { SummonUnit } from "../types/SummonUnit";
 
 /**
  * Manages the turn system and phase transitions.
@@ -19,6 +20,7 @@ export class TurnManager {
   private onCardDrawn: ((cardData: any) => void) | null = null;
   private onPhaseChanged: ((phase: TurnPhase, player: number) => void) | null = null;
   private onRequestDiscard: ((count: number) => void) | null = null;
+  private onLevelPhase: ((player: number) => void) | null = null;
 
   constructor(scene: Phaser.Scene, deck: Deck, handManager: IHandManager) {
     this.scene = scene;
@@ -78,6 +80,13 @@ export class TurnManager {
    */
   public setOnRequestDiscard(callback: (count: number) => void): void {
     this.onRequestDiscard = callback;
+  }
+
+  /**
+   * Sets callback for when level phase occurs
+   */
+  public setOnLevelPhase(callback: (player: number) => void): void {
+    this.onLevelPhase = callback;
   }
 
   /**
@@ -182,8 +191,10 @@ export class TurnManager {
    */
   private executeLevelPhase(): void {
     console.log('[TurnManager] Executing Level Phase');
-    // TODO: Level up all summons controlled by current player
-    // This will be implemented when summon leveling is added
+    // Notify listeners to level up summons
+    if (this.onLevelPhase) {
+      this.onLevelPhase(this.currentPlayer);
+    }
   }
 
   /**

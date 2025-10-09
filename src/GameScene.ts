@@ -66,6 +66,7 @@ export class GameScene extends Phaser.Scene {
     this.turnManager.setOnCardDrawn((cardData) => this.onCardDrawn(cardData));
     this.turnManager.setOnPhaseChanged((phase, player) => this.onPhaseChanged(phase, player));
     this.turnManager.setOnRequestDiscard((count) => this.onRequestDiscard(count));
+    this.turnManager.setOnLevelPhase((player) => this.onLevelPhase(player));
     this.turnManager.startGame();
   }
 
@@ -90,6 +91,9 @@ export class GameScene extends Phaser.Scene {
       () => this.canPerformActions()
     );
     this.cardPlayHandlerRegistry.registerHandler(summonHandler);
+
+    // Store reference to summon handler for level phase
+    (this as any).summonHandler = summonHandler;
 
     // Future handlers can be registered here:
     // this.cardPlayHandlerRegistry.registerHandler(new ActionPlayHandler(...));
@@ -156,6 +160,17 @@ export class GameScene extends Phaser.Scene {
    */
   private onPhaseChanged(phase: TurnPhase, player: number): void {
     this.uiManager.updatePhaseIndicator(phase, player);
+  }
+
+  /**
+   * Callback when level phase occurs
+   */
+  private onLevelPhase(player: number): void {
+    console.log(`[GameScene] Level Phase for player ${player}`);
+    const summonHandler = (this as any).summonHandler;
+    if (summonHandler) {
+      summonHandler.levelUpPlayerSummons(player);
+    }
   }
 
   /**
