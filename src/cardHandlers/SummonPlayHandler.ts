@@ -20,13 +20,16 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private currentActionMenu: SummonActionMenu | null = null;
   private availableActions: ISummonAction[];
   private activeAction: ISummonAction | null = null;
+  private canPerformActionsCheck: (() => boolean) | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
-    playerInfo: PlayerInfo
+    playerInfo: PlayerInfo,
+    canPerformActionsCheck?: () => boolean
   ) {
     this.grid = grid;
     this.playerInfo = playerInfo;
+    this.canPerformActionsCheck = canPerformActionsCheck || null;
     
     // Initialize available actions (can be expanded in the future)
     this.availableActions = [
@@ -259,6 +262,12 @@ export class SummonPlayHandler implements ICardPlayHandler {
 
   private onSummonClicked(scene: Phaser.Scene, summon: SummonUnit): void {
     console.log(`[SummonPlayHandler] Summon clicked: ${summon.cardData.name}`);
+
+    // Check if actions can be performed (phase/turn restriction)
+    if (this.canPerformActionsCheck && !this.canPerformActionsCheck()) {
+      console.log('[SummonPlayHandler] Cannot interact with summons during this phase or turn');
+      return;
+    }
 
     // Cancel any active action before showing new menu
     if (this.activeAction && this.activeAction.cancel) {

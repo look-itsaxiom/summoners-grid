@@ -83,8 +83,12 @@ export class GameScene extends Phaser.Scene {
     // Create the handler registry
     this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
 
-    // Register the summon play handler
-    const summonHandler = new SummonPlayHandler(this.grid, this.playerInfo);
+    // Register the summon play handler with phase/turn check
+    const summonHandler = new SummonPlayHandler(
+      this.grid, 
+      this.playerInfo,
+      () => this.canPerformActions()
+    );
     this.cardPlayHandlerRegistry.registerHandler(summonHandler);
 
     // Future handlers can be registered here:
