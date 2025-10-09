@@ -29,7 +29,7 @@ export class Deck {
           SPI: 9,
           MDF: 6,
           SPD: 8,
-          ACC: 10,
+          ACC: 9,  // Corrected from 10 to 9
           LCK: 16
         },
         growthRates: {
@@ -54,15 +54,15 @@ export class Deck {
       description: 'A Summon card',
       summonData: {
         baseStats: {
-          STR: 9,
-          END: 9,
-          DEF: 11,
-          INT: 21,
-          SPI: 22,
-          MDF: 12,
-          SPD: 11,
-          ACC: 13,
-          LCK: 9
+          STR: 8,
+          END: 8,
+          DEF: 10,
+          INT: 20,
+          SPI: 21,
+          MDF: 11,
+          SPD: 10,
+          ACC: 11,
+          LCK: 8
         },
         growthRates: {
           STR: GrowthRate.Normal,      // 1.0
