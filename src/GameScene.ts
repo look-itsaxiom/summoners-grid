@@ -5,15 +5,25 @@ import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
 import { PlayerInfo, TurnPhase } from "./types/GameTypes";
 import { GameConfig } from "./config/GameConfig";
 import { GridManager, HandManager, DeckVisualizer, UIManager, TurnManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
+import { IGameService, LocalGameService, type GameState, type AnyPlayerAction } from "./services";
 
 /**
  * Main game scene that orchestrates the game flow.
- * Refactored to follow Single Responsibility Principle by delegating
- * specific responsibilities to dedicated manager classes.
+ * 
+ * REFACTORED: Now uses GameService for all game state management.
+ * The UI (GameScene) accepts player input and sends it to the GameService,
+ * which processes the input and returns updated game state.
+ * 
+ * This separation prepares for future server-based architecture where
+ * LocalGameService can be replaced with RemoteGameService.
  */
 export class GameScene extends Phaser.Scene {
-  // Core game components
-  private deck!: Deck;
+  // Game service (the authoritative source of game state)
+  private gameService!: IGameService;
+  private currentGameState!: GameState;
+  
+  // Core game components (now mainly for UI display)
+  private deck!: Deck; // TODO: Can be removed once fully integrated with service
   private cardPlayHandlerRegistry!: CardPlayHandlerRegistry;
   private readonly playerInfo: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
 
@@ -22,7 +32,7 @@ export class GameScene extends Phaser.Scene {
   private handManager!: IHandManager;
   private deckVisualizer!: IDeckVisualizer;
   private uiManager!: IUIManager;
-  private turnManager!: TurnManager;
+  private turnManager!: TurnManager; // TODO: Can be removed once fully integrated with service
 
   // Grid reference (needed by card handlers)
   private grid: Phaser.GameObjects.Rectangle[][] = [];
@@ -36,8 +46,12 @@ export class GameScene extends Phaser.Scene {
     super("GameScene");
   }
 
-  create(): void {
-    // Initialize deck
+  async create(): Promise<void> {
+    // Initialize game service
+    this.gameService = new LocalGameService();
+    this.currentGameState = await this.gameService.initializeGame();
+    
+    // Initialize deck (temporary - for UI display)
     this.deck = new Deck();
 
     // Initialize managers
@@ -53,20 +67,23 @@ export class GameScene extends Phaser.Scene {
     this.deckVisualizer.createDeckVisual(() => this.handleDrawCard());
     this.deckVisualizer.createDiscardVisual();
 
-    // Draw initial hand (3 summon cards only)
-    this.drawInitialHand();
+    // Initialize hand from game state
+    this.syncHandFromGameState();
 
     // Create UI elements
     this.uiManager.createStaticUI();
     this.uiManager.createPlayButton(() => this.playSelectedCard());
     this.uiManager.createPhaseIndicator(() => this.handleNextPhase());
 
-    // Initialize and start turn system
+    // Initialize and start turn system (temporary compatibility layer)
     this.turnManager = new TurnManager(this, this.deck, this.handManager);
     this.turnManager.setOnCardDrawn((cardData) => this.onCardDrawn(cardData));
     this.turnManager.setOnPhaseChanged((phase, player) => this.onPhaseChanged(phase, player));
     this.turnManager.setOnRequestDiscard((count) => this.onRequestDiscard(count));
     this.turnManager.startGame();
+    
+    // Sync initial UI with game state
+    this.syncUIWithGameState();
   }
 
   /**
@@ -160,9 +177,14 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Handles next phase button click
+   * REFACTORED: Now sends action to game service
    */
   private handleNextPhase(): void {
-    this.turnManager.nextPhase();
+    // Use service to process phase change
+    this.processPlayerAction({
+      type: "NEXT_PHASE",
+      playerId: this.currentGameState.currentPlayer
+    });
   }
 
   /**
@@ -265,11 +287,75 @@ export class GameScene extends Phaser.Scene {
    * Only allowed during Player A's Action phase
    */
   private canPerformActions(): boolean {
-    const currentPlayer = this.turnManager.getCurrentPlayer();
-    const currentPhase = this.turnManager.getCurrentPhase();
+    // Use game state from service
+    return this.currentGameState.currentPhase === TurnPhase.Action && 
+           this.currentGameState.currentPlayer === 0; // Player A
+  }
+  
+  /**
+   * Sync hand display from game state
+   */
+  private syncHandFromGameState(): void {
+    this.handManager.clearHand();
+    const hand = this.currentGameState.currentPlayer === 0 
+      ? this.currentGameState.playerAHand 
+      : this.currentGameState.playerBHand;
     
-    // Only Player A (0) can perform actions during their Action phase
-    return currentPlayer === 0 && currentPhase === TurnPhase.Action;
+    for (const cardData of hand) {
+      this.handManager.addCard(
+        cardData,
+        (card) => this.onCardSelected(card),
+        (card) => this.onCardDeselected(card)
+      );
+    }
+    this.handManager.repositionCards();
+  }
+  
+  /**
+   * Sync all UI elements with current game state
+   */
+  private syncUIWithGameState(): void {
+    // Update phase indicator
+    this.uiManager.updatePhaseIndicator(
+      this.currentGameState.currentPhase,
+      this.currentGameState.currentPlayer
+    );
+    
+    // Sync hand
+    this.syncHandFromGameState();
+    
+    // Handle discard selection state
+    if (this.currentGameState.isSelectingDiscard && !this.isSelectingDiscard) {
+      this.onRequestDiscard(this.currentGameState.discardCount);
+    }
+  }
+  
+  /**
+   * Process a player action through the game service
+   */
+  private async processPlayerAction(action: AnyPlayerAction): Promise<void> {
+    const response = await this.gameService.processAction(action);
+    
+    if (!response.success) {
+      console.warn(`[GameScene] Action failed: ${response.message}`);
+      // TODO: Show error message to player
+      return;
+    }
+    
+    // Update local game state
+    this.currentGameState = response.state;
+    
+    // Sync UI with new state
+    this.syncUIWithGameState();
+    
+    // Handle cards drawn
+    if (response.cardsDrawn && response.cardsDrawn.length > 0) {
+      for (const cardData of response.cardsDrawn) {
+        this.onCardDrawn(cardData);
+      }
+    }
+    
+    console.log(`[GameScene] Action processed successfully: ${response.message || 'OK'}`);
   }
 
   /**

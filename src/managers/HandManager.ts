@@ -147,4 +147,13 @@ export class HandManager implements IHandManager {
   public getCards(): Card[] {
     return this.hand;
   }
+  
+  /**
+   * Clears all cards from hand
+   */
+  public clearHand(): void {
+    this.hand.forEach(card => card.destroy());
+    this.hand.length = 0;
+    this.selectedCard = null;
+  }
 }

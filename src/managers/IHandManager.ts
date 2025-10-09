@@ -59,4 +59,9 @@ export interface IHandManager {
    * @returns Array of all cards currently in hand
    */
   getCards(): Card[];
+  
+  /**
+   * Clears all cards from hand
+   */
+  clearHand(): void;
 }
