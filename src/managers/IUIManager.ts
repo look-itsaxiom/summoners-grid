@@ -1,4 +1,5 @@
 import { Card } from "../Card";
+import { TurnPhase } from "../types/GameTypes";
 
 /**
  * Interface for UI management operations.
@@ -26,4 +27,17 @@ export interface IUIManager {
    * Hides the play button
    */
   hidePlayButton(): void;
+
+  /**
+   * Creates the phase indicator UI
+   * @param onNextPhase Callback function when next phase button is clicked
+   */
+  createPhaseIndicator(onNextPhase: () => void): void;
+
+  /**
+   * Updates the phase indicator display
+   * @param phase Current turn phase
+   * @param player Current player (0 or 1)
+   */
+  updatePhaseIndicator(phase: TurnPhase, player: number): void;
 }

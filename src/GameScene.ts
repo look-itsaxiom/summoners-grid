@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { Card, CardData } from "./Card";
 import { Deck } from "./Deck";
 import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
-import { PlayerInfo } from "./types/GameTypes";
+import { PlayerInfo, TurnPhase } from "./types/GameTypes";
 import { GameConfig } from "./config/GameConfig";
-import { GridManager, HandManager, DeckVisualizer, UIManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
+import { GridManager, HandManager, DeckVisualizer, UIManager, TurnManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
 
 /**
  * Main game scene that orchestrates the game flow.
@@ -22,6 +22,7 @@ export class GameScene extends Phaser.Scene {
   private handManager!: IHandManager;
   private deckVisualizer!: IDeckVisualizer;
   private uiManager!: IUIManager;
+  private turnManager!: TurnManager;
 
   // Grid reference (needed by card handlers)
   private grid: Phaser.GameObjects.Rectangle[][] = [];
@@ -53,6 +54,13 @@ export class GameScene extends Phaser.Scene {
     // Create UI elements
     this.uiManager.createStaticUI();
     this.uiManager.createPlayButton(() => this.playSelectedCard());
+    this.uiManager.createPhaseIndicator(() => this.handleNextPhase());
+
+    // Initialize and start turn system
+    this.turnManager = new TurnManager(this, this.deck, this.handManager);
+    this.turnManager.setOnCardDrawn((cardData) => this.onCardDrawn(cardData));
+    this.turnManager.setOnPhaseChanged((phase, player) => this.onPhaseChanged(phase, player));
+    this.turnManager.startGame();
   }
 
   /**
@@ -101,8 +109,9 @@ export class GameScene extends Phaser.Scene {
    * Handles drawing a card from the deck
    */
   private handleDrawCard(): void {
-    if (this.handManager.isFull()) {
-      console.log(`Hand is full (${GameConfig.HAND_SIZE} cards max)`);
+    // Manual draw via deck button - only during action phase
+    if (this.turnManager.getCurrentPhase() !== TurnPhase.Action) {
+      console.log('Can only draw cards manually during Action Phase');
       return;
     }
 
@@ -118,6 +127,32 @@ export class GameScene extends Phaser.Scene {
       (card) => this.onCardDeselected(card)
     );
     this.handManager.repositionCards();
+  }
+
+  /**
+   * Callback when a card is drawn by turn system
+   */
+  private onCardDrawn(cardData: CardData): void {
+    this.handManager.addCard(
+      cardData,
+      (card) => this.onCardSelected(card),
+      (card) => this.onCardDeselected(card)
+    );
+    this.handManager.repositionCards();
+  }
+
+  /**
+   * Callback when phase changes
+   */
+  private onPhaseChanged(phase: TurnPhase, player: number): void {
+    this.uiManager.updatePhaseIndicator(phase, player);
+  }
+
+  /**
+   * Handles next phase button click
+   */
+  private handleNextPhase(): void {
+    this.turnManager.nextPhase();
   }
 
   /**
