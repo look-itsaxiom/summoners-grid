@@ -4,7 +4,7 @@ import { Deck } from "./Deck";
 import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
 import { PlayerInfo } from "./types/GameTypes";
 import { GameConfig } from "./config/GameConfig";
-import { GridManager, HandManager, DeckVisualizer, UIManager } from "./managers";
+import { GridManager, HandManager, DeckVisualizer, UIManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
 
 /**
  * Main game scene that orchestrates the game flow.
@@ -15,13 +15,13 @@ export class GameScene extends Phaser.Scene {
   // Core game components
   private deck!: Deck;
   private cardPlayHandlerRegistry!: CardPlayHandlerRegistry;
-  private playerInfo: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
+  private readonly playerInfo: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
 
-  // Manager components (following SRP)
-  private gridManager!: GridManager;
-  private handManager!: HandManager;
-  private deckVisualizer!: DeckVisualizer;
-  private uiManager!: UIManager;
+  // Manager components (following SRP and DIP with interfaces)
+  private gridManager!: IGridManager;
+  private handManager!: IHandManager;
+  private deckVisualizer!: IDeckVisualizer;
+  private uiManager!: IUIManager;
 
   // Grid reference (needed by card handlers)
   private grid: Phaser.GameObjects.Rectangle[][] = [];
