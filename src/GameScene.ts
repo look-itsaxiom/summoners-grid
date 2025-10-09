@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { Card, CardData } from "./Card";
 import { Deck } from "./Deck";
 import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
-import { PlayerInfo } from "./types/GameTypes";
+import { PlayerInfo, TurnPhase } from "./types/GameTypes";
 import { GameConfig } from "./config/GameConfig";
-import { GridManager, HandManager, DeckVisualizer, UIManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
+import { GridManager, HandManager, DeckVisualizer, UIManager, TurnManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
 
 /**
  * Main game scene that orchestrates the game flow.
@@ -22,9 +22,15 @@ export class GameScene extends Phaser.Scene {
   private handManager!: IHandManager;
   private deckVisualizer!: IDeckVisualizer;
   private uiManager!: IUIManager;
+  private turnManager!: TurnManager;
 
   // Grid reference (needed by card handlers)
   private grid: Phaser.GameObjects.Rectangle[][] = [];
+
+  // Discard selection state
+  private isSelectingDiscard: boolean = false;
+  private discardCount: number = 0;
+  private selectedForDiscard: Card[] = [];
 
   constructor() {
     super("GameScene");
@@ -53,6 +59,14 @@ export class GameScene extends Phaser.Scene {
     // Create UI elements
     this.uiManager.createStaticUI();
     this.uiManager.createPlayButton(() => this.playSelectedCard());
+    this.uiManager.createPhaseIndicator(() => this.handleNextPhase());
+
+    // Initialize and start turn system
+    this.turnManager = new TurnManager(this, this.deck, this.handManager);
+    this.turnManager.setOnCardDrawn((cardData) => this.onCardDrawn(cardData));
+    this.turnManager.setOnPhaseChanged((phase, player) => this.onPhaseChanged(phase, player));
+    this.turnManager.setOnRequestDiscard((count) => this.onRequestDiscard(count));
+    this.turnManager.startGame();
   }
 
   /**
@@ -69,8 +83,12 @@ export class GameScene extends Phaser.Scene {
     // Create the handler registry
     this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
 
-    // Register the summon play handler
-    const summonHandler = new SummonPlayHandler(this.grid, this.playerInfo);
+    // Register the summon play handler with phase/turn check
+    const summonHandler = new SummonPlayHandler(
+      this.grid, 
+      this.playerInfo,
+      () => this.canPerformActions()
+    );
     this.cardPlayHandlerRegistry.registerHandler(summonHandler);
 
     // Future handlers can be registered here:
@@ -101,8 +119,9 @@ export class GameScene extends Phaser.Scene {
    * Handles drawing a card from the deck
    */
   private handleDrawCard(): void {
-    if (this.handManager.isFull()) {
-      console.log(`Hand is full (${GameConfig.HAND_SIZE} cards max)`);
+    // Manual draw via deck button - only during action phase
+    if (this.turnManager.getCurrentPhase() !== TurnPhase.Action) {
+      console.log('Can only draw cards manually during Action Phase');
       return;
     }
 
@@ -121,9 +140,47 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
+   * Callback when a card is drawn by turn system
+   */
+  private onCardDrawn(cardData: CardData): void {
+    this.handManager.addCard(
+      cardData,
+      (card) => this.onCardSelected(card),
+      (card) => this.onCardDeselected(card)
+    );
+    this.handManager.repositionCards();
+  }
+
+  /**
+   * Callback when phase changes
+   */
+  private onPhaseChanged(phase: TurnPhase, player: number): void {
+    this.uiManager.updatePhaseIndicator(phase, player);
+  }
+
+  /**
+   * Handles next phase button click
+   */
+  private handleNextPhase(): void {
+    this.turnManager.nextPhase();
+  }
+
+  /**
    * Handles card selection
    */
   private onCardSelected(card: Card): void {
+    // If selecting cards to discard
+    if (this.isSelectingDiscard) {
+      this.toggleDiscardSelection(card);
+      return;
+    }
+
+    // Check if player can perform actions
+    if (!this.canPerformActions()) {
+      console.log("Cannot select cards during this phase or when it's not your turn");
+      return;
+    }
+
     // Deselect any previously selected card
     const previouslySelected = this.handManager.getSelectedCard();
     if (previouslySelected && previouslySelected !== card) {
@@ -149,6 +206,12 @@ export class GameScene extends Phaser.Scene {
    * Plays the currently selected card
    */
   private playSelectedCard(): void {
+    // Check if player can perform actions
+    if (!this.canPerformActions()) {
+      console.log("Cannot play cards during this phase or when it's not your turn");
+      return;
+    }
+
     const selectedCard = this.handManager.getSelectedCard();
     if (!selectedCard) {
       console.log("No card selected");
@@ -195,5 +258,76 @@ export class GameScene extends Phaser.Scene {
       console.log(`[GameScene] No handler implemented yet for ${cardData.type} cards`);
       console.log(`[GameScene] Card effect would be applied here in future implementation`);
     }
+  }
+
+  /**
+   * Checks if the player can perform actions (select/play cards)
+   * Only allowed during Player A's Action phase
+   */
+  private canPerformActions(): boolean {
+    const currentPlayer = this.turnManager.getCurrentPlayer();
+    const currentPhase = this.turnManager.getCurrentPhase();
+    
+    // Only Player A (0) can perform actions during their Action phase
+    return currentPlayer === 0 && currentPhase === TurnPhase.Action;
+  }
+
+  /**
+   * Callback when discard is requested at end phase
+   */
+  private onRequestDiscard(count: number): void {
+    console.log(`[GameScene] Need to discard ${count} cards`);
+    this.isSelectingDiscard = true;
+    this.discardCount = count;
+    this.selectedForDiscard = [];
+    
+    // Show discard UI
+    this.uiManager.showDiscardUI(count, () => this.confirmDiscard());
+  }
+
+  /**
+   * Toggles a card's selection for discard
+   */
+  private toggleDiscardSelection(card: Card): void {
+    const index = this.selectedForDiscard.indexOf(card);
+    
+    if (index >= 0) {
+      // Already selected, deselect it
+      this.selectedForDiscard.splice(index, 1);
+      card.deselect();
+    } else if (this.selectedForDiscard.length < this.discardCount) {
+      // Can select more cards
+      this.selectedForDiscard.push(card);
+      card.select();
+    }
+    
+    // Update UI with count
+    this.uiManager.updateDiscardCount(this.selectedForDiscard.length, this.discardCount);
+  }
+
+  /**
+   * Confirms the discard selection
+   */
+  private confirmDiscard(): void {
+    if (this.selectedForDiscard.length !== this.discardCount) {
+      console.log(`Must select exactly ${this.discardCount} cards to discard`);
+      return;
+    }
+
+    // Discard the selected cards
+    this.selectedForDiscard.forEach(card => {
+      this.turnManager.discardCard(card);
+    });
+
+    // Clean up
+    this.selectedForDiscard = [];
+    this.isSelectingDiscard = false;
+    this.handManager.repositionCards();
+    
+    // Hide discard UI
+    this.uiManager.hideDiscardUI();
+
+    // Complete the discard process
+    this.turnManager.completeDiscard();
   }
 }

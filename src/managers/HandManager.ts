@@ -40,15 +40,67 @@ export class HandManager implements IHandManager {
 
   /**
    * Repositions all cards in the hand with smooth animation
+   * Cards will overlap when there are many cards to fit on screen
    */
   public repositionCards(): void {
+    const handSize = this.hand.length;
+    
+    if (handSize === 0) return;
+
+    // Calculate spacing - reduce spacing as more cards are added
+    let spacing = GameConfig.CARD_SPACING;
+    const maxCardsAtFullSpacing = 7; // Cards start overlapping after 7
+    const minSpacing = 60; // Minimum spacing when heavily overlapped
+
+    if (handSize > maxCardsAtFullSpacing) {
+      // Calculate reduced spacing to fit all cards
+      const availableWidth = 800; // Available width for hand
+      const cardWidth = 120; // Width of a card
+      const neededWidth = cardWidth + (handSize - 1) * minSpacing;
+      
+      if (neededWidth > availableWidth) {
+        spacing = Math.max(minSpacing, (availableWidth - cardWidth) / (handSize - 1));
+      } else {
+        spacing = minSpacing;
+      }
+    }
+
     this.hand.forEach((card, index) => {
+      const targetX = GameConfig.HAND_START_X + index * spacing;
+      
       this.scene.tweens.add({
         targets: card,
-        x: GameConfig.HAND_START_X + index * GameConfig.CARD_SPACING,
+        x: targetX,
         duration: 200,
         ease: "Power2",
       });
+
+      // Set depth so cards overlap correctly (left to right)
+      card.setDepth(100 + index);
+
+      // Add hover effect to bring card to front
+      this.setupCardHoverDepth(card, 100 + this.hand.length);
+    });
+  }
+
+  /**
+   * Sets up hover effect to bring card to front
+   */
+  private setupCardHoverDepth(card: Card, frontDepth: number): void {
+    const originalDepth = card.depth;
+    
+    card.on('pointerover', () => {
+      card.setDepth(frontDepth);
+      card.setScale(1.1);
+    });
+
+    card.on('pointerout', () => {
+      card.setDepth(originalDepth);
+      // Only reset scale if not selected
+      const isSelected = card === this.selectedCard;
+      if (!isSelected) {
+        card.setScale(1.0);
+      }
     });
   }
 

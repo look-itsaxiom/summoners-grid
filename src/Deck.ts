@@ -3,6 +3,7 @@ import { CardData } from './Card';
 export class Deck {
   private cards: CardData[] = [];
   private summonCards: CardData[] = [];
+  private rechargePile: CardData[] = [];
 
   constructor() {
     this.initializeDeck();
@@ -58,6 +59,14 @@ export class Deck {
   }
 
   public draw(): CardData | null {
+    // If main deck is empty, shuffle recharge pile into main deck
+    if (this.cards.length === 0 && this.rechargePile.length > 0) {
+      console.log('[Deck] Main deck empty, shuffling recharge pile into main deck');
+      this.cards = [...this.rechargePile];
+      this.rechargePile = [];
+      this.shuffle();
+    }
+    
     return this.cards.pop() || null;
   }
 
@@ -71,5 +80,20 @@ export class Deck {
 
   public getSummonCount(): number {
     return this.summonCards.length;
+  }
+
+  /**
+   * Add a card to the recharge pile
+   */
+  public addToRechargePile(card: CardData): void {
+    this.rechargePile.push(card);
+    console.log(`[Deck] Card added to recharge pile: ${card.name}`);
+  }
+
+  /**
+   * Get the number of cards in the recharge pile
+   */
+  public getRechargePileCount(): number {
+    return this.rechargePile.length;
   }
 }
