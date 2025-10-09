@@ -154,6 +154,8 @@ export class TurnManager {
       const handSize = this.handManager.getHandSize();
       const maxHandSize = 6;
       
+      console.log(`[TurnManager] Current hand size: ${handSize}, max: ${maxHandSize}`);
+      
       if (handSize > maxHandSize) {
         const cardsToDiscard = handSize - maxHandSize;
         console.log(`[TurnManager] Hand size ${handSize} exceeds limit of ${maxHandSize}, need to discard ${cardsToDiscard} cards`);
@@ -170,6 +172,8 @@ export class TurnManager {
           }
         }
         this.handManager.repositionCards();
+      } else {
+        console.log(`[TurnManager] Hand size ${handSize} is within limit, no discard needed`);
       }
     }
   }

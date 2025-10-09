@@ -15,3 +15,8 @@ const config: Phaser.Types.Core.GameConfig = {
 };
 
 const game = new Phaser.Game(config);
+
+// Expose game instance for debugging in development
+if (process.env.NODE_ENV !== 'production') {
+  (window as any).game = game;
+}
