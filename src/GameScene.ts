@@ -3,24 +3,28 @@ import { Card, CardData } from "./Card";
 import { Deck } from "./Deck";
 import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
 import { PlayerInfo } from "./types/GameTypes";
+import { GameConfig } from "./config/GameConfig";
+import { GridManager, HandManager, DeckVisualizer, UIManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
 
+/**
+ * Main game scene that orchestrates the game flow.
+ * Refactored to follow Single Responsibility Principle by delegating
+ * specific responsibilities to dedicated manager classes.
+ */
 export class GameScene extends Phaser.Scene {
-  private readonly GRID_COLS = 12;
-  private readonly GRID_ROWS = 14;
-  private readonly CELL_SIZE = 40;
-  private readonly HAND_SIZE = 6;
-
-  private grid: Phaser.GameObjects.Rectangle[][] = [];
-  private hand: Card[] = [];
+  // Core game components
   private deck!: Deck;
-  private selectedCard: Card | null = null;
-  private playButton!: Phaser.GameObjects.Rectangle;
-  private playButtonText!: Phaser.GameObjects.Text;
-  private deckVisual!: Phaser.GameObjects.Container;
-  private discardPile: CardData[] = [];
-  private discardVisual!: Phaser.GameObjects.Container;
   private cardPlayHandlerRegistry!: CardPlayHandlerRegistry;
-  private playerInfo: PlayerInfo = { playerId: 0, color: 0x4a6fa5 }; // Player A (blue)
+  private readonly playerInfo: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
+
+  // Manager components (following SRP and DIP with interfaces)
+  private gridManager!: IGridManager;
+  private handManager!: IHandManager;
+  private deckVisualizer!: IDeckVisualizer;
+  private uiManager!: IUIManager;
+
+  // Grid reference (needed by card handlers)
+  private grid: Phaser.GameObjects.Rectangle[][] = [];
 
   constructor() {
     super("GameScene");
@@ -30,23 +34,35 @@ export class GameScene extends Phaser.Scene {
     // Initialize deck
     this.deck = new Deck();
 
+    // Initialize managers
+    this.initializeManagers();
+
     // Create the game board
-    this.createBoard();
+    this.grid = this.gridManager.createGrid();
 
     // Initialize card play handler registry (after grid is created)
     this.initializeCardHandlers();
 
-    // Create visual deck
-    this.createDeckVisual();
-
-    // Create discard pile visual
-    this.createDiscardVisual();
+    // Create deck and discard visuals
+    this.deckVisualizer.createDeckVisual(() => this.handleDrawCard());
+    this.deckVisualizer.createDiscardVisual();
 
     // Draw initial hand (3 summon cards only)
     this.drawInitialHand();
 
-    // Add UI text
-    this.createUI();
+    // Create UI elements
+    this.uiManager.createStaticUI();
+    this.uiManager.createPlayButton(() => this.playSelectedCard());
+  }
+
+  /**
+   * Initializes all manager components
+   */
+  private initializeManagers(): void {
+    this.gridManager = new GridManager(this);
+    this.handManager = new HandManager(this);
+    this.deckVisualizer = new DeckVisualizer(this, this.deck);
+    this.uiManager = new UIManager(this);
   }
 
   private initializeCardHandlers(): void {
@@ -63,356 +79,105 @@ export class GameScene extends Phaser.Scene {
     // etc.
   }
 
-  private createBoard(): void {
-    const offsetX = 200;
-    const offsetY = 100;
-
-    // Create 12x14 grid
-    for (let row = 0; row < this.GRID_ROWS; row++) {
-      this.grid[row] = [];
-      for (let col = 0; col < this.GRID_COLS; col++) {
-        const x = offsetX + col * this.CELL_SIZE;
-        // Flip Y coordinate so row 0 appears at bottom (Player A territory faces player)
-        const y = offsetY + (this.GRID_ROWS - 1 - row) * this.CELL_SIZE;
-
-        // Determine cell color based on territory
-        let cellColor = 0x333333; // Neutral territory
-        if (row < 3) {
-          cellColor = 0x3a5a7a; // Player territory (bottom 3 rows)
-        } else if (row >= this.GRID_ROWS - 3) {
-          cellColor = 0x7a3a3a; // Opponent territory (top 3 rows)
-        }
-
-        const cell = this.add.rectangle(x + this.CELL_SIZE / 2, y + this.CELL_SIZE / 2, this.CELL_SIZE - 2, this.CELL_SIZE - 2, cellColor);
-        cell.setStrokeStyle(1, 0x666666);
-
-        this.grid[row][col] = cell;
-      }
-    }
-
-    // Add coordinate labels
-    this.addCoordinateLabels(offsetX, offsetY);
-  }
-
-  private addCoordinateLabels(offsetX: number, offsetY: number): void {
-    // Column labels (0-11)
-    for (let col = 0; col < this.GRID_COLS; col++) {
-      const x = offsetX + col * this.CELL_SIZE + this.CELL_SIZE / 2;
-      const y = offsetY - 15;
-      this.add
-        .text(x, y, (col + 1).toString(), {
-          fontSize: "10px",
-          color: "#888888",
-        })
-        .setOrigin(0.5);
-    }
-
-    // Row labels (0-13) - flip to match visual layout
-    for (let row = 0; row < this.GRID_ROWS; row++) {
-      const x = offsetX - 15;
-      // Use flipped Y coordinate to match visual grid position
-      const y = offsetY + (this.GRID_ROWS - 1 - row) * this.CELL_SIZE + this.CELL_SIZE / 2;
-      this.add
-        .text(x, y, (row + 1).toString(), {
-          fontSize: "10px",
-          color: "#888888",
-        })
-        .setOrigin(0.5);
-    }
-  }
-
-  private createDeckVisual(): void {
-    const deckX = 900;
-    const deckY = 400;
-
-    // Create deck container
-    this.deckVisual = this.add.container(deckX, deckY);
-
-    // Create multiple card backs to show stack effect
-    for (let i = 0; i < 3; i++) {
-      const cardBack = this.add.rectangle(i * 2, i * 2, 80, 110, 0x1a3a5a);
-      cardBack.setStrokeStyle(2, 0x4a6fa5);
-      this.deckVisual.add(cardBack);
-    }
-
-    // Add deck text
-    const deckText = this.add
-      .text(0, -70, "DECK", {
-        fontSize: "16px",
-        color: "#ffffff",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-    this.deckVisual.add(deckText);
-
-    // Add card count text
-    const countText = this.add
-      .text(0, 70, "", {
-        fontSize: "14px",
-        color: "#aaaaaa",
-      })
-      .setOrigin(0.5);
-    this.deckVisual.add(countText);
-
-    // Update count text continuously
-    this.time.addEvent({
-      delay: 100,
-      callback: () => {
-        countText.setText(`${this.deck.getRemainingCount()} cards`);
-      },
-      loop: true,
-    });
-
-    // Make deck interactive
-    const topCard = this.deckVisual.list[2] as Phaser.GameObjects.Rectangle;
-    topCard.setInteractive();
-
-    topCard.on("pointerdown", () => {
-      if (this.hand.length < this.HAND_SIZE) {
-        this.drawCard();
-        this.repositionHand();
-      } else {
-        console.log("Hand is full (6 cards max)");
-      }
-    });
-
-    topCard.on("pointerover", () => {
-      topCard.setFillStyle(0x2a4a6a);
-      this.deckVisual.setScale(1.05);
-    });
-
-    topCard.on("pointerout", () => {
-      topCard.setFillStyle(0x1a3a5a);
-      this.deckVisual.setScale(1.0);
-    });
-
-    // Add "Click to Draw" instruction
-    const instructionText = this.add
-      .text(0, 100, "Click to Draw", {
-        fontSize: "12px",
-        color: "#6a9fc5",
-      })
-      .setOrigin(0.5);
-    this.deckVisual.add(instructionText);
-  }
-
-  private createDiscardVisual(): void {
-    const discardX = 900;
-    const discardY = 200;
-
-    // Create discard container
-    this.discardVisual = this.add.container(discardX, discardY);
-
-    // Create discard pile background
-    const discardBack = this.add.rectangle(0, 0, 80, 110, 0x3a3a1a);
-    discardBack.setStrokeStyle(2, 0x6a6a4a);
-    this.discardVisual.add(discardBack);
-
-    // Add discard text
-    const discardText = this.add
-      .text(0, -70, "DISCARD", {
-        fontSize: "16px",
-        color: "#ffffff",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-    this.discardVisual.add(discardText);
-
-    // Add card count text
-    const countText = this.add
-      .text(0, 70, "0 cards", {
-        fontSize: "14px",
-        color: "#aaaaaa",
-      })
-      .setOrigin(0.5);
-    this.discardVisual.add(countText);
-  }
-
-  private updateDiscardVisual(): void {
-    // Update the discard pile visuals to show cards
-    const countText = this.discardVisual.list[2] as Phaser.GameObjects.Text;
-    countText.setText(`${this.discardPile.length} cards`);
-
-    // Make the discard background more prominent if there are cards
-    const discardBack = this.discardVisual.list[0] as Phaser.GameObjects.Rectangle;
-    if (this.discardPile.length > 0) {
-      discardBack.setFillStyle(0x4a4a2a);
-      discardBack.setStrokeStyle(2, 0x7a7a5a);
-    } else {
-      discardBack.setFillStyle(0x3a3a1a);
-      discardBack.setStrokeStyle(2, 0x6a6a4a);
-    }
-  }
-
+  /**
+   * Draws initial hand of 3 summon cards
+   */
   private drawInitialHand(): void {
     // Draw 3 summon cards for initial hand (3v3 format)
     for (let i = 0; i < 3; i++) {
       const cardData = this.deck.drawSummon();
       if (cardData) {
-        this.addCardToHand(cardData);
+        this.handManager.addCard(
+          cardData,
+          (card) => this.onCardSelected(card),
+          (card) => this.onCardDeselected(card)
+        );
       }
     }
-    this.repositionHand();
+    this.handManager.repositionCards();
   }
 
-  private drawCard(): void {
+  /**
+   * Handles drawing a card from the deck
+   */
+  private handleDrawCard(): void {
+    if (this.handManager.isFull()) {
+      console.log(`Hand is full (${GameConfig.HAND_SIZE} cards max)`);
+      return;
+    }
+
     const cardData = this.deck.draw();
     if (!cardData) {
       console.log("No more cards in deck");
       return;
     }
 
-    this.addCardToHand(cardData);
-    this.repositionHand();
+    this.handManager.addCard(
+      cardData,
+      (card) => this.onCardSelected(card),
+      (card) => this.onCardDeselected(card)
+    );
+    this.handManager.repositionCards();
   }
 
-  private addCardToHand(cardData: CardData): void {
-    const handY = 780;
-    const handStartX = 250;
-    const cardSpacing = 100;
-
-    const card = new Card(this, handStartX + this.hand.length * cardSpacing, handY, cardData);
-
-    card.on("cardSelected", (data: CardData) => {
-      this.onCardSelected(card);
-    });
-
-    card.on("cardDeselected", () => {
-      this.onCardDeselected(card);
-    });
-
-    this.hand.push(card);
-  }
-
+  /**
+   * Handles card selection
+   */
   private onCardSelected(card: Card): void {
     // Deselect any previously selected card
-    if (this.selectedCard && this.selectedCard !== card) {
-      this.selectedCard.deselect();
+    const previouslySelected = this.handManager.getSelectedCard();
+    if (previouslySelected && previouslySelected !== card) {
+      previouslySelected.deselect();
     }
-    this.selectedCard = card;
+    this.handManager.setSelectedCard(card);
     console.log("Card selected:", card.getCardData());
 
     // Show play button above the selected card
-    this.showPlayButton();
+    this.uiManager.showPlayButton(card);
   }
 
+  /**
+   * Handles card deselection
+   */
   private onCardDeselected(card: Card): void {
-    if (this.selectedCard === card) {
-      this.selectedCard = null;
-      this.hidePlayButton();
-    }
+    this.handManager.deselectCard(card);
+    this.uiManager.hidePlayButton();
     console.log("Card deselected");
   }
 
-  private createUI(): void {
-    // Title
-    this.add
-      .text(600, 30, "Summoner's Grid", {
-        fontSize: "32px",
-        color: "#ffffff",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5);
-
-    // Create Play button (initially hidden)
-    this.playButton = this.add.rectangle(0, 0, 120, 40, 0x4a6fa5);
-    this.playButton.setStrokeStyle(2, 0x6a9fc5);
-    this.playButton.setInteractive();
-    this.playButton.setVisible(false);
-
-    this.playButtonText = this.add
-      .text(0, 0, "Play Card", {
-        fontSize: "14px",
-        color: "#ffffff",
-      })
-      .setOrigin(0.5);
-    this.playButtonText.setVisible(false);
-
-    this.playButton.on("pointerdown", () => {
-      this.playSelectedCard();
-    });
-
-    this.playButton.on("pointerover", () => {
-      this.playButton.setFillStyle(0x5a7fb5);
-    });
-
-    this.playButton.on("pointerout", () => {
-      this.playButton.setFillStyle(0x4a6fa5);
-    });
-  }
-
-  private showPlayButton(): void {
-    if (this.selectedCard) {
-      // Position button above the selected card
-      const cardX = this.selectedCard.x;
-      const cardY = this.selectedCard.y;
-
-      this.playButton.setPosition(cardX, cardY - 80);
-      this.playButtonText.setPosition(cardX, cardY - 80);
-
-      this.playButton.setVisible(true);
-      this.playButtonText.setVisible(true);
-
-      // Bring button to front
-      this.playButton.setDepth(1000);
-      this.playButtonText.setDepth(1001);
-    }
-  }
-
-  private hidePlayButton(): void {
-    this.playButton.setVisible(false);
-    this.playButtonText.setVisible(false);
-  }
-
+  /**
+   * Plays the currently selected card
+   */
   private playSelectedCard(): void {
-    if (!this.selectedCard) {
+    const selectedCard = this.handManager.getSelectedCard();
+    if (!selectedCard) {
       console.log("No card selected");
       return;
     }
 
-    const cardData = this.selectedCard.getCardData();
+    const cardData = selectedCard.getCardData();
     console.log("Playing card:", cardData);
 
     // Add card to discard pile
-    this.discardPile.push(cardData);
-    this.updateDiscardVisual();
+    this.deckVisualizer.addToDiscard(cardData);
 
     // Remove card from hand
-    const cardIndex = this.hand.indexOf(this.selectedCard);
-    if (cardIndex !== -1) {
-      this.hand.splice(cardIndex, 1);
-      this.selectedCard.destroy();
-      this.selectedCard = null;
+    this.handManager.removeCard(selectedCard);
+    this.handManager.setSelectedCard(null);
 
-      // Hide play button
-      this.hidePlayButton();
+    // Hide play button
+    this.uiManager.hidePlayButton();
 
-      // Reposition remaining cards
-      this.repositionHand();
+    // Reposition remaining cards
+    this.handManager.repositionCards();
 
-      // Stub function for playing a card
-      this.onPlayCard(cardData);
-
-      // Note: Do NOT automatically draw a new card - player must click deck to draw
-    }
+    // Execute card play logic
+    this.onPlayCard(cardData);
   }
 
-  private repositionHand(): void {
-    const handY = 780;
-    const handStartX = 250;
-    const cardSpacing = 130;
-
-    this.hand.forEach((card, index) => {
-      this.tweens.add({
-        targets: card,
-        x: handStartX + index * cardSpacing,
-        duration: 200,
-        ease: "Power2",
-      });
-    });
-  }
-
-  // Handler for playing a card
+  /**
+   * Executes card play logic through the appropriate handler
+   */
   private onPlayCard(cardData: CardData): void {
     console.log(`[GameScene] Playing card: ${cardData.name} (${cardData.type})`);
 

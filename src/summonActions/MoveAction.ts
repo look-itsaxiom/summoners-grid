@@ -1,6 +1,7 @@
 import { ISummonAction } from './ISummonAction';
 import { SummonUnit } from '../types/SummonUnit';
 import { GridPosition } from '../types/GameTypes';
+import { GameConfig } from '../config/GameConfig';
 
 /**
  * Move action for summon units.
@@ -8,12 +9,6 @@ import { GridPosition } from '../types/GameTypes';
  * the logic for moving a summon unit.
  */
 export class MoveAction implements ISummonAction {
-  private readonly GRID_COLS = 12;
-  private readonly GRID_ROWS = 14;
-  private readonly CELL_SIZE = 40;
-  private readonly GRID_OFFSET_X = 200;
-  private readonly GRID_OFFSET_Y = 100;
-
   private grid: Phaser.GameObjects.Rectangle[][];
   private occupiedPositions: Map<string, SummonUnit>;
   private highlightedCells: Phaser.GameObjects.Rectangle[] = [];
@@ -71,11 +66,8 @@ export class MoveAction implements ISummonAction {
   }
 
   private showInstructions(scene: Phaser.Scene): void {
-    const centerX = 600;
-    const centerY = 650;
-
     this.instructionText = scene.add
-      .text(centerX, centerY, 'Select a space to move to', {
+      .text(GameConfig.INSTRUCTION_X, GameConfig.INSTRUCTION_Y, 'Select a space to move to', {
         fontSize: '20px',
         color: '#00ff00',
         backgroundColor: '#000000',
@@ -95,8 +87,8 @@ export class MoveAction implements ISummonAction {
   private highlightValidCells(scene: Phaser.Scene, summon: SummonUnit): void {
     // For now, allow movement to any space (as per requirements)
     // In future, can be restricted by movement range
-    for (let row = 0; row < this.GRID_ROWS; row++) {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+    for (let row = 0; row < GameConfig.GRID_ROWS; row++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const position: GridPosition = { row, col };
         
         // Skip current position
@@ -116,8 +108,8 @@ export class MoveAction implements ISummonAction {
         const highlight = scene.add.rectangle(
           cell.x,
           cell.y,
-          this.CELL_SIZE - 2,
-          this.CELL_SIZE - 2,
+          GameConfig.CELL_SIZE - 2,
+          GameConfig.CELL_SIZE - 2,
           0x00ff00,
           0.2
         );
@@ -147,8 +139,8 @@ export class MoveAction implements ISummonAction {
     onComplete: (success: boolean) => void
   ): void {
     // Make all cells interactive for selection
-    for (let row = 0; row < this.GRID_ROWS; row++) {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+    for (let row = 0; row < GameConfig.GRID_ROWS; row++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const cell = this.grid[row][col];
         const position: GridPosition = { row, col };
 
@@ -232,8 +224,8 @@ export class MoveAction implements ISummonAction {
     this.hideInstructions();
 
     // Remove event handlers from all cells
-    for (let row = 0; row < this.GRID_ROWS; row++) {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+    for (let row = 0; row < GameConfig.GRID_ROWS; row++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const cell = this.grid[row][col];
         const cleanupData = cell.getData('moveActionCleanup');
 

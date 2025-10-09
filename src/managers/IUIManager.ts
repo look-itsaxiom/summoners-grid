@@ -1,0 +1,29 @@
+import { Card } from "../Card";
+
+/**
+ * Interface for UI management operations.
+ * Following the Interface Segregation Principle - focused on UI elements only.
+ */
+export interface IUIManager {
+  /**
+   * Creates the title and other static UI elements
+   */
+  createStaticUI(): void;
+
+  /**
+   * Creates the play button (initially hidden)
+   * @param onPlay Callback function to execute when play button is clicked
+   */
+  createPlayButton(onPlay: () => void): void;
+
+  /**
+   * Shows the play button above the selected card
+   * @param selectedCard The card above which to show the play button
+   */
+  showPlayButton(selectedCard: Card): void;
+
+  /**
+   * Hides the play button
+   */
+  hidePlayButton(): void;
+}
