@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { Card, CardData } from "./Card";
 import { Deck } from "./Deck";
 import { CardPlayHandlerRegistry, SummonPlayHandler } from "./cardHandlers";
-import { PlayerInfo, TurnPhase } from "./types/GameTypes";
+import { PlayerInfo, TurnPhase, GridPosition } from "./types/GameTypes";
 import { GameConfig } from "./config/GameConfig";
 import { GridManager, HandManager, DeckVisualizer, UIManager, TurnManager, type IGridManager, type IHandManager, type IDeckVisualizer, type IUIManager } from "./managers";
 import { IGameService, LocalGameService, type GameState, type AnyPlayerAction } from "./services";
@@ -100,11 +100,12 @@ export class GameScene extends Phaser.Scene {
     // Create the handler registry
     this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
 
-    // Register the summon play handler with phase/turn check
+    // Register the summon play handler with phase/turn check and service callback
     const summonHandler = new SummonPlayHandler(
       this.grid, 
       this.playerInfo,
-      () => this.canPerformActions()
+      () => this.canPerformActions(),
+      (cardData, position) => this.onSummonPlacementRequested(cardData, position)
     );
     this.cardPlayHandlerRegistry.registerHandler(summonHandler);
 
@@ -112,6 +113,31 @@ export class GameScene extends Phaser.Scene {
     // this.cardPlayHandlerRegistry.registerHandler(new ActionPlayHandler(...));
     // this.cardPlayHandlerRegistry.registerHandler(new BuildingPlayHandler(...));
     // etc.
+  }
+  
+  /**
+   * Called when player requests to place a summon
+   * REFACTORED: Sends action to game service instead of directly placing
+   */
+  private async onSummonPlacementRequested(cardData: CardData, position: GridPosition): Promise<void> {
+    console.log(`[GameScene] Summon placement requested at (${position.col},${position.row})`);
+    
+    // Send play card action to service
+    await this.processPlayerAction({
+      type: "PLAY_CARD",
+      playerId: this.playerInfo.playerId,
+      cardData: cardData,
+      targetPosition: position
+    });
+    
+    // Service has updated state, now create visual token
+    // Get the summon handler to place the visual token
+    const summonHandler = this.cardPlayHandlerRegistry.getHandler(cardData);
+    if (summonHandler && summonHandler instanceof SummonPlayHandler) {
+      summonHandler.placeToken(this, position, cardData);
+      // Sync handler's placed summons with game state
+      summonHandler.syncPlacedSummons(this.currentGameState.placedSummons);
+    }
   }
 
   /**

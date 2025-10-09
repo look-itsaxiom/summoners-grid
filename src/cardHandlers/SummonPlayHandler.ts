@@ -21,15 +21,18 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private availableActions: ISummonAction[];
   private activeAction: ISummonAction | null = null;
   private canPerformActionsCheck: (() => boolean) | null = null;
+  private onSummonPlaced: ((cardData: CardData, position: GridPosition) => void) | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
     playerInfo: PlayerInfo,
-    canPerformActionsCheck?: () => boolean
+    canPerformActionsCheck?: () => boolean,
+    onSummonPlaced?: (cardData: CardData, position: GridPosition) => void
   ) {
     this.grid = grid;
     this.playerInfo = playerInfo;
     this.canPerformActionsCheck = canPerformActionsCheck || null;
+    this.onSummonPlaced = onSummonPlaced || null;
     
     // Initialize available actions (can be expanded in the future)
     this.availableActions = [
@@ -168,14 +171,18 @@ export class SummonPlayHandler implements ICardPlayHandler {
           if (this.isValidPlacement(position)) {
             console.log(`[SummonPlayHandler] Placing summon at (${col},${row})`);
             
-            // Place the token
-            this.placeToken(scene, position, cardData);
-
-            // Clean up
-            this.cleanup(scene);
-
-            // Complete the action
-            onComplete(true);
+            // Notify GameScene if callback provided (new service-based approach)
+            if (this.onSummonPlaced) {
+              this.onSummonPlaced(cardData, position);
+              // Clean up UI
+              this.cleanup(scene);
+              onComplete(true);
+            } else {
+              // Legacy approach: place token directly
+              this.placeToken(scene, position, cardData);
+              this.cleanup(scene);
+              onComplete(true);
+            }
           }
         };
 
@@ -194,7 +201,11 @@ export class SummonPlayHandler implements ICardPlayHandler {
     });
   }
 
-  private placeToken(
+  /**
+   * Place a visual token for a summon
+   * This is public so GameScene can call it after service confirms placement
+   */
+  public placeToken(
     scene: Phaser.Scene,
     position: GridPosition,
     cardData: CardData
@@ -331,6 +342,21 @@ export class SummonPlayHandler implements ICardPlayHandler {
         this.activeAction = null;
       }
     });
+  }
+
+  /**
+   * Get the placed summons map (for synchronization with game state)
+   */
+  public getPlacedSummons(): Map<string, SummonUnit> {
+    return this.placedSummons;
+  }
+  
+  /**
+   * Sync placed summons from game state
+   * Called when game state updates from service
+   */
+  public syncPlacedSummons(summons: Map<string, SummonUnit>): void {
+    this.placedSummons = summons;
   }
 
   private getPositionKey(position: GridPosition): string {
