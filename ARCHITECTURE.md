@@ -2,11 +2,64 @@
 
 ## Overview
 
-This document describes the architecture of the summon action system, which follows SOLID principles for maintainability and extensibility.
+This document describes the architecture of the game system, which follows SOLID principles for maintainability and extensibility.
+
+**NEW (2024):** The game now uses a **client-server architecture pattern** that separates game state logic from UI logic. See [CLIENT-SERVER-ARCHITECTURE.md](CLIENT-SERVER-ARCHITECTURE.md) for detailed information about the service layer.
+
+## High-Level Architecture
+
+### Service Layer (Game Logic)
+The service layer manages the authoritative game state and processes player actions:
+- **IGameService**: Interface defining the contract between UI and game logic
+- **LocalGameService**: In-process implementation that validates actions and updates state
+- **PlayerAction types**: Command pattern for all player inputs
+- **GameState**: Complete representation of game state
+
+### UI Layer (Client)
+The UI layer handles player interaction and visual representation:
+- **GameScene**: Main coordinator that sends actions to service and renders state updates
+- **Managers**: Handle display concerns (GridManager, HandManager, UIManager)
+- **Card Handlers**: Convert UI interactions into service commands
+- **Visual Components**: Render game entities (cards, tokens, UI elements)
 
 ## Class Diagram
 
 ```
+┌─────────────────────────────────────────────────────────────┐
+│                     IGameService                            │
+│                    (Interface)                               │
+│  - initializeGame()                                         │
+│  - processAction(action)                                    │
+│  - getGameState()                                           │
+└───────────────────┬─────────────────────────────────────────┘
+                    │ implements
+                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  LocalGameService                           │
+│  (Manages authoritative game state)                         │
+│  - Validates player actions                                 │
+│  - Updates game state                                       │
+│  - Returns state responses                                  │
+└───────────────────┬─────────────────────────────────────────┘
+                    │ uses
+                    ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      GameState                              │
+│  - turnNumber, currentPlayer, currentPhase                  │
+│  - playerAHand, playerBHand                                 │
+│  - placedSummons (Map<string, SummonUnit>)                  │
+│  - deck counts, victory points                              │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│                        GameScene                            │
+│  (Main UI coordinator)                                      │
+│  - Sends PlayerActions to service                           │
+│  - Receives GameState updates                               │
+│  - Syncs UI with state                                      │
+└─────────────────┬───────────────────────────────────────────┘
+                  │ uses
+                  ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                        GameScene                            │
 │  (Main game scene - coordinates game flow)                  │
@@ -97,6 +150,85 @@ This document describes the architecture of the summon action system, which foll
 
 ## Data Flow
 
+### Service-Based Architecture Flow
+
+#### 1. Phase Transition
+```
+Player clicks "Next Phase"
+    ↓
+GameScene.handleNextPhase()
+    ↓
+Creates NextPhaseAction
+    ↓
+processPlayerAction() → LocalGameService
+    ↓
+Service validates and updates state
+    ↓
+Returns GameStateResponse
+    ↓
+GameScene syncs UI with new state
+    ↓
+Phase indicator updates, cards drawn
+```
+
+#### 2. Placing a Summon
+```
+Player selects card and clicks grid
+    ↓
+SummonPlayHandler.onSummonPlaced callback
+    ↓
+GameScene.onSummonPlacementRequested()
+    ↓
+Creates PlayCardAction
+    ↓
+processPlayerAction() → LocalGameService
+    ↓
+Service validates position and updates state
+    ↓
+Returns updated state with summon placed
+    ↓
+GameScene receives response
+    ↓
+Calls SummonPlayHandler.placeToken()
+    ↓
+Visual token created and animated
+    ↓
+Handler syncs with game state
+```
+
+#### 3. Moving a Summon
+```
+Player clicks summon token
+    ↓
+SummonActionMenu shows
+    ↓
+Player selects "Move"
+    ↓
+MoveAction highlights valid cells
+    ↓
+Player clicks destination
+    ↓
+MoveAction.onMoveRequested callback
+    ↓
+GameScene.onSummonMoveRequested()
+    ↓
+Creates MoveSummonAction
+    ↓
+processPlayerAction() → LocalGameService
+    ↓
+Service validates and updates position
+    ↓
+Returns updated state
+    ↓
+GameScene receives response
+    ↓
+Calls MoveAction.moveToken()
+    ↓
+Visual token animates to new position
+```
+
+### Legacy Data Flow (Deprecated)
+
 ### 1. Placing a Summon
 ```
 Player clicks card
@@ -156,50 +288,89 @@ Action.execute()
 
 ### Single Responsibility Principle (SRP)
 - ✅ Each class has one reason to change
-- `SummonUnit`: Changes only if summon state model changes
-- `MoveAction`: Changes only if movement rules change
-- `AttackAction`: Changes only if attack mechanics change
-- `SummonActionMenu`: Changes only if UI requirements change
+- `LocalGameService`: Manages game state and rules only
+- `GameScene`: Coordinates UI and communicates with service only
+- `SummonUnit`: Manages summon state only
+- `MoveAction`: Handles movement UI/logic only
+- `SummonActionMenu`: Manages action menu UI only
 
 ### Open/Closed Principle (OCP)
 - ✅ System is open for extension, closed for modification
-- Add new actions by creating new classes implementing `ISummonAction`
-- No need to modify `SummonPlayHandler` or `SummonActionMenu`
-- Example: Adding a "Defend" action:
-  ```typescript
-  export class DefendAction implements ISummonAction {
-    getName(): string { return 'Defend'; }
-    canExecute(summon: SummonUnit): boolean { return true; }
-    execute(summon: SummonUnit, scene: Phaser.Scene, onComplete: Function): void {
-      // Defend logic here
-    }
-  }
-  ```
+- Add new actions by creating new `PlayerAction` types
+- Add new services by implementing `IGameService` (e.g., `RemoteGameService`)
+- Add new summon actions by implementing `ISummonAction`
+- No need to modify existing service or UI code
 
 ### Liskov Substitution Principle (LSP)
-- ✅ All action implementations can be used interchangeably
-- `SummonPlayHandler` works with any `ISummonAction`
-- No need to check action type at runtime
+- ✅ All implementations can be used interchangeably
+- `LocalGameService` can be swapped with `RemoteGameService` or `MockGameService`
+- All action implementations work with any `ISummonAction` consumer
+- No runtime type checking needed
 
 ### Interface Segregation Principle (ISP)
-- ✅ Interface contains only essential methods
-- Actions only implement what they need
-- No "fat interfaces" with unused methods
+- ✅ Interfaces contain only essential methods
+- `IGameService` has focused contract (3 methods)
+- `ISummonAction` has minimal interface
+- `PlayerAction` types are specific and focused
 
 ### Dependency Inversion Principle (DIP)
 - ✅ High-level modules depend on abstractions
-- `SummonPlayHandler` depends on `ISummonAction` interface
-- Not dependent on concrete `MoveAction` or `AttackAction` classes
-- Actions can be swapped or mocked for testing
+- `GameScene` depends on `IGameService` interface, not concrete implementation
+- `SummonPlayHandler` depends on callback abstractions
+- Easy to swap implementations for testing or different environments
+
+## Architecture Benefits
+
+### 1. Separation of Concerns
+- **Service Layer**: Pure game logic, no UI dependencies
+- **UI Layer**: Pure presentation, no game rules
+- Clear boundaries make code easier to understand and maintain
+
+### 2. Testability
+- Service can be unit tested without UI
+- UI can use `MockGameService` for testing
+- Actions can be tested independently
+- State changes are predictable and reproducible
+
+### 3. Future Server Support
+- `LocalGameService` runs in-process (current)
+- Can be replaced with `RemoteGameService` that communicates over network
+- UI code remains unchanged
+- Easy path to authoritative server
+
+### 4. Maintainability
+- Changes to game rules only affect service layer
+- Changes to UI only affect presentation layer
+- Reduced coupling between components
+- Clear responsibilities for each class
 
 ## Extension Points
 
-### Adding New Actions
+### Adding New Player Actions
+
+1. Create a new `PlayerAction` type:
+```typescript
+export interface NewGameAction extends PlayerAction {
+  type: "NEW_ACTION";
+  // action-specific data
+}
+```
+
+2. Handle in `LocalGameService.processAction()`:
+```typescript
+case "NEW_ACTION":
+  return await this.handleNewAction(action as NewGameAction);
+```
+
+3. Create UI interaction in appropriate component
+4. Call `processPlayerAction()` from GameScene
+
+### Adding New Summon Actions
 
 1. Create a new class implementing `ISummonAction`:
 ```typescript
-export class NewAction implements ISummonAction {
-  getName(): string { return 'New Action'; }
+export class DefendAction implements ISummonAction {
+  getName(): string { return 'Defend'; }
   canExecute(summon: SummonUnit): boolean { /* logic */ }
   execute(summon: SummonUnit, scene: Phaser.Scene, onComplete: Function): void {
     /* implementation */
@@ -212,8 +383,42 @@ export class NewAction implements ISummonAction {
 this.availableActions = [
   new MoveAction(this.grid, this.placedSummons),
   new AttackAction(),
-  new NewAction() // Add here
+  new DefendAction() // Add here
 ];
+```
+
+### Adding Remote Service Support
+
+Create a `RemoteGameService` implementation:
+```typescript
+export class RemoteGameService implements IGameService {
+  async processAction(action: AnyPlayerAction): Promise<GameStateResponse> {
+    const response = await fetch('/api/game/action', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(action)
+    });
+    return response.json();
+  }
+  
+  async getGameState(): Promise<GameState> {
+    const response = await fetch('/api/game/state');
+    return response.json();
+  }
+  
+  async initializeGame(): Promise<GameState> {
+    const response = await fetch('/api/game/init', { method: 'POST' });
+    return response.json();
+  }
+}
+```
+
+Then swap in GameScene:
+```typescript
+// Change from:
+this.gameService = new LocalGameService();
+// To:
+this.gameService = new RemoteGameService();
 ```
 
 ### Extending SummonUnit State
@@ -332,8 +537,28 @@ The fix ensures only one action can be active at a time. When a new action start
 
 ## Future Architecture Enhancements
 
-1. **Action Queue System**: For managing multiple actions in sequence
-2. **Action Validation Service**: Centralized validation logic
-3. **Action History**: For undo/redo functionality
-4. **Animation Manager**: Centralized animation handling
-5. **State Machine**: For managing summon states (idle, moving, attacking, etc.)
+### Authoritative Server
+- Replace `LocalGameService` with `RemoteGameService`
+- Server validates all actions
+- Multiple clients stay synchronized
+- Prevents cheating and ensures fair play
+
+### State Synchronization
+- WebSocket connection for real-time updates
+- Server broadcasts state changes to all clients
+- Optimistic UI updates with rollback on rejection
+- Spectator mode support
+
+### Replay System
+- Record all `PlayerAction` commands
+- Replay games from action history
+- Analysis and debugging tools
+- Share replays with other players
+
+### Advanced Features
+- AI opponent using service interface
+- Tournament mode with multiple games
+- Statistics and analytics
+- Leaderboards and rankings
+
+For detailed information about the client-server architecture, see [CLIENT-SERVER-ARCHITECTURE.md](CLIENT-SERVER-ARCHITECTURE.md).
