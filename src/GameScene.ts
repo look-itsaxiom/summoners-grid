@@ -100,12 +100,13 @@ export class GameScene extends Phaser.Scene {
     // Create the handler registry
     this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
 
-    // Register the summon play handler with phase/turn check and service callback
+    // Register the summon play handler with phase/turn check and service callbacks
     const summonHandler = new SummonPlayHandler(
       this.grid, 
       this.playerInfo,
       () => this.canPerformActions(),
-      (cardData, position) => this.onSummonPlacementRequested(cardData, position)
+      (cardData, position) => this.onSummonPlacementRequested(cardData, position),
+      (fromPos, toPos) => this.onSummonMoveRequested(fromPos, toPos)
     );
     this.cardPlayHandlerRegistry.registerHandler(summonHandler);
 
@@ -137,6 +138,44 @@ export class GameScene extends Phaser.Scene {
       summonHandler.placeToken(this, position, cardData);
       // Sync handler's placed summons with game state
       summonHandler.syncPlacedSummons(this.currentGameState.placedSummons);
+    }
+  }
+  
+  /**
+   * Called when player requests to move a summon
+   * REFACTORED: Sends action to game service instead of directly moving
+   */
+  private async onSummonMoveRequested(fromPos: GridPosition, toPos: GridPosition): Promise<void> {
+    console.log(`[GameScene] Summon move requested from (${fromPos.col},${fromPos.row}) to (${toPos.col},${toPos.row})`);
+    
+    // Send move summon action to service
+    await this.processPlayerAction({
+      type: "MOVE_SUMMON",
+      playerId: this.playerInfo.playerId,
+      fromPosition: fromPos,
+      toPosition: toPos
+    });
+    
+    // Service has updated state, now animate the visual token
+    const fromKey = `${fromPos.row},${fromPos.col}`;
+    const summon = this.currentGameState.placedSummons.get(fromKey);
+    
+    if (summon) {
+      // Find MoveAction to animate the token
+      const summonHandler = this.cardPlayHandlerRegistry.getHandler({ type: 'Summon' } as CardData);
+      if (summonHandler && summonHandler instanceof SummonPlayHandler) {
+        // Get the MoveAction from available actions
+        const moveAction = (summonHandler as any).availableActions?.find(
+          (action: any) => action.getName() === 'Move'
+        );
+        
+        if (moveAction && 'moveToken' in moveAction) {
+          (moveAction as any).moveToken(this, summon, toPos);
+        }
+        
+        // Sync handler's placed summons with game state
+        summonHandler.syncPlacedSummons(this.currentGameState.placedSummons);
+      }
     }
   }
 

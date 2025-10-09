@@ -22,21 +22,24 @@ export class SummonPlayHandler implements ICardPlayHandler {
   private activeAction: ISummonAction | null = null;
   private canPerformActionsCheck: (() => boolean) | null = null;
   private onSummonPlaced: ((cardData: CardData, position: GridPosition) => void) | null = null;
+  private onSummonMoveRequested: ((fromPos: GridPosition, toPos: GridPosition) => void) | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
     playerInfo: PlayerInfo,
     canPerformActionsCheck?: () => boolean,
-    onSummonPlaced?: (cardData: CardData, position: GridPosition) => void
+    onSummonPlaced?: (cardData: CardData, position: GridPosition) => void,
+    onSummonMoveRequested?: (fromPos: GridPosition, toPos: GridPosition) => void
   ) {
     this.grid = grid;
     this.playerInfo = playerInfo;
     this.canPerformActionsCheck = canPerformActionsCheck || null;
     this.onSummonPlaced = onSummonPlaced || null;
+    this.onSummonMoveRequested = onSummonMoveRequested || null;
     
     // Initialize available actions (can be expanded in the future)
     this.availableActions = [
-      new MoveAction(this.grid, this.placedSummons),
+      new MoveAction(this.grid, this.placedSummons, onSummonMoveRequested),
       new AttackAction()
     ];
   }

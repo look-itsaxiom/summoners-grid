@@ -15,13 +15,16 @@ export class MoveAction implements ISummonAction {
   private instructionText: Phaser.GameObjects.Text | null = null;
   private isActive: boolean = false;
   private currentScene: Phaser.Scene | null = null;
+  private onMoveRequested: ((fromPos: GridPosition, toPos: GridPosition) => void) | null = null;
 
   constructor(
     grid: Phaser.GameObjects.Rectangle[][],
-    occupiedPositions: Map<string, SummonUnit>
+    occupiedPositions: Map<string, SummonUnit>,
+    onMoveRequested?: (fromPos: GridPosition, toPos: GridPosition) => void
   ) {
     this.grid = grid;
     this.occupiedPositions = occupiedPositions;
+    this.onMoveRequested = onMoveRequested || null;
   }
 
   getName(): string {
@@ -168,21 +171,20 @@ export class MoveAction implements ISummonAction {
         const clickHandler = () => {
           console.log(`[MoveAction] Moving to (${col},${row})`);
 
-          // Calculate movement cost (for now, just 1)
-          const movementCost = 1;
-
-          // Move the token
-          this.moveToken(scene, summon, position);
-
-          // Update summon state
-          summon.useMovement(movementCost);
-          summon.updatePosition(position);
-
-          // Clean up
-          this.cleanup(scene);
-
-          // Complete the action
-          onComplete(true);
+          // If callback provided, notify and let service handle it
+          if (this.onMoveRequested) {
+            this.onMoveRequested(summon.position, position);
+            this.cleanup(scene);
+            onComplete(true);
+          } else {
+            // Legacy: directly move token and update state
+            const movementCost = 1;
+            this.moveToken(scene, summon, position);
+            summon.useMovement(movementCost);
+            summon.updatePosition(position);
+            this.cleanup(scene);
+            onComplete(true);
+          }
         };
 
         cell.on('pointerover', hoverHandler);
@@ -199,7 +201,10 @@ export class MoveAction implements ISummonAction {
     }
   }
 
-  private moveToken(
+  /**
+   * Move the token visually (can be called externally after service confirms)
+   */
+  public moveToken(
     scene: Phaser.Scene,
     summon: SummonUnit,
     newPosition: GridPosition
