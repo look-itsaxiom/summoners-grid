@@ -4,6 +4,7 @@ import { GridPosition, PlayerInfo } from '../types/GameTypes';
 import { SummonUnit } from '../types/SummonUnit';
 import { ISummonAction, MoveAction, AttackAction } from '../summonActions';
 import { SummonActionMenu } from '../ui/SummonActionMenu';
+import { GameConfig } from '../config/GameConfig';
 
 /**
  * Handler for playing Summon cards.
@@ -11,12 +12,6 @@ import { SummonActionMenu } from '../ui/SummonActionMenu';
  * the logic for playing summon cards onto the grid.
  */
 export class SummonPlayHandler implements ICardPlayHandler {
-  private readonly GRID_COLS = 12;
-  private readonly GRID_ROWS = 14;
-  private readonly CELL_SIZE = 40;
-  private readonly GRID_OFFSET_X = 200;
-  private readonly GRID_OFFSET_Y = 100;
-
   private grid: Phaser.GameObjects.Rectangle[][];
   private playerInfo: PlayerInfo;
   private highlightedCells: Phaser.GameObjects.Rectangle[] = [];
@@ -62,12 +57,9 @@ export class SummonPlayHandler implements ICardPlayHandler {
   }
 
   private showInstructions(scene: Phaser.Scene): void {
-    const centerX = 600;
-    const centerY = 650;
-
     this.instructionText = scene.add.text(
-      centerX,
-      centerY,
+      GameConfig.INSTRUCTION_X,
+      GameConfig.INSTRUCTION_Y,
       'Select a valid territory space to summon',
       {
         fontSize: '20px',
@@ -90,7 +82,7 @@ export class SummonPlayHandler implements ICardPlayHandler {
     const validRows = this.getValidRows();
 
     validRows.forEach(row => {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const cell = this.grid[row][col];
         
         // Store original color
@@ -100,8 +92,8 @@ export class SummonPlayHandler implements ICardPlayHandler {
         const highlight = scene.add.rectangle(
           cell.x,
           cell.y,
-          this.CELL_SIZE - 2,
-          this.CELL_SIZE - 2,
+          GameConfig.CELL_SIZE - 2,
+          GameConfig.CELL_SIZE - 2,
           0xffff00,
           0.2
         );
@@ -129,9 +121,9 @@ export class SummonPlayHandler implements ICardPlayHandler {
     // Player A (playerId 0) controls bottom 3 rows (0-2)
     // Player B (playerId 1) controls top 3 rows (11-13)
     if (this.playerInfo.playerId === 0) {
-      return [0, 1, 2];
+      return GameConfig.PLAYER_A_TERRITORY_ROWS;
     } else {
-      return [11, 12, 13];
+      return GameConfig.PLAYER_B_TERRITORY_ROWS;
     }
   }
 
@@ -149,7 +141,7 @@ export class SummonPlayHandler implements ICardPlayHandler {
 
     // Make valid cells interactive
     validRows.forEach(row => {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const cell = this.grid[row][col];
         const position: GridPosition = { row, col };
 
@@ -346,7 +338,7 @@ export class SummonPlayHandler implements ICardPlayHandler {
     // Remove event handlers from all cells
     const validRows = this.getValidRows();
     validRows.forEach(row => {
-      for (let col = 0; col < this.GRID_COLS; col++) {
+      for (let col = 0; col < GameConfig.GRID_COLS; col++) {
         const cell = this.grid[row][col];
         const cleanupData = cell.getData('summonHandlerCleanup');
 
