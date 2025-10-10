@@ -26,9 +26,9 @@ export class DeckVisualizer implements IDeckVisualizer {
    */
   private getDeckPosition(): { x: number; y: number } {
     if (this.playerId === 0) {
-      return { x: GameConfig.DECK_X, y: GameConfig.DECK_Y };
+      return { x: GameConfig.DECK_A_X, y: GameConfig.DECK_A_Y };
     } else {
-      return { x: GameConfig.DECK_X, y: GameConfig.DECK_Y_PLAYER_B };
+      return { x: GameConfig.DECK_B_X, y: GameConfig.DECK_B_Y };
     }
   }
 
@@ -37,9 +37,9 @@ export class DeckVisualizer implements IDeckVisualizer {
    */
   private getDiscardPosition(): { x: number; y: number } {
     if (this.playerId === 0) {
-      return { x: GameConfig.DISCARD_X, y: GameConfig.DISCARD_Y };
+      return { x: GameConfig.DISCARD_A_X, y: GameConfig.DISCARD_A_Y };
     } else {
-      return { x: GameConfig.DISCARD_X, y: GameConfig.DISCARD_Y_PLAYER_B };
+      return { x: GameConfig.DISCARD_B_X, y: GameConfig.DISCARD_B_Y };
     }
   }
 

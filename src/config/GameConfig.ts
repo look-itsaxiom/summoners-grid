@@ -12,18 +12,22 @@ export class GameConfig {
 
   // Hand configuration
   static readonly HAND_SIZE = 6;
-  static readonly HAND_Y = 780; // Player A hand (bottom)
-  static readonly HAND_Y_PLAYER_B = 80; // Player B hand (top)
-  static readonly HAND_START_X = 250;
+  static readonly HAND_Y = 770; // Player A hand (bottom)
+  static readonly HAND_Y_PLAYER_B = 85; // Player B hand (top)
+  static readonly HAND_START_X = 220;
   static readonly CARD_SPACING = 130;
 
-  // Deck visualization
-  static readonly DECK_X = 900;
-  static readonly DECK_Y = 400; // Player A deck
-  static readonly DECK_Y_PLAYER_B = 300; // Player B deck
-  static readonly DISCARD_X = 900;
-  static readonly DISCARD_Y = 200; // Player A discard
-  static readonly DISCARD_Y_PLAYER_B = 500; // Player B discard
+  // Deck visualization - Left side layout
+  static readonly DECK_A_X = 90;
+  static readonly DECK_A_Y = 680;
+  static readonly DISCARD_A_X = 90;
+  static readonly DISCARD_A_Y = 550;
+  
+  // Deck visualization - Right side layout
+  static readonly DECK_B_X = 1110;
+  static readonly DECK_B_Y = 175;
+  static readonly DISCARD_B_X = 1110;
+  static readonly DISCARD_B_Y = 305;
 
   // Player territory configuration
   static readonly PLAYER_A_TERRITORY_ROWS = [0, 1, 2]; // Bottom 3 rows
@@ -38,7 +42,9 @@ export class GameConfig {
 
   // UI positioning
   static readonly TITLE_X = 600;
-  static readonly TITLE_Y = 30;
+  static readonly TITLE_Y = 25;
   static readonly INSTRUCTION_X = 600;
   static readonly INSTRUCTION_Y = 650;
+  static readonly PHASE_INDICATOR_X = 1110;
+  static readonly PHASE_INDICATOR_Y = 450;
 }
