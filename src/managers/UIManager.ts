@@ -33,14 +33,39 @@ export class UIManager implements IUIManager {
    * Creates the title and other static UI elements
    */
   public createStaticUI(): void {
-    // Title
+    // Main title with better styling
     this.scene.add
       .text(GameConfig.TITLE_X, GameConfig.TITLE_Y, "Summoner's Grid", {
-        fontSize: "32px",
+        fontSize: "36px",
         color: "#ffffff",
         fontStyle: "bold",
+        stroke: "#000000",
+        strokeThickness: 3,
       })
       .setOrigin(0.5);
+
+    // Add player labels on the board
+    this.scene.add
+      .text(100, 735, "PLAYER A", {
+        fontSize: "14px",
+        color: "#4a6fa5",
+        fontStyle: "bold",
+        backgroundColor: "#1a1a1a",
+        padding: { x: 8, y: 4 }
+      })
+      .setOrigin(0.5)
+      .setDepth(50);
+
+    this.scene.add
+      .text(100, 125, "PLAYER B", {
+        fontSize: "14px",
+        color: "#7a3a3a",
+        fontStyle: "bold",
+        backgroundColor: "#1a1a1a",
+        padding: { x: 8, y: 4 }
+      })
+      .setOrigin(0.5)
+      .setDepth(50);
   }
 
   /**
@@ -103,21 +128,34 @@ export class UIManager implements IUIManager {
    * Creates the phase indicator UI
    */
   public createPhaseIndicator(onNextPhase: () => void): void {
-    const x = 950;
-    const y = 500;
+    const x = GameConfig.PHASE_INDICATOR_X;
+    const y = GameConfig.PHASE_INDICATOR_Y;
 
     // Create container for phase indicator
     this.phaseContainer = this.scene.add.container(x, y);
 
-    // Background panel
-    const bg = this.scene.add.rectangle(0, 0, 200, 120, 0x2a2a2a);
-    bg.setStrokeStyle(2, 0x4a6fa5);
+    // Background panel with shadow effect
+    const shadow = this.scene.add.rectangle(2, 2, 220, 140, 0x000000, 0.3);
+    this.phaseContainer.add(shadow);
+
+    const bg = this.scene.add.rectangle(0, 0, 220, 140, 0x1a1a1a);
+    bg.setStrokeStyle(3, 0x4a6fa5);
     this.phaseContainer.add(bg);
 
-    // Player text
+    // "CURRENT TURN" label
+    const label = this.scene.add
+      .text(0, -55, "CURRENT TURN", {
+        fontSize: "12px",
+        color: "#888888",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+    this.phaseContainer.add(label);
+
+    // Player text - larger and more prominent
     this.playerText = this.scene.add
-      .text(0, -40, "Player A", {
-        fontSize: "18px",
+      .text(0, -30, "Player A", {
+        fontSize: "22px",
         color: "#4a6fa5",
         fontStyle: "bold",
       })
@@ -126,23 +164,24 @@ export class UIManager implements IUIManager {
 
     // Phase text
     this.phaseText = this.scene.add
-      .text(0, -10, "Draw Phase", {
-        fontSize: "16px",
+      .text(0, 0, "Draw Phase", {
+        fontSize: "18px",
         color: "#ffffff",
       })
       .setOrigin(0.5);
     this.phaseContainer.add(this.phaseText);
 
-    // Next phase button
-    this.nextPhaseButton = this.scene.add.rectangle(0, 30, 150, 35, 0x4a6fa5);
+    // Next phase button with better styling
+    this.nextPhaseButton = this.scene.add.rectangle(0, 40, 170, 40, 0x4a6fa5);
     this.nextPhaseButton.setStrokeStyle(2, 0x6a9fc5);
     this.nextPhaseButton.setInteractive();
     this.phaseContainer.add(this.nextPhaseButton);
 
     this.nextPhaseButtonText = this.scene.add
-      .text(0, 30, "Next Phase", {
-        fontSize: "14px",
+      .text(0, 40, "Next Phase ▶", {
+        fontSize: "16px",
         color: "#ffffff",
+        fontStyle: "bold",
       })
       .setOrigin(0.5);
     this.phaseContainer.add(this.nextPhaseButtonText);
@@ -153,11 +192,13 @@ export class UIManager implements IUIManager {
     });
 
     this.nextPhaseButton.on("pointerover", () => {
-      this.nextPhaseButton.setFillStyle(0x5a7fb5);
+      this.nextPhaseButton.setFillStyle(0x5a8fc5);
+      this.nextPhaseButton.setScale(1.02);
     });
 
     this.nextPhaseButton.on("pointerout", () => {
       this.nextPhaseButton.setFillStyle(0x4a6fa5);
+      this.nextPhaseButton.setScale(1.0);
     });
 
     this.phaseContainer.setDepth(500);
