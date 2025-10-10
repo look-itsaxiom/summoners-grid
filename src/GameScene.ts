@@ -12,15 +12,19 @@ import { GridManager, HandManager, DeckVisualizer, UIManager, TurnManager, type 
  * specific responsibilities to dedicated manager classes.
  */
 export class GameScene extends Phaser.Scene {
-  // Core game components
-  private deck!: Deck;
+  // Core game components - one deck per player
+  private deckA!: Deck;
+  private deckB!: Deck;
   private cardPlayHandlerRegistry!: CardPlayHandlerRegistry;
-  private readonly playerInfo: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
+  private playerInfoA: PlayerInfo = { playerId: 0, color: GameConfig.PLAYER_A_COLOR };
+  private playerInfoB: PlayerInfo = { playerId: 1, color: GameConfig.PLAYER_B_COLOR };
 
   // Manager components (following SRP and DIP with interfaces)
   private gridManager!: IGridManager;
-  private handManager!: IHandManager;
-  private deckVisualizer!: IDeckVisualizer;
+  private handManagerA!: IHandManager;
+  private handManagerB!: IHandManager;
+  private deckVisualizerA!: IDeckVisualizer;
+  private deckVisualizerB!: IDeckVisualizer;
   private uiManager!: IUIManager;
   private turnManager!: TurnManager;
 
@@ -37,8 +41,9 @@ export class GameScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Initialize deck
-    this.deck = new Deck();
+    // Initialize decks - one for each player
+    this.deckA = new Deck();
+    this.deckB = new Deck();
 
     // Initialize managers
     this.initializeManagers();
@@ -49,11 +54,13 @@ export class GameScene extends Phaser.Scene {
     // Initialize card play handler registry (after grid is created)
     this.initializeCardHandlers();
 
-    // Create deck and discard visuals
-    this.deckVisualizer.createDeckVisual(() => this.handleDrawCard());
-    this.deckVisualizer.createDiscardVisual();
+    // Create deck and discard visuals for both players
+    this.deckVisualizerA.createDeckVisual(() => this.handleDrawCard());
+    this.deckVisualizerA.createDiscardVisual();
+    this.deckVisualizerB.createDeckVisual(() => this.handleDrawCard());
+    this.deckVisualizerB.createDiscardVisual();
 
-    // Draw initial hand (3 summon cards only)
+    // Draw initial hand for both players (3 summon cards each)
     this.drawInitialHand();
 
     // Create UI elements
@@ -62,10 +69,10 @@ export class GameScene extends Phaser.Scene {
     this.uiManager.createPhaseIndicator(() => this.handleNextPhase());
 
     // Initialize and start turn system
-    this.turnManager = new TurnManager(this, this.deck, this.handManager);
-    this.turnManager.setOnCardDrawn((cardData) => this.onCardDrawn(cardData));
+    this.turnManager = new TurnManager(this, this.deckA, this.deckB, this.handManagerA, this.handManagerB);
+    this.turnManager.setOnCardDrawn((cardData, player) => this.onCardDrawn(cardData, player));
     this.turnManager.setOnPhaseChanged((phase, player) => this.onPhaseChanged(phase, player));
-    this.turnManager.setOnRequestDiscard((count) => this.onRequestDiscard(count));
+    this.turnManager.setOnRequestDiscard((count, player) => this.onRequestDiscard(count, player));
     this.turnManager.setOnLevelPhase((player) => this.onLevelPhase(player));
     this.turnManager.startGame();
   }
@@ -75,8 +82,10 @@ export class GameScene extends Phaser.Scene {
    */
   private initializeManagers(): void {
     this.gridManager = new GridManager(this);
-    this.handManager = new HandManager(this);
-    this.deckVisualizer = new DeckVisualizer(this, this.deck);
+    this.handManagerA = new HandManager(this, 0); // Player A
+    this.handManagerB = new HandManager(this, 1); // Player B
+    this.deckVisualizerA = new DeckVisualizer(this, this.deckA, 0);
+    this.deckVisualizerB = new DeckVisualizer(this, this.deckB, 1);
     this.uiManager = new UIManager(this);
   }
 
@@ -84,16 +93,25 @@ export class GameScene extends Phaser.Scene {
     // Create the handler registry
     this.cardPlayHandlerRegistry = new CardPlayHandlerRegistry();
 
-    // Register the summon play handler with phase/turn check
-    const summonHandler = new SummonPlayHandler(
+    // Register the summon play handler for Player A
+    const summonHandlerA = new SummonPlayHandler(
       this.grid, 
-      this.playerInfo,
+      this.playerInfoA,
       () => this.canPerformActions()
     );
-    this.cardPlayHandlerRegistry.registerHandler(summonHandler);
+    this.cardPlayHandlerRegistry.registerHandler(summonHandlerA);
 
-    // Store reference to summon handler for level phase
-    (this as any).summonHandler = summonHandler;
+    // Register the summon play handler for Player B
+    const summonHandlerB = new SummonPlayHandler(
+      this.grid, 
+      this.playerInfoB,
+      () => this.canPerformActions()
+    );
+    this.cardPlayHandlerRegistry.registerHandler(summonHandlerB);
+
+    // Store references to summon handlers for level phase
+    (this as any).summonHandlerA = summonHandlerA;
+    (this as any).summonHandlerB = summonHandlerB;
 
     // Future handlers can be registered here:
     // this.cardPlayHandlerRegistry.registerHandler(new ActionPlayHandler(...));
@@ -102,21 +120,34 @@ export class GameScene extends Phaser.Scene {
   }
 
   /**
-   * Draws initial hand of 3 summon cards
+   * Draws initial hand of 3 summon cards for both players
    */
   private drawInitialHand(): void {
-    // Draw 3 summon cards for initial hand (3v3 format)
+    // Draw 3 summon cards for Player A (3v3 format)
     for (let i = 0; i < 3; i++) {
-      const cardData = this.deck.drawSummon();
+      const cardData = this.deckA.drawSummon();
       if (cardData) {
-        this.handManager.addCard(
+        this.handManagerA.addCard(
           cardData,
-          (card) => this.onCardSelected(card),
-          (card) => this.onCardDeselected(card)
+          (card) => this.onCardSelected(card, 0),
+          (card) => this.onCardDeselected(card, 0)
         );
       }
     }
-    this.handManager.repositionCards();
+    this.handManagerA.repositionCards();
+
+    // Draw 3 summon cards for Player B (3v3 format)
+    for (let i = 0; i < 3; i++) {
+      const cardData = this.deckB.drawSummon();
+      if (cardData) {
+        this.handManagerB.addCard(
+          cardData,
+          (card) => this.onCardSelected(card, 1),
+          (card) => this.onCardDeselected(card, 1)
+        );
+      }
+    }
+    this.handManagerB.repositionCards();
   }
 
   /**
@@ -129,30 +160,35 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const cardData = this.deck.draw();
+    const currentPlayer = this.turnManager.getCurrentPlayer();
+    const deck = currentPlayer === 0 ? this.deckA : this.deckB;
+    const handManager = currentPlayer === 0 ? this.handManagerA : this.handManagerB;
+
+    const cardData = deck.draw();
     if (!cardData) {
       console.log("No more cards in deck");
       return;
     }
 
-    this.handManager.addCard(
+    handManager.addCard(
       cardData,
-      (card) => this.onCardSelected(card),
-      (card) => this.onCardDeselected(card)
+      (card) => this.onCardSelected(card, currentPlayer),
+      (card) => this.onCardDeselected(card, currentPlayer)
     );
-    this.handManager.repositionCards();
+    handManager.repositionCards();
   }
 
   /**
    * Callback when a card is drawn by turn system
    */
-  private onCardDrawn(cardData: CardData): void {
-    this.handManager.addCard(
+  private onCardDrawn(cardData: CardData, player: number): void {
+    const handManager = player === 0 ? this.handManagerA : this.handManagerB;
+    handManager.addCard(
       cardData,
-      (card) => this.onCardSelected(card),
-      (card) => this.onCardDeselected(card)
+      (card) => this.onCardSelected(card, player),
+      (card) => this.onCardDeselected(card, player)
     );
-    this.handManager.repositionCards();
+    handManager.repositionCards();
   }
 
   /**
@@ -167,7 +203,7 @@ export class GameScene extends Phaser.Scene {
    */
   private onLevelPhase(player: number): void {
     console.log(`[GameScene] Level Phase for player ${player}`);
-    const summonHandler = (this as any).summonHandler;
+    const summonHandler = player === 0 ? (this as any).summonHandlerA : (this as any).summonHandlerB;
     if (summonHandler) {
       summonHandler.levelUpPlayerSummons(player);
     }
@@ -183,7 +219,7 @@ export class GameScene extends Phaser.Scene {
   /**
    * Handles card selection
    */
-  private onCardSelected(card: Card): void {
+  private onCardSelected(card: Card, player: number): void {
     // If selecting cards to discard
     if (this.isSelectingDiscard) {
       this.toggleDiscardSelection(card);
@@ -196,12 +232,14 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
+    const handManager = player === 0 ? this.handManagerA : this.handManagerB;
+
     // Deselect any previously selected card
-    const previouslySelected = this.handManager.getSelectedCard();
+    const previouslySelected = handManager.getSelectedCard();
     if (previouslySelected && previouslySelected !== card) {
       previouslySelected.deselect();
     }
-    this.handManager.setSelectedCard(card);
+    handManager.setSelectedCard(card);
     console.log("Card selected:", card.getCardData());
 
     // Show play button above the selected card
@@ -211,8 +249,9 @@ export class GameScene extends Phaser.Scene {
   /**
    * Handles card deselection
    */
-  private onCardDeselected(card: Card): void {
-    this.handManager.deselectCard(card);
+  private onCardDeselected(card: Card, player: number): void {
+    const handManager = player === 0 ? this.handManagerA : this.handManagerB;
+    handManager.deselectCard(card);
     this.uiManager.hidePlayButton();
     console.log("Card deselected");
   }
@@ -227,7 +266,11 @@ export class GameScene extends Phaser.Scene {
       return;
     }
 
-    const selectedCard = this.handManager.getSelectedCard();
+    const currentPlayer = this.turnManager.getCurrentPlayer();
+    const handManager = currentPlayer === 0 ? this.handManagerA : this.handManagerB;
+    const deckVisualizer = currentPlayer === 0 ? this.deckVisualizerA : this.deckVisualizerB;
+
+    const selectedCard = handManager.getSelectedCard();
     if (!selectedCard) {
       console.log("No card selected");
       return;
@@ -237,17 +280,17 @@ export class GameScene extends Phaser.Scene {
     console.log("Playing card:", cardData);
 
     // Add card to discard pile
-    this.deckVisualizer.addToDiscard(cardData);
+    deckVisualizer.addToDiscard(cardData);
 
     // Remove card from hand
-    this.handManager.removeCard(selectedCard);
-    this.handManager.setSelectedCard(null);
+    handManager.removeCard(selectedCard);
+    handManager.setSelectedCard(null);
 
     // Hide play button
     this.uiManager.hidePlayButton();
 
     // Reposition remaining cards
-    this.handManager.repositionCards();
+    handManager.repositionCards();
 
     // Execute card play logic
     this.onPlayCard(cardData);
@@ -277,27 +320,27 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Checks if the player can perform actions (select/play cards)
-   * Only allowed during Player A's Action phase
+   * Only allowed during the current player's Action phase
    */
   private canPerformActions(): boolean {
     const currentPlayer = this.turnManager.getCurrentPlayer();
     const currentPhase = this.turnManager.getCurrentPhase();
     
-    // Only Player A (0) can perform actions during their Action phase
-    return currentPlayer === 0 && currentPhase === TurnPhase.Action;
+    // Only the current player can perform actions during their Action phase
+    return currentPhase === TurnPhase.Action;
   }
 
   /**
    * Callback when discard is requested at end phase
    */
-  private onRequestDiscard(count: number): void {
-    console.log(`[GameScene] Need to discard ${count} cards`);
+  private onRequestDiscard(count: number, player: number): void {
+    console.log(`[GameScene] Player ${player} needs to discard ${count} cards`);
     this.isSelectingDiscard = true;
     this.discardCount = count;
     this.selectedForDiscard = [];
     
     // Show discard UI
-    this.uiManager.showDiscardUI(count, () => this.confirmDiscard());
+    this.uiManager.showDiscardUI(count, () => this.confirmDiscard(player));
   }
 
   /**
@@ -323,7 +366,7 @@ export class GameScene extends Phaser.Scene {
   /**
    * Confirms the discard selection
    */
-  private confirmDiscard(): void {
+  private confirmDiscard(player: number): void {
     if (this.selectedForDiscard.length !== this.discardCount) {
       console.log(`Must select exactly ${this.discardCount} cards to discard`);
       return;
@@ -331,13 +374,15 @@ export class GameScene extends Phaser.Scene {
 
     // Discard the selected cards
     this.selectedForDiscard.forEach(card => {
-      this.turnManager.discardCard(card);
+      this.turnManager.discardCard(card, player);
     });
 
     // Clean up
     this.selectedForDiscard = [];
     this.isSelectingDiscard = false;
-    this.handManager.repositionCards();
+    
+    const handManager = player === 0 ? this.handManagerA : this.handManagerB;
+    handManager.repositionCards();
     
     // Hide discard UI
     this.uiManager.hideDiscardUI();

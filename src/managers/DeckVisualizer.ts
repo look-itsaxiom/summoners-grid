@@ -13,17 +13,42 @@ export class DeckVisualizer implements IDeckVisualizer {
   private deckVisual!: Phaser.GameObjects.Container;
   private discardVisual!: Phaser.GameObjects.Container;
   private readonly discardPile: CardData[] = [];
+  private readonly playerId: number; // 0 for Player A, 1 for Player B
 
-  constructor(scene: Phaser.Scene, deck: Deck) {
+  constructor(scene: Phaser.Scene, deck: Deck, playerId: number = 0) {
     this.scene = scene;
     this.deck = deck;
+    this.playerId = playerId;
+  }
+
+  /**
+   * Gets the position for this player's deck
+   */
+  private getDeckPosition(): { x: number; y: number } {
+    if (this.playerId === 0) {
+      return { x: GameConfig.DECK_X, y: GameConfig.DECK_Y };
+    } else {
+      return { x: GameConfig.DECK_X, y: GameConfig.DECK_Y_PLAYER_B };
+    }
+  }
+
+  /**
+   * Gets the position for this player's discard pile
+   */
+  private getDiscardPosition(): { x: number; y: number } {
+    if (this.playerId === 0) {
+      return { x: GameConfig.DISCARD_X, y: GameConfig.DISCARD_Y };
+    } else {
+      return { x: GameConfig.DISCARD_X, y: GameConfig.DISCARD_Y_PLAYER_B };
+    }
   }
 
   /**
    * Creates the visual representation of the deck
    */
   public createDeckVisual(onDraw: () => void): void {
-    this.deckVisual = this.scene.add.container(GameConfig.DECK_X, GameConfig.DECK_Y);
+    const pos = this.getDeckPosition();
+    this.deckVisual = this.scene.add.container(pos.x, pos.y);
 
     // Create multiple card backs to show stack effect
     for (let i = 0; i < 3; i++) {
@@ -34,7 +59,7 @@ export class DeckVisualizer implements IDeckVisualizer {
 
     // Add deck text
     const deckText = this.scene.add
-      .text(0, -70, "DECK", {
+      .text(0, -70, `DECK P${this.playerId === 0 ? 'A' : 'B'}`, {
         fontSize: "16px",
         color: "#ffffff",
         fontStyle: "bold",
@@ -99,7 +124,8 @@ export class DeckVisualizer implements IDeckVisualizer {
    * Creates the visual representation of the discard pile
    */
   public createDiscardVisual(): void {
-    this.discardVisual = this.scene.add.container(GameConfig.DISCARD_X, GameConfig.DISCARD_Y);
+    const pos = this.getDiscardPosition();
+    this.discardVisual = this.scene.add.container(pos.x, pos.y);
 
     // Create discard pile background
     const discardBack = this.scene.add.rectangle(0, 0, 80, 110, 0x3a3a1a);
@@ -108,7 +134,7 @@ export class DeckVisualizer implements IDeckVisualizer {
 
     // Add discard text
     const discardText = this.scene.add
-      .text(0, -70, "DISCARD", {
+      .text(0, -70, `DISCARD P${this.playerId === 0 ? 'A' : 'B'}`, {
         fontSize: "16px",
         color: "#ffffff",
         fontStyle: "bold",

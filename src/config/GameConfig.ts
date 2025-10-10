@@ -12,15 +12,18 @@ export class GameConfig {
 
   // Hand configuration
   static readonly HAND_SIZE = 6;
-  static readonly HAND_Y = 780;
+  static readonly HAND_Y = 780; // Player A hand (bottom)
+  static readonly HAND_Y_PLAYER_B = 80; // Player B hand (top)
   static readonly HAND_START_X = 250;
   static readonly CARD_SPACING = 130;
 
   // Deck visualization
   static readonly DECK_X = 900;
-  static readonly DECK_Y = 400;
+  static readonly DECK_Y = 400; // Player A deck
+  static readonly DECK_Y_PLAYER_B = 300; // Player B deck
   static readonly DISCARD_X = 900;
-  static readonly DISCARD_Y = 200;
+  static readonly DISCARD_Y = 200; // Player A discard
+  static readonly DISCARD_Y_PLAYER_B = 500; // Player B discard
 
   // Player territory configuration
   static readonly PLAYER_A_TERRITORY_ROWS = [0, 1, 2]; // Bottom 3 rows

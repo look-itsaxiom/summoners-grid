@@ -13,19 +13,23 @@ export class TurnManager {
   private turnNumber: number = 0;
   private isFirstTurn: boolean = true;
 
-  private readonly deck: Deck;
-  private readonly handManager: IHandManager;
+  private readonly deckA: Deck;
+  private readonly deckB: Deck;
+  private readonly handManagerA: IHandManager;
+  private readonly handManagerB: IHandManager;
   private readonly scene: Phaser.Scene;
   
-  private onCardDrawn: ((cardData: any) => void) | null = null;
+  private onCardDrawn: ((cardData: any, player: number) => void) | null = null;
   private onPhaseChanged: ((phase: TurnPhase, player: number) => void) | null = null;
-  private onRequestDiscard: ((count: number) => void) | null = null;
+  private onRequestDiscard: ((count: number, player: number) => void) | null = null;
   private onLevelPhase: ((player: number) => void) | null = null;
 
-  constructor(scene: Phaser.Scene, deck: Deck, handManager: IHandManager) {
+  constructor(scene: Phaser.Scene, deckA: Deck, deckB: Deck, handManagerA: IHandManager, handManagerB: IHandManager) {
     this.scene = scene;
-    this.deck = deck;
-    this.handManager = handManager;
+    this.deckA = deckA;
+    this.deckB = deckB;
+    this.handManagerA = handManagerA;
+    this.handManagerB = handManagerB;
   }
 
   /**
@@ -64,7 +68,7 @@ export class TurnManager {
   /**
    * Sets callback for when a card is drawn
    */
-  public setOnCardDrawn(callback: (cardData: any) => void): void {
+  public setOnCardDrawn(callback: (cardData: any, player: number) => void): void {
     this.onCardDrawn = callback;
   }
 
@@ -78,7 +82,7 @@ export class TurnManager {
   /**
    * Sets callback for when discard is requested
    */
-  public setOnRequestDiscard(callback: (count: number) => void): void {
+  public setOnRequestDiscard(callback: (count: number, player: number) => void): void {
     this.onRequestDiscard = callback;
   }
 
@@ -98,22 +102,19 @@ export class TurnManager {
     this.currentPhase = TurnPhase.Draw;
     this.notifyPhaseChanged();
 
-    // Auto-progress through Player B's phases
-    if (this.currentPlayer === 1) {
-      this.scene.time.delayedCall(1000, () => {
-        this.nextPhase();
-      });
-    }
+    // No auto-progression - let user control both players
   }
 
   /**
    * Discards a specific card to the recharge pile
    */
-  public discardCard(card: any): void {
+  public discardCard(card: any, player: number): void {
     const cardData = card.getCardData();
-    console.log(`[TurnManager] Discarding: ${cardData.name}`);
-    this.deck.addToRechargePile(cardData);
-    this.handManager.removeCard(card);
+    console.log(`[TurnManager] Player ${player} discarding: ${cardData.name}`);
+    const deck = player === 0 ? this.deckA : this.deckB;
+    const handManager = player === 0 ? this.handManagerA : this.handManagerB;
+    deck.addToRechargePile(cardData);
+    handManager.removeCard(card);
   }
 
   /**
@@ -137,13 +138,14 @@ export class TurnManager {
         // Note: If discard is required, executeEndPhase will handle it
         // and completeDiscard() will be called later to switch players
         // If no discard required, we switch immediately
-        const needsDiscard = this.currentPlayer === 0 && this.handManager.getHandSize() > 6;
+        const handManager = this.currentPlayer === 0 ? this.handManagerA : this.handManagerB;
+        const needsDiscard = handManager.getHandSize() > 6;
         if (!needsDiscard) {
           this.switchPlayer();
           this.currentPhase = TurnPhase.Draw;
         } else {
           // Stay in End phase until discard is complete
-          return; // Don't notify phase change or auto-progress yet
+          return; // Don't notify phase change yet
         }
         break;
     }
@@ -151,13 +153,7 @@ export class TurnManager {
     console.log(`[TurnManager] Phase changed to ${this.currentPhase} (Player ${this.currentPlayer === 0 ? 'A' : 'B'})`);
     this.notifyPhaseChanged();
 
-    // Auto-progress through Player B's phases
-    if (this.currentPlayer === 1 && this.currentPhase !== TurnPhase.Action) {
-      // Add a small delay for visual feedback
-      this.scene.time.delayedCall(1000, () => {
-        this.nextPhase();
-      });
-    }
+    // No auto-progression - let user control both players
   }
 
   /**
@@ -172,17 +168,16 @@ export class TurnManager {
       return;
     }
 
-    // Only draw for Player A (Player B is AI/not implemented)
-    if (this.currentPlayer === 0) {
-      const cardData = this.deck.draw();
-      if (cardData) {
-        console.log(`[TurnManager] Drew card: ${cardData.name}`);
-        if (this.onCardDrawn) {
-          this.onCardDrawn(cardData);
-        }
-      } else {
-        console.log('[TurnManager] No cards to draw (deck and recharge pile empty)');
+    // Draw for current player
+    const deck = this.currentPlayer === 0 ? this.deckA : this.deckB;
+    const cardData = deck.draw();
+    if (cardData) {
+      console.log(`[TurnManager] Drew card: ${cardData.name}`);
+      if (this.onCardDrawn) {
+        this.onCardDrawn(cardData, this.currentPlayer);
       }
+    } else {
+      console.log('[TurnManager] No cards to draw (deck and recharge pile empty)');
     }
   }
 
@@ -203,27 +198,26 @@ export class TurnManager {
   private executeEndPhase(): void {
     console.log('[TurnManager] Executing End Phase');
     
-    // Only enforce hand limit for Player A
-    if (this.currentPlayer === 0) {
-      const handSize = this.handManager.getHandSize();
-      const maxHandSize = 6;
+    // Enforce hand limit for current player
+    const handManager = this.currentPlayer === 0 ? this.handManagerA : this.handManagerB;
+    const handSize = handManager.getHandSize();
+    const maxHandSize = 6;
+    
+    console.log(`[TurnManager] Current hand size: ${handSize}, max: ${maxHandSize}`);
+    
+    if (handSize > maxHandSize) {
+      const cardsToDiscard = handSize - maxHandSize;
+      console.log(`[TurnManager] Hand size ${handSize} exceeds limit of ${maxHandSize}, need to discard ${cardsToDiscard} cards`);
       
-      console.log(`[TurnManager] Current hand size: ${handSize}, max: ${maxHandSize}`);
-      
-      if (handSize > maxHandSize) {
-        const cardsToDiscard = handSize - maxHandSize;
-        console.log(`[TurnManager] Hand size ${handSize} exceeds limit of ${maxHandSize}, need to discard ${cardsToDiscard} cards`);
-        
-        // Trigger card discard selection (GameScene will handle UI)
-        // For now, we'll need to wait for user to select cards to discard
-        // This will be handled by a callback
-        if (this.onRequestDiscard) {
-          this.onRequestDiscard(cardsToDiscard);
-        }
-      } else {
-        console.log(`[TurnManager] Hand size ${handSize} is within limit, no discard needed`);
-        // Continue to next phase immediately if no discard needed
+      // Trigger card discard selection (GameScene will handle UI)
+      // For now, we'll need to wait for user to select cards to discard
+      // This will be handled by a callback
+      if (this.onRequestDiscard) {
+        this.onRequestDiscard(cardsToDiscard, this.currentPlayer);
       }
+    } else {
+      console.log(`[TurnManager] Hand size ${handSize} is within limit, no discard needed`);
+      // Continue to next phase immediately if no discard needed
     }
   }
 

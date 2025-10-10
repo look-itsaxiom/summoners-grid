@@ -10,16 +10,26 @@ export class HandManager implements IHandManager {
   private readonly scene: Phaser.Scene;
   private readonly hand: Card[] = [];
   private selectedCard: Card | null = null;
+  private readonly playerId: number; // 0 for Player A, 1 for Player B
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, playerId: number = 0) {
     this.scene = scene;
+    this.playerId = playerId;
+  }
+
+  /**
+   * Gets the Y position for this player's hand
+   */
+  private getHandY(): number {
+    // Player A (0) at bottom, Player B (1) at top
+    return this.playerId === 0 ? GameConfig.HAND_Y : GameConfig.HAND_Y_PLAYER_B;
   }
 
   /**
    * Adds a card to the hand
    */
   public addCard(cardData: CardData, onSelected: (card: Card) => void, onDeselected: (card: Card) => void): void {
-    const card = new Card(this.scene, GameConfig.HAND_START_X + this.hand.length * GameConfig.CARD_SPACING, GameConfig.HAND_Y, cardData);
+    const card = new Card(this.scene, GameConfig.HAND_START_X + this.hand.length * GameConfig.CARD_SPACING, this.getHandY(), cardData);
 
     card.on("cardSelected", () => onSelected(card));
     card.on("cardDeselected", () => onDeselected(card));
@@ -65,12 +75,15 @@ export class HandManager implements IHandManager {
       }
     }
 
+    const handY = this.getHandY();
+
     this.hand.forEach((card, index) => {
       const targetX = GameConfig.HAND_START_X + index * spacing;
       
       this.scene.tweens.add({
         targets: card,
         x: targetX,
+        y: handY,
         duration: 200,
         ease: "Power2",
       });
