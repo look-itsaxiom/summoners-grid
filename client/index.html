@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Summoner's Grid - Multiplayer Demo</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1400px;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 3em;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    }
+
+    .screen {
+      display: none;
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    /* Lobby Screen */
+    .lobby-actions {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .btn {
+      padding: 15px 30px;
+      font-size: 1.2em;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #45a049;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .btn-secondary {
+      background: #2196F3;
+      color: white;
+    }
+
+    .btn-secondary:hover {
+      background: #0b7dda;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .btn-danger {
+      background: #f44336;
+      color: white;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .room-list {
+      background: rgba(0,0,0,0.2);
+      border-radius: 10px;
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .room-item {
+      background: rgba(255,255,255,0.1);
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .room-item:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* Waiting Room */
+    .waiting-info {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .waiting-info h2 {
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+
+    .waiting-info p {
+      font-size: 1.2em;
+      margin-bottom: 30px;
+    }
+
+    /* Game Screen */
+    .game-container {
+      display: flex;
+      gap: 20px;
+    }
+
+    .game-main {
+      flex: 1;
+    }
+
+    .game-sidebar {
+      width: 300px;
+    }
+
+    .game-info {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    .game-info h3 {
+      margin-bottom: 10px;
+      border-bottom: 2px solid rgba(255,255,255,0.3);
+      padding-bottom: 5px;
+    }
+
+    .player-info {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding: 10px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 5px;
+    }
+
+    .player-info.active {
+      border: 2px solid #4CAF50;
+      background: rgba(76, 175, 80, 0.2);
+    }
+
+    .board-container {
+      background: rgba(0,0,0,0.3);
+      padding: 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(12, 50px);
+      grid-template-rows: repeat(14, 50px);
+      gap: 2px;
+      margin: 0 auto;
+      width: fit-content;
+    }
+
+    .cell {
+      width: 50px;
+      height: 50px;
+      background: rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.3);
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s;
+    }
+
+    .cell:hover {
+      background: rgba(255,255,255,0.2);
+    }
+
+    .cell.territory-0 {
+      background: rgba(76, 175, 80, 0.2);
+    }
+
+    .cell.territory-1 {
+      background: rgba(244, 67, 54, 0.2);
+    }
+
+    .cell.selected {
+      border: 3px solid yellow;
+      background: rgba(255,255,0,0.3);
+    }
+
+    .cell.valid-move {
+      background: rgba(76, 175, 80, 0.4);
+      cursor: pointer;
+    }
+
+    .cell.valid-target {
+      background: rgba(244, 67, 54, 0.4);
+      cursor: crosshair;
+    }
+
+    .unit {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 10px;
+      font-weight: bold;
+      text-shadow: 1px 1px 2px black;
+    }
+
+    .unit.player-0 {
+      background: rgba(76, 175, 80, 0.8);
+      border: 2px solid #4CAF50;
+    }
+
+    .unit.player-1 {
+      background: rgba(244, 67, 54, 0.8);
+      border: 2px solid #f44336;
+    }
+
+    .unit-level {
+      font-size: 8px;
+    }
+
+    .unit-hp {
+      font-size: 9px;
+      margin-top: 2px;
+    }
+
+    .hand-container {
+      background: rgba(0,0,0,0.3);
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 15px;
+    }
+
+    .hand-cards {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding: 10px 0;
+    }
+
+    .card {
+      min-width: 120px;
+      background: rgba(255,255,255,0.2);
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+      border-color: #4CAF50;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .card.selected {
+      border-color: yellow;
+      background: rgba(255,255,0,0.3);
+    }
+
+    .card-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .card-type {
+      font-size: 0.8em;
+      color: #ccc;
+    }
+
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .status-message {
+      background: rgba(33, 150, 243, 0.3);
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .error-message {
+      background: rgba(244, 67, 54, 0.5);
+      padding: 10px;
+      border-radius: 5px;
+      margin-bottom: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    input[type="text"] {
+      padding: 10px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+      margin-right: 10px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+    }
+
+    .modal-content {
+      background: rgba(255,255,255,0.1);
+      backdrop-filter: blur(10px);
+      padding: 40px;
+      border-radius: 20px;
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .modal-content h2 {
+      margin-bottom: 20px;
+      font-size: 2.5em;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>⚔️ Summoner's Grid ⚔️</h1>
+
+    <!-- Lobby Screen -->
+    <div id="lobby-screen" class="screen active">
+      <div class="lobby-actions">
+        <div>
+          <input type="text" id="room-name-input" placeholder="Room name...">
+          <button class="btn btn-primary" onclick="createRoom()">Create Room</button>
+        </div>
+        <button class="btn btn-secondary" onclick="refreshRooms()">Refresh Rooms</button>
+      </div>
+
+      <div class="room-list" id="room-list">
+        <p style="text-align: center; opacity: 0.7;">No rooms available. Create one to start!</p>
+      </div>
+    </div>
+
+    <!-- Waiting Room Screen -->
+    <div id="waiting-screen" class="screen">
+      <div class="waiting-info">
+        <h2>Room: <span id="current-room-name"></span></h2>
+        <p>Players: <span id="player-count">1</span>/2</p>
+        <p id="waiting-status">Waiting for opponent...</p>
+        <button class="btn btn-primary" id="ready-btn" onclick="setReady()">Ready</button>
+        <button class="btn btn-danger" onclick="leaveRoom()">Leave Room</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen" class="screen">
+      <div id="status-area"></div>
+      <div id="error-area"></div>
+
+      <div class="game-container">
+        <div class="game-main">
+          <div class="board-container">
+            <div id="game-board"></div>
+          </div>
+
+          <div class="hand-container">
+            <h3>Your Hand</h3>
+            <div class="hand-cards" id="hand-cards"></div>
+            <div class="controls">
+              <button class="btn btn-secondary" onclick="clearSelection()">Clear Selection</button>
+              <button class="btn btn-primary" onclick="endTurn()">End Turn</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="game-sidebar">
+          <div class="game-info">
+            <h3>Game Info</h3>
+            <p>Turn: <span id="turn-number">1</span></p>
+            <p>Phase: <span id="phase">Action</span></p>
+          </div>
+
+          <div class="game-info">
+            <h3>Players</h3>
+            <div id="player-info-area"></div>
+          </div>
+
+          <div class="game-info">
+            <h3>Selected Unit</h3>
+            <div id="unit-info">
+              <p style="opacity: 0.7;">Select a unit to see details</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal">
+      <div class="modal-content">
+        <h2>Game Over!</h2>
+        <p id="winner-text"></p>
+        <button class="btn btn-primary" onclick="returnToLobby()">Return to Lobby</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
