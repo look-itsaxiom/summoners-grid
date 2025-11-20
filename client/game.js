@@ -81,6 +81,18 @@ function handleCellClick(x, y) {
       y: y
     });
     clearSelection();
+  } else if (mode === 'playAction' && selectedCard) {
+    // Try to play action card targeting unit at this position
+    const target = getUnitAt(x, y);
+    if (target) {
+      socket.emit('playAction', {
+        cardId: selectedCard.id,
+        targetId: target.id
+      });
+      clearSelection();
+    } else {
+      showError('No unit at that position');
+    }
   } else if (mode === 'move' && selectedUnit) {
     // Try to move unit to this position
     socket.emit('moveUnit', {
@@ -111,15 +123,24 @@ function handleCellClick(x, y) {
 function selectCard(card) {
   selectedCard = card;
   selectedUnit = null;
-  mode = 'summon';
 
   // Highlight card
   document.querySelectorAll('.card').forEach(c => c.classList.remove('selected'));
   event.target.closest('.card').classList.add('selected');
 
-  // Highlight valid summon positions
-  highlightValidSummonPositions();
-  showStatus('Select a position in your territory to summon');
+  // Determine action based on card type
+  if (card.type === 'summon') {
+    mode = 'summon';
+    highlightValidSummonPositions();
+    showStatus('Select a position in your territory to summon');
+  } else if (card.type === 'action') {
+    mode = 'playAction';
+    highlightValidActionTargets(card);
+    showStatus(`Select a target for ${card.name || 'action card'}`);
+  } else {
+    showError(`Card type "${card.type}" not yet supported`);
+    clearSelection();
+  }
 }
 
 function selectUnit(unit) {
@@ -153,6 +174,36 @@ function highlightValidSummonPositions() {
     
     if (inTerritory && isEmpty) {
       cell.classList.add('valid-move');
+    }
+  });
+}
+
+function highlightValidActionTargets(card) {
+  document.querySelectorAll('.cell').forEach(cell => {
+    cell.classList.remove('valid-move', 'valid-target');
+    const x = parseInt(cell.dataset.x);
+    const y = parseInt(cell.dataset.y);
+    
+    const unit = getUnitAt(x, y);
+    if (!unit) return;
+    
+    // Check if unit is a valid target based on card requirements
+    let isValid = false;
+    
+    // Determine target validity based on card effect
+    if (card.effect === 'heal' || card.effect === 'weaponPowerBonus' || card.effect === 'extraMovementAndAttack') {
+      // These cards target friendly units
+      isValid = unit.playerId === playerId;
+    } else if (card.effect === 'immobilize' || card.id === 'blastBolt' || card.id === 'drainTouch') {
+      // These cards can target any unit (or enemy units)
+      isValid = true;
+    } else {
+      // Default: can target any unit
+      isValid = true;
+    }
+    
+    if (isValid) {
+      cell.classList.add('valid-target');
     }
   });
 }
@@ -421,6 +472,20 @@ socket.on('gameUpdate', (data) => {
     case 'summonPlayed':
       if (data.playerId === playerId) {
         showStatus('Summon placed! You drew 3 cards.');
+      }
+      break;
+    case 'actionPlayed':
+      if (data.playerId === playerId) {
+        const result = data.effectResult;
+        if (result.didHit === false) {
+          showStatus(`${data.cardName} missed!`);
+        } else if (result.damage) {
+          showStatus(`${data.cardName}: ${result.damage} damage${result.didCrit ? ' (CRIT!)' : ''}${result.defeated ? ' - Target defeated!' : ''}`);
+        } else if (result.healing) {
+          showStatus(`${data.cardName}: Healed ${result.healing} HP${result.didCrit ? ' (CRIT!)' : ''}`);
+        } else {
+          showStatus(`${data.cardName} activated!`);
+        }
       }
       break;
     case 'unitMoved':

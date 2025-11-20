@@ -330,6 +330,161 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Play action card
+  socket.on('playAction', ({ cardId, targetId }) => {
+    const roomId = playerRooms.get(socket.id);
+    if (!roomId) return;
+
+    const room = rooms.get(roomId);
+    if (!room || !room.started) return;
+
+    const gameState = room.gameState;
+    const playerId = room.players.findIndex(p => p.socketId === socket.id);
+    
+    if (playerId !== gameState.currentPlayer) {
+      socket.emit('error', 'Not your turn');
+      return;
+    }
+
+    if (gameState.phase !== PHASES.ACTION) {
+      socket.emit('error', 'Wrong phase');
+      return;
+    }
+
+    const player = gameState.players[playerId];
+
+    // Find card in hand
+    const cardIndex = player.hand.findIndex(c => c.id === cardId);
+    if (cardIndex === -1) {
+      socket.emit('error', 'Card not in hand');
+      return;
+    }
+
+    const card = player.hand[cardIndex];
+    if (card.type !== 'action') {
+      socket.emit('error', 'Not an action card');
+      return;
+    }
+
+    // Find target unit
+    let targetUnit = null;
+    for (const pos in gameState.board.units) {
+      const u = gameState.board.units[pos];
+      if (u.id === targetId) {
+        targetUnit = u;
+        break;
+      }
+    }
+
+    if (!targetUnit) {
+      socket.emit('error', 'Target not found');
+      return;
+    }
+
+    // Check requirements - player must control required role family
+    if (card.requirements && card.requirements.family) {
+      const hasRequiredRole = Object.values(gameState.board.units).some(u => 
+        u.playerId === playerId && u.roleData && u.roleData.family === card.requirements.family
+      );
+      
+      if (!hasRequiredRole) {
+        socket.emit('error', `Requires ${card.requirements.family} role`);
+        return;
+      }
+    }
+
+    // Apply action card effect
+    let effectResult = null;
+    
+    switch(card.id) {
+      case 'blastBolt':
+        // Deal fire damage to target
+        const toHit = card.baseAccuracy + Math.floor(targetUnit.stats.acc / 10);
+        const didHit = rollHit(toHit);
+        
+        if (didHit) {
+          const didCrit = rollCrit(Math.floor((targetUnit.stats.lck * 0.3375) + 1.65));
+          const damage = calculateDamage(
+            targetUnit.stats,
+            targetUnit.stats,
+            card.basePower,
+            'magical',
+            didCrit
+          );
+          targetUnit.currentHP -= damage;
+          
+          const defeated = targetUnit.currentHP <= 0;
+          if (defeated) {
+            const [tx, ty] = Object.keys(gameState.board.units)
+              .find(key => gameState.board.units[key].id === targetId)
+              .split(',')
+              .map(Number);
+            gameState.board.removeUnit(tx, ty);
+            gameState.addVictoryPoints(playerId, VP_TIER1_DEFEAT);
+          }
+          
+          effectResult = { didHit: true, didCrit, damage, defeated };
+        } else {
+          effectResult = { didHit: false };
+        }
+        break;
+        
+      case 'healingHands':
+        // Heal target unit
+        const casterStats = targetUnit.stats; // Using target's own stats for simplicity
+        const didHealCrit = rollCrit(Math.floor((casterStats.lck * 0.3375) + 1.65));
+        const healing = calculateHealing(casterStats, card.basePower, didHealCrit);
+        
+        targetUnit.currentHP = Math.min(targetUnit.currentHP + healing, targetUnit.maxHP);
+        effectResult = { healing, didCrit: didHealCrit, newHP: targetUnit.currentHP };
+        break;
+        
+      case 'sharpenedBlade':
+        // Boost weapon power (simplified - just heal for demo)
+        targetUnit.weapon.power += 10;
+        effectResult = { powerBonus: 10 };
+        break;
+        
+      case 'rush':
+        // Grant extra movement and attack
+        targetUnit.movement += 2;
+        targetUnit.hasAttacked = false;
+        effectResult = { extraMovement: 2 };
+        break;
+        
+      default:
+        socket.emit('error', 'Action card effect not implemented');
+        return;
+    }
+
+    // Remove card from hand
+    player.hand.splice(cardIndex, 1);
+    
+    // Move to appropriate pile
+    if (card.id === 'sharpenedBlade' || card.id === 'rush') {
+      player.rechargePile.push(card);
+    } else {
+      player.discardPile.push(card);
+    }
+
+    // Broadcast update
+    broadcastGameUpdate(io, room, {
+      action: 'actionPlayed',
+      playerId,
+      cardId: card.id,
+      cardName: card.name,
+      targetId,
+      effectResult
+    });
+
+    // Check for game over
+    if (gameState.gameOver) {
+      io.to(roomId).emit('gameOver', {
+        winner: gameState.winner
+      });
+    }
+  });
+
   // Move unit
   socket.on('moveUnit', ({ unitId, toX, toY }) => {
     const roomId = playerRooms.get(socket.id);
