@@ -79,8 +79,8 @@ class GameState {
       this.createPlayer(1)
     ];
     this.currentPlayer = 0;
-    this.phase = PHASES.DRAW;
-    this.turnNumber = 0;
+    this.phase = PHASES.ACTION; // Start in ACTION phase on first turn
+    this.turnNumber = 1;
     this.stack = [];
     this.gameOver = false;
     this.winner = null;

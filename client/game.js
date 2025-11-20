@@ -391,7 +391,12 @@ socket.on('gameStart', (data) => {
   updateBoard();
   updatePlayerInfo();
   
-  // Get initial hand from server (will be updated via gameUpdate)
+  // Get player's hand from the state
+  const myPlayerData = gameState.players[playerId];
+  if (myPlayerData && myPlayerData.hand) {
+    updateHand(myPlayerData.hand);
+  }
+  
   if (gameState.currentPlayer === playerId) {
     showStatus("Your turn! Play a summon card to begin.");
   } else {
@@ -403,13 +408,19 @@ socket.on('gameUpdate', (data) => {
   gameState = data.state;
   updateBoard();
   updatePlayerInfo();
+  
+  // Update hand if provided
+  const myPlayerData = gameState.players[playerId];
+  if (myPlayerData && myPlayerData.hand) {
+    updateHand(myPlayerData.hand);
+  }
+  
   clearSelection();
 
   switch(data.action) {
     case 'summonPlayed':
       if (data.playerId === playerId) {
         showStatus('Summon placed! You drew 3 cards.');
-        // Update hand would come from state
       }
       break;
     case 'unitMoved':

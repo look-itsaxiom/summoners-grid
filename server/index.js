@@ -210,8 +210,12 @@ io.on('connection', (socket) => {
     // Start game if both players ready
     if (room.canStart()) {
       const gameState = room.startGame();
-      io.to(roomId).emit('gameStart', {
-        initialState: serializeGameState(gameState)
+      
+      // Send game start to each player with their own hand
+      room.players.forEach((player, idx) => {
+        io.to(player.socketId).emit('gameStart', {
+          initialState: serializeGameState(gameState, idx)
+        });
       });
       console.log(`Game started in room ${roomId}`);
     }
@@ -319,11 +323,10 @@ io.on('connection', (socket) => {
     }
 
     // Broadcast update
-    io.to(roomId).emit('gameUpdate', {
+    broadcastGameUpdate(io, room, {
       action: 'summonPlayed',
       playerId,
-      unit: serializeUnit(unit),
-      state: serializeGameState(gameState)
+      unit: serializeUnit(unit)
     });
   });
 
@@ -375,14 +378,13 @@ io.on('connection', (socket) => {
 
     unit.movementUsed += distance;
 
-    io.to(roomId).emit('gameUpdate', {
+    broadcastGameUpdate(io, room, {
       action: 'unitMoved',
       unitId,
       fromX,
       fromY,
       toX,
-      toY,
-      state: serializeGameState(gameState)
+      toY
     });
   });
 
@@ -452,11 +454,10 @@ io.on('connection', (socket) => {
     
     if (!didHit) {
       attacker.hasAttacked = true;
-      io.to(roomId).emit('gameUpdate', {
+      broadcastGameUpdate(io, room, {
         action: 'attackMissed',
         attackerId,
-        targetId,
-        state: serializeGameState(gameState)
+        targetId
       });
       return;
     }
@@ -485,7 +486,7 @@ io.on('connection', (socket) => {
       gameState.addVictoryPoints(playerId, VP_TIER1_DEFEAT);
     }
 
-    io.to(roomId).emit('gameUpdate', {
+    broadcastGameUpdate(io, room, {
       action: 'attackResolved',
       attackerId,
       targetId,
@@ -493,8 +494,7 @@ io.on('connection', (socket) => {
       didCrit,
       defeated,
       newHP: target.currentHP,
-      victoryPoints: gameState.players[playerId].victoryPoints,
-      state: serializeGameState(gameState)
+      victoryPoints: gameState.players[playerId].victoryPoints
     });
 
     // Check for game over
@@ -587,11 +587,10 @@ io.on('connection', (socket) => {
 
     gameState.phase = PHASES.ACTION; // Move to action phase immediately for simplicity
 
-    io.to(roomId).emit('gameUpdate', {
+    broadcastGameUpdate(io, room, {
       action: 'turnEnded',
       newPlayer: gameState.currentPlayer,
-      turnNumber: gameState.turnNumber,
-      state: serializeGameState(gameState)
+      turnNumber: gameState.turnNumber
     });
   });
 
@@ -620,16 +619,18 @@ io.on('connection', (socket) => {
 });
 
 // Helper functions
-function serializeGameState(gameState) {
+function serializeGameState(gameState, forPlayerId = null) {
   return {
     currentPlayer: gameState.currentPlayer,
     phase: gameState.phase,
     turnNumber: gameState.turnNumber,
-    players: gameState.players.map(p => ({
+    players: gameState.players.map((p, idx) => ({
       id: p.id,
       victoryPoints: p.victoryPoints,
       handSize: p.hand.length,
-      deckSize: p.mainDeck.length
+      deckSize: p.mainDeck.length,
+      // Include actual hand only for the specific player
+      hand: forPlayerId !== null && idx === forPlayerId ? p.hand : undefined
     })),
     board: serializeBoard(gameState.board),
     gameOver: gameState.gameOver,
@@ -663,6 +664,16 @@ function serializeUnit(unit) {
     weapon: unit.weapon,
     stats: unit.stats
   };
+}
+
+// Helper to broadcast game update with player-specific data
+function broadcastGameUpdate(io, room, updateData) {
+  room.players.forEach((player, idx) => {
+    io.to(player.socketId).emit('gameUpdate', {
+      ...updateData,
+      state: serializeGameState(room.gameState, idx)
+    });
+  });
 }
 
 const PORT = process.env.PORT || 3000;
