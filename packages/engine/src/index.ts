@@ -7,3 +7,6 @@ export const VERSION = '0.0.1';
 
 // State types and interfaces
 export * from './state';
+
+// Stat calculation system
+export * from './stats';
