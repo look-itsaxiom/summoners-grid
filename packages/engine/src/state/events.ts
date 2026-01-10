@@ -134,6 +134,49 @@ export interface RoleAdvancedEvent {
   params: { unitId: UnitId; fromRole: string; toRole: string };
 }
 
+// Selection events
+export interface SelectionMadeEvent {
+  type: 'SELECTION_MADE';
+  params: { player: PlayerIndex; promptId: string; selection: EntityId | string };
+}
+
+// Play events
+export interface SummonPlayedEvent {
+  type: 'SUMMON_PLAYED';
+  params: { player: PlayerIndex; cardId: string; unitId: string; position: GridPosition };
+}
+
+export interface CardSetEvent {
+  type: 'CARD_SET';
+  params: { player: PlayerIndex; cardId: string };
+}
+
+export interface BuildingPlayedEvent {
+  type: 'BUILDING_PLAYED';
+  params: { player: PlayerIndex; cardId: string; buildingId: EntityId; position: GridPosition };
+}
+
+export interface QuestPlayedEvent {
+  type: 'QUEST_PLAYED';
+  params: { player: PlayerIndex; cardId: string };
+}
+
+export interface CardRevealedEvent {
+  type: 'CARD_REVEALED';
+  params: { player: PlayerIndex; cardId: string };
+}
+
+// Game end events
+export interface PlayerConcededEvent {
+  type: 'PLAYER_CONCEDED';
+  params: { player: PlayerIndex };
+}
+
+export interface GameEndEvent {
+  type: 'GAME_END';
+  params: { winner: PlayerIndex; reason: string };
+}
+
 /**
  * Union of all known event types.
  */
@@ -160,7 +203,15 @@ export type KnownGameEvent =
   | PriorityPassedEvent
   | VictoryPointsGainedEvent
   | GameEndedEvent
-  | RoleAdvancedEvent;
+  | RoleAdvancedEvent
+  | SelectionMadeEvent
+  | SummonPlayedEvent
+  | CardSetEvent
+  | BuildingPlayedEvent
+  | QuestPlayedEvent
+  | CardRevealedEvent
+  | PlayerConcededEvent
+  | GameEndEvent;
 
 /**
  * Helper to create typed events.

@@ -16,3 +16,6 @@ export * from './resolution';
 
 // Turn system
 export * from './turns';
+
+// Action dispatch system
+export * from './actions';
