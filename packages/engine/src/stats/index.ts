@@ -9,7 +9,9 @@ export {
   getGrowthRate,
   GROWTH_RATE_VALUES,
   MAX_LEVEL,
+  MIN_LEVEL,
   STARTING_LEVEL,
+  validateLevel,
 } from './growth-rates';
 
 // Stat calculation

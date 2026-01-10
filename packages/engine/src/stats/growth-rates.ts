@@ -7,6 +7,15 @@
 
 import type { GrowthRateSymbol } from '../state/base';
 
+/** Starting level for summons */
+export const STARTING_LEVEL = 5;
+
+/** Maximum level for summons */
+export const MAX_LEVEL = 20;
+
+/** Minimum valid level (level 1 is theoretical minimum) */
+export const MIN_LEVEL = 1;
+
 /**
  * Growth rate values per level for each symbol.
  * From GDD:
@@ -34,17 +43,31 @@ export function getGrowthRate(symbol: GrowthRateSymbol): number {
 }
 
 /**
+ * Validate that a level is within valid bounds.
+ * @throws Error if level is out of bounds
+ */
+export function validateLevel(level: number, context?: string): void {
+  if (level < MIN_LEVEL || level > MAX_LEVEL) {
+    const ctx = context ? ` (${context})` : '';
+    throw new Error(`Level ${level} is out of bounds [${MIN_LEVEL}, ${MAX_LEVEL}]${ctx}`);
+  }
+}
+
+/**
  * Calculate stat gain from growth rate at a given level.
  * Formula: Floor(Level × GrowthRate)
  *
- * Note: This is the TOTAL gain from level 1, not per-level gain.
- * At level 1, gain is 0 (base stats only).
+ * Note: This is the TOTAL gain from level 0, not per-level gain.
+ * At level 1, gain = Floor(1 × rate).
  * At level 5 (starting level), gain = Floor(5 × rate).
+ *
+ * @throws Error if level is out of valid bounds
  */
 export function calculateGrowthGain(
   level: number,
   growthRate: GrowthRateSymbol
 ): number {
+  validateLevel(level);
   const rate = getGrowthRate(growthRate);
   return Math.floor(level * rate);
 }
@@ -52,17 +75,20 @@ export function calculateGrowthGain(
 /**
  * Calculate stat gain between two levels.
  * Useful for level-up calculations.
+ *
+ * @throws Error if fromLevel > toLevel or levels are out of bounds
  */
 export function calculateLevelUpGain(
   fromLevel: number,
   toLevel: number,
   growthRate: GrowthRateSymbol
 ): number {
+  validateLevel(fromLevel, 'fromLevel');
+  validateLevel(toLevel, 'toLevel');
+
+  if (fromLevel > toLevel) {
+    throw new Error(`fromLevel (${fromLevel}) must be <= toLevel (${toLevel})`);
+  }
+
   return calculateGrowthGain(toLevel, growthRate) - calculateGrowthGain(fromLevel, growthRate);
 }
-
-/** Starting level for summons */
-export const STARTING_LEVEL = 5;
-
-/** Maximum level for summons */
-export const MAX_LEVEL = 20;

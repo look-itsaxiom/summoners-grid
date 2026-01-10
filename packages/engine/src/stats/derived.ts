@@ -9,8 +9,13 @@ import type { Stats } from '../state/base';
 /**
  * Calculate maximum HP from END stat.
  * Formula: 50 + Floor(END^1.5)
+ *
+ * @throws Error if endurance is negative (would produce NaN)
  */
 export function calculateMaxHp(endurance: number): number {
+  if (endurance < 0) {
+    throw new Error('Endurance must be non-negative');
+  }
   return 50 + Math.floor(Math.pow(endurance, 1.5));
 }
 
