@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "paths": {
+      "@summoners-grid/engine": ["./packages/engine/src/index.ts"],
+      "@summoners-grid/engine/*": ["./packages/engine/src/*"],
+      "@summoners-grid/client": ["./packages/client/src/index.ts"],
+      "@summoners-grid/client/*": ["./packages/client/src/*"],
+      "@summoners-grid/data": ["./packages/data/src/index.ts"],
+      "@summoners-grid/data/*": ["./packages/data/src/*"]
+    }
+  },
+  "references": [
+    { "path": "./packages/engine" },
+    { "path": "./packages/client" },
+    { "path": "./packages/data" }
+  ]
+}
