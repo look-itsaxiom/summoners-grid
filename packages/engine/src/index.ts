@@ -19,3 +19,6 @@ export * from './turns';
 
 // Action dispatch system
 export * from './actions';
+
+// Combat system
+export * from './combat';
