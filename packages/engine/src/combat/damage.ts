@@ -226,8 +226,8 @@ export const ELEMENTAL_RESISTANCE: Record<Attribute, Attribute[]> = {
   wind: ['fire'],
   earth: ['wind'],
   water: ['earth'],
-  light: ['dark'],
-  dark: ['light'],
+  light: ['light'],  // Light attacking Light is resisted
+  dark: ['dark'],    // Dark attacking Dark is resisted
   neutral: [],
 };
 
