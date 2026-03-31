@@ -1,23 +1,39 @@
-# Summoner's Grid — Ralph Loop Prompt
+# Summoner's Grid — Ralph Loop Prompt (Godot Edition)
 
-You are building **Summoner's Grid**, a tactical grid-based RPG card game for the browser. The complete game design is defined in two documents in this repo:
+You are porting **Summoner's Grid** from a verified web prototype to a polished Godot 4 game. The complete game design is defined in two documents in this repo:
 
 - `Summoner's Grid GDD.md` — The authoritative game design document
 - `Summoner's Grid Play Example.md` — A full 10-turn play-through demonstrating every mechanic
 
-Your job: **build this game from nothing to a polished, publishable browser game.** Every iteration, you must diagnose what exists, identify the highest-priority gap, implement it, test it in the browser, and commit your work.
+The web prototype in `src/` has a **fully verified game engine** (280 tests, all formulas matching the Play Example). Your job: **rebuild this as a native Godot 4 game** using the web engine as your reference implementation. Every iteration, diagnose what exists, identify the highest-priority gap, implement it, test it via Godot MCP, and commit.
 
 ---
 
 ## Tech Stack
 
-- **Build tool:** Vite
-- **Language:** TypeScript (strict mode)
-- **UI Framework:** React 18+
-- **Styling:** CSS Modules or Tailwind CSS (pick one on first iteration and stick with it)
-- **Game state:** Zustand for state management
-- **Testing:** Vitest for unit tests on game engine logic
-- **No backend** — this is a single-player vs AI game for now (PvP networking is a future expansion)
+- **Engine:** Godot 4.x (GDScript)
+- **Project root:** `godot/` directory (keep web prototype in `src/` as reference)
+- **Testing:** GUT (Godot Unit Testing) for formula verification
+- **Art style target:** HD-2D (Octopath Traveler) — pixel sprites on 3D-lit boards
+- **Audio:** Procedural + asset-based
+- **MCP:** Use `godot-mcp` tools for live testing, scene inspection, property manipulation
+
+---
+
+## Reference Implementation
+
+The web prototype (`src/engine/`) contains verified formulas you must match exactly:
+
+- `src/engine/stats.ts` — Stat calculation, growth rates, damage formulas
+- `src/engine/ai.ts` — AI opponent logic (5-priority card evaluation)
+- `src/engine/cardEffects.ts` — Card effect resolution
+- `src/engine/elements.ts` — Elemental advantage cycle
+- `src/engine/sound.ts` — Procedural SFX (port to Godot AudioServer)
+- `src/store/gameStore.ts` — Game state machine (turn phases, VP tracking, effect stack)
+- `src/data/cards.ts` — All 72 card definitions
+- `src/types/index.ts` — Type definitions → GDScript classes
+
+Use these as your source of truth. When in doubt, read the web code.
 
 ---
 
@@ -27,99 +43,75 @@ Every iteration, follow this exact sequence:
 
 ### Step 1: Diagnose Current State
 
-1. Check if `package.json` exists — if not, this is a fresh start
+1. Check if `godot/project.godot` exists — if not, this is a fresh start
 2. Run `git log --oneline -20` to see recent work
-3. Check for a dev server running; if the project is scaffolded, start it with `npm run dev`
-4. Read through the source files to understand what's implemented
-5. Compare against the GDD and Play Example to identify gaps
+3. Use Godot MCP tools to inspect the running project if possible
+4. Read through the Godot source files to understand what's implemented
+5. Compare against the priority list below to identify gaps
 
 ### Step 2: Identify Highest-Priority Gap
 
 Use this priority order (work top-to-bottom, don't skip ahead):
 
-#### Phase 1: Foundation
-1. Project scaffold (Vite + React + TypeScript + Zustand)
-2. Core data types (Card, Summon, Equipment, Role, Species, Stats, etc.)
-3. Game state model (players, board, hands, decks, zones, turn phases)
-4. Stat calculation engine (base stats + growth rates + level + role modifiers + equipment)
-5. Damage formula engine (physical, magical, healing, crit, elemental)
+#### Phase 1: Godot Foundation
+1. Project scaffold (Godot 4 project, folder structure, autoloads)
+2. Core data classes (Card, Summon, Equipment, Role, Species as Resources/RefCounted)
+3. Game state autoload (players, board, hands, decks, zones, turn phases)
+4. Stat calculation (port stats.ts — base stats + growth rates + level + role + equipment)
+5. Damage formulas (port all 4: physical melee, physical bow, magical, healing)
 
 #### Phase 2: Game Rules Engine
 6. Turn structure (Draw → Level → Action → End phases)
-7. Summon placement and territory validation
-8. Movement system (grid pathfinding, diagonal movement, movement speed)
+7. Summon placement and territory validation (12x14 grid)
+8. Movement system (Chebyshev distance, movement speed from SPD)
 9. Basic attack resolution (hit calc, crit calc, damage calc)
 10. Card play system (requirements checking, effect resolution)
-11. Effect stack (LIFO resolution, speed levels, speed lock, priority system)
-12. Victory point tracking and win condition detection
+11. Effect stack (LIFO resolution, speed levels, counter > reaction > action)
+12. Victory point tracking and win condition (first to 3 VP)
 
 #### Phase 3: Card Content
 13. Species templates (all 7 species with stat ranges from GDD)
-14. Role system (all 3 families, tier 1-3, advancement trees, stat modifiers)
-15. Equipment cards (weapons, armor, offhand, accessories with formulas)
-16. Action cards (at least 10 diverse cards matching Play Example)
-17. Building cards (placement, dimensions, ongoing effects, destruction)
-18. Quest cards (objectives, completion tracking, rewards)
-19. Counter and Reaction cards (face-down setting, trigger system)
+14. Role system (3 families, tier 1-3, advancement trees, 27 roles)
+15. Equipment cards (weapons, armor, offhand, accessories)
+16. Action cards (port all 30 from web)
+17. Building cards (placement, dimensions, ongoing effects)
+18. Quest cards (objectives, completion, level rewards)
+19. Counter and Reaction cards (face-down, trigger system)
 20. Advance cards (role changes, Named Summons)
 
-#### Phase 4: UI
-21. Game board (12x14 grid with coordinate system, territory highlighting)
-22. Card rendering (summon cards with stats, growth rate symbols, equipment)
+#### Phase 4: Godot Scenes & UI
+21. Game board scene (12x14 TileMap or GridContainer, territory highlighting)
+22. Card scene (PackedScene with stats, art frame, rarity border)
 23. Hand display (card fan, selection, play targets)
-24. Turn phase indicator and action controls
-25. Summon unit display on board (HP bars, status, movement range)
-26. Effect stack visualization (LIFO stack display during resolution)
-27. Combat resolution animation/display (hit rolls, damage numbers)
+24. Turn phase HUD (indicator, action controls, End Turn button)
+25. Summon unit scene (sprite, HP bar, level label, status indicators)
+26. Effect stack panel (LIFO stack display during resolution)
+27. Combat popup (hit rolls, damage numbers, floating text)
 28. Deck zone displays (deck counts, discard pile, recharge pile)
 
 #### Phase 5: AI Opponent
-29. Basic AI (plays summons, moves toward enemy, attacks when able)
-30. Card play AI (evaluates hand, plays beneficial cards)
-31. Response AI (decides when to play reactions/counters)
-32. Strategic AI (target selection, positioning, role advancement timing)
+29. Basic AI (port ai.ts — summon placement, movement, attacks)
+30. Card play AI (5-priority evaluation: emergency heal → buff → damage → heal → quest)
+31. Response AI (counter/reaction face-down and trigger decisions)
+32. Strategic AI (target selection, positioning, advance timing)
 
-#### Phase 6: Game Flow
-33. Main menu screen
-34. Deck builder / deck selection screen
-35. Pre-game setup (coin flip, turn order choice)
+#### Phase 6: Game Flow Scenes
+33. Main menu scene
+34. Deck builder / selection scene
+35. Pre-game setup (coin flip, turn order)
 36. Game over screen (victory/defeat, stats summary)
-37. Card collection / pack opening (procedural summon generation)
+37. Pack opening scene (procedural summon generation with DNA system)
 
-#### Phase 7: Polish & Content
-38. Sound effects and music integration
-39. Card art (use placeholder geometric/abstract art, CSS-generated)
-40. Animations (card play, movement, attacks, damage, level up)
-41. Visual effects (elemental attributes, critical hits, healing)
-42. Tutorial / how-to-play guide
-43. More card content (expand beyond minimum viable set)
-44. Balance tuning (play test via AI vs AI, adjust numbers)
-45. Mobile responsiveness
-46. Performance optimization
-
-### Step 3: Implement the Gap
-
-- Write clean, well-structured TypeScript
-- Follow existing code patterns and file structure
-- Write Vitest unit tests for all game engine logic (formulas, rules, state transitions)
-- Keep UI components focused and composable
-- Commit after each meaningful piece of work with descriptive messages
-
-### Step 4: Browser Test
-
-After implementing, use the Claude in Chrome browser tools to verify your work:
-
-1. Navigate to the dev server (usually `http://localhost:5173`)
-2. Verify the UI renders correctly
-3. Test the feature you just implemented by interacting with it
-4. Check the browser console for errors
-5. If something is broken, fix it before moving on
-
-### Step 5: Commit and Continue
-
-- Stage and commit your changes with a descriptive message
-- If you've completed a significant milestone, note it
-- Move to the next gap
+#### Phase 7: Polish & Art
+38. Pixel art summon sprites (per species, idle animation)
+39. Board tile art (territory themes, neutral zone)
+40. Card art frames (rarity borders, element icons, equipment slots)
+41. Attack/spell VFX (particles, shader effects)
+42. Movement trails and placement effects
+43. Level-up VFX (glow burst, stat popup)
+44. Sound effects (port procedural SFX or use asset-based)
+45. Background music (menu, battle, victory/defeat stingers)
+46. Screen transitions and juice (shake, flash, bounce)
 
 ---
 
@@ -136,12 +128,12 @@ Critical Hit Chance = Floor((LCK * 0.3375) + 1.65)
 ```
 
 ### Growth Rate Types
-- Minimal (--): +1 every 2 levels (0.5/level)
-- Steady (-): +2 every 3 levels (0.67/level)
-- Normal (_): +1 every level (1.0/level)
-- Gradual (+): +1/level + 1 every 3 levels (1.33/level)
-- Accelerated (++): +1/level + 1 every 2 levels (1.5/level)
-- Exceptional (*): +2 every level (2.0/level)
+- Minimal (--): 0.5/level
+- Steady (-): 0.67/level
+- Normal (_): 1.0/level
+- Gradual (+): 1.33/level
+- Accelerated (++): 1.5/level
+- Exceptional (*): 2.0/level
 
 ### Damage Formulas
 ```
@@ -151,16 +143,8 @@ Magical: INT * (1 + BasePower/100) * (INT/TargetMDF) * CritMult
 Healing: SPI * (1 + BasePower/100) * CritMult
 ```
 
-### Effect Stack Speed Levels (fastest to slowest)
-- Counter > Reaction > Action
-- Speed Lock: higher speed effects prevent lower speed responses until resolved
-
 ### Turn Structure
 Draw Phase → Level Phase → Action Phase → End Phase
-- One Turn Summon per turn (triggers 3 card draws)
-- One attack per summon per turn (unless modified by cards)
-- Movement can be split before/after actions
-- Hand limit of 6 at end of turn
 
 ### Victory Points
 - Tier 1 Summon defeat: 1 VP
@@ -169,78 +153,62 @@ Draw Phase → Level Phase → Action Phase → End Phase
 - First to 3 VP wins
 
 ### HP Damage Retention
-When a summon levels up and max HP increases, current DAMAGE is retained, not current HP percentage. Example: 44/96 HP → takes 52 damage. Levels up, max HP becomes 102. Damage stays at 52, so HP becomes 50/102.
-
-### Summon Entry
-- Summons always enter at Level 5
-- Max level is 20
-- Playing a summon draws 3 cards from Main Deck
-
-### Card Pile Destinations
-- Counter, Building, Quest → Discard Pile
-- Action, Reaction → Recharge Pile
-- Defeated Summons → Removed from game
-- When Main Deck empty, shuffle Recharge Pile to form new Main Deck
+Damage is retained on level-up, not HP percentage.
 
 ---
 
-## Browser Testing Checklist
+## Godot MCP Testing
 
-When testing in the browser, verify these specific things:
+Use the `godot-mcp` tools to verify your work:
 
-- [ ] Grid renders as 12x14 with coordinate labels
-- [ ] Territory zones are visually distinct (Player A, Player B, unclaimed)
-- [ ] Cards display all relevant stats and growth rate symbols
-- [ ] Summons can be placed only in valid territory spaces
-- [ ] Movement highlights valid spaces based on movement speed
-- [ ] Attack shows valid targets based on weapon range
-- [ ] Damage numbers match GDD formulas exactly
-- [ ] Level up recalculates stats correctly (verify against Play Example numbers)
-- [ ] Effect stack resolves in correct LIFO order
-- [ ] Victory points track correctly
-- [ ] Game ends when a player reaches 3 VP
+- `mcp__godot-mcp__run_project` — Launch the game
+- `mcp__godot-mcp__game_get_scene_tree` — Inspect node hierarchy
+- `mcp__godot-mcp__game_get_property` — Read node properties
+- `mcp__godot-mcp__game_set_property` — Modify values live
+- `mcp__godot-mcp__game_call_method` — Call methods on nodes
+- `mcp__godot-mcp__game_screenshot` — Capture visual state
+- `mcp__godot-mcp__game_eval` — Run arbitrary GDScript
+
+### Formula Verification via MCP
+```
+# Example: verify stat calculation matches web prototype
+game_eval: "Stats.calculate_final_stat(10, 5, 1.0, 1.1, 0)"
+# Should return: (10 + floor(5 * 1.0)) * 1.1 + 0 = 16.5 → 16
+```
 
 ---
 
 ## Validation Against Play Example
 
-The Play Example document is your **acceptance test**. The exact numbers in that document must be reproducible by your engine. Key verification points:
+The Play Example document is your **acceptance test**. Port these exact checks to GUT:
 
 - Turn 1: Gignen Warrior at (5,2), Level 5, HP 96, stats match
-- Turn 2: Blast Bolt deals exactly 52 damage (19 * 1.6 * 1.727 = 52)
-- Turn 3: Healing Hands crits for 31 healing (15 * 1.4 * 1.5 = 31.5 → 31)
-- Turn 3: Quest + Gignen Country = 4 levels gained (6→10)
-- Turn 5: Berserker deals 326 total damage (169 weapon + 157 Tempest Slash)
-- Turn 8: Dark Altar destruction chain works correctly
-- Turn 10: Blast Bolt deals 502 damage, defeating Berserker for 2 VP, winning game
+- Turn 2: Blast Bolt deals exactly 52 damage
+- Turn 3: Healing Hands crits for 31 healing
+- Turn 5: Berserker deals 326 total damage
+- Turn 10: Blast Bolt deals 502 damage, winning the game
 
 ---
 
 ## When You Think You're Done
 
-You're never done. If all phases above are complete:
-
-1. **Play test** — Run AI vs AI games and watch for rule violations
-2. **Add more cards** — Create new cards that explore unexplored design space
-3. **Improve AI** — Make it smarter, more strategic, more fun to play against
-4. **Polish visuals** — Better animations, particles, screen shake, juice
-5. **Add sound** — Victory fanfares, card play sounds, attack impacts
-6. **Expand content** — More species variations, more equipment, more quests
-7. **Balance** — Run simulations, check win rates, adjust numbers
-8. **UX improvements** — Tooltips, tutorials, better card inspection
-9. **Performance** — Profile and optimize render cycles
-10. **Accessibility** — Keyboard navigation, screen reader support, color blind modes
-
-Always find the next thing to make better. The game is shipping tomorrow.
+1. **Play test** — Run via Godot MCP, watch for rule violations
+2. **Compare to web** — Run same scenarios in both, numbers must match
+3. **Add art** — Pixel sprites, tile textures, card frames
+4. **Improve AI** — Port all 5 priority levels, make it strategic
+5. **Polish** — Particles, screen shake, transitions, juice
+6. **Sound** — SFX for every action, BGM for every scene
+7. **Mobile** — Touch input, responsive scaling
+8. **Export** — Build for desktop (Windows/Linux/Mac) and mobile (Android/iOS)
 
 ---
 
 ## Important Reminders
 
 - READ THE GDD before implementing any mechanic. The GDD is authoritative.
-- Test your formulas against the Play Example numbers. They must match exactly.
+- READ THE WEB CODE (`src/engine/`) for verified formulas. Port, don't re-derive.
+- Test formulas against the Play Example numbers. They must match exactly.
+- Use Godot MCP tools to inspect and test the running game.
 - Commit frequently with descriptive messages.
-- If the dev server isn't running, start it.
-- If tests fail, fix them before moving on.
-- Use the browser to visually verify every UI change.
 - Don't over-engineer early phases. Get it working, then make it pretty.
+- The web prototype stays in `src/` as reference — don't delete it.

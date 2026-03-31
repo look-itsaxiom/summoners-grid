@@ -1,38 +1,47 @@
 # Summoner's Grid
 
-Tactical grid-based RPG card game built for the browser.
+Tactical grid-based RPG card game. Porting from a verified web prototype to Godot 4.
 
 ## Tech Stack
 
-Vite + React 18 + TypeScript (strict) + Zustand + Vitest
+- **Target:** Godot 4.x (GDScript) in `godot/`
+- **Reference:** Web prototype in `src/` (Vite + React + TypeScript + Zustand + Vitest)
+- **Testing:** GUT for Godot, Vitest for web reference (280 tests, all passing)
+- **MCP:** `godot-mcp` for live testing and scene inspection
 
 ## Project Structure
 
 - `Summoner's Grid GDD.md` — Game Design Document (authoritative rules reference)
 - `Summoner's Grid Play Example.md` — 10-turn play example with exact numbers for verification
-- `PROMPT.md` — Ralph Loop iteration prompt
-- `src/engine/` — Pure TypeScript game logic (stats, AI, elements, sound, card gen, simulator)
-- `src/components/` — React UI components (25 components)
-- `src/store/` — Zustand state management
-- `src/data/` — Card data, roles, species definitions
-- `src/types/` — TypeScript type definitions
+- `PROMPT.md` — Ralph Loop iteration prompt (Godot edition)
+- `godot/` — Godot 4 project (active development)
+- `src/engine/` — Verified TypeScript game logic (reference implementation, DO NOT DELETE)
+- `src/components/` — React UI components (web prototype, reference only)
+- `src/store/` — Zustand state management (reference only)
+- `src/data/` — Card data, roles, species definitions (port to GDScript)
+- `src/types/` — TypeScript type definitions (port to GDScript classes)
 
 ## Development
 
 ```bash
-npm install
-npx vite --port 5174   # Dev server (port 5173 used by another project)
-npm test                # Run 58 Vitest tests
-npm run build           # Production build (~300KB JS, 33KB CSS)
+# Web reference (keep available for formula verification)
+npm install --legacy-peer-deps
+npx vite --port 5174
+npm test                # 280 Vitest tests
+
+# Godot (active development)
+# Use godot-mcp tools for testing
+# GUT tests in godot/test/
 ```
 
 ## Key Conventions
 
-- Game engine in `src/engine/` — pure TypeScript, no React dependencies
-- All GDD formulas must match exactly (verified by 31 formula tests)
-- Card effects resolved in `src/store/gameStore.ts` where `set()` is available
-- AI logic in `src/engine/ai.ts` — 5-priority card evaluation system
-- Sound effects are procedural via Web Audio API (no external files)
+- **Port formulas exactly** from `src/engine/stats.ts` — don't re-derive
+- **GDD is authoritative** for rules; web code is authoritative for formula implementation
+- All Play Example numbers must match in both web and Godot
+- Game engine in Godot should be autoloads/pure scripts, separate from scene tree
+- AI logic ports from `src/engine/ai.ts` — 5-priority card evaluation system
+- Art style target: HD-2D (Octopath Traveler) — pixel sprites on 3D-lit boards
 
 ## Game Content (72 items)
 
