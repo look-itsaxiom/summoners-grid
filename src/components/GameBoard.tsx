@@ -43,23 +43,31 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
     isCardTarget ? 'card-target' : '',
     isAdvanceTarget ? 'advance-target' : '',
     unit ? `unit-${unit.owner}` : '',
+    unit?.isNamedSummon ? 'named-summon' : '',
   ]
     .filter(Boolean)
     .join(' ');
 
+  const hpPercent = unit ? (unit.currentHP / unit.maxHP) * 100 : 100;
+  const hpClass = hpPercent <= 25 ? 'hp-low' : hpPercent <= 50 ? 'hp-medium' : '';
+  const displayName = unit?.isNamedSummon && unit.namedSummonName
+    ? unit.namedSummonName.split(',')[0] // Show first part of named summon name
+    : unit?.card.name.slice(0, 10);
+
   return (
-    <div className={classes} onClick={onClick} title={`(${x},${y})`}>
+    <div className={classes} onClick={onClick} title={unit ? `${unit.isNamedSummon ? unit.namedSummonName : unit.card.name} — Lv${unit.level} ${unit.currentRole}\nHP: ${unit.currentHP}/${unit.maxHP}\nSTR:${unit.calculatedStats.STR} DEF:${unit.calculatedStats.DEF} INT:${unit.calculatedStats.INT}\nSPD:${unit.calculatedStats.SPD} ACC:${unit.calculatedStats.ACC} LCK:${unit.calculatedStats.LCK}\nWeapon: ${unit.card.equipment.weapon?.name ?? 'None'}` : `(${x},${y})`}>
       {unit && (
         <div className="unit-display">
-          <div className="unit-name">{unit.card.name.slice(0, 10)}</div>
+          {unit.isNamedSummon && <span className="named-tag">NAMED</span>}
+          <div className="unit-name">{displayName}</div>
           <div className="unit-hp">
             {unit.currentHP}/{unit.maxHP}
           </div>
           <div className="unit-level">Lv{unit.level} {unit.currentRole}</div>
-          <div className="hp-bar">
+          <div className={`hp-bar ${hpClass}`}>
             <div
               className="hp-fill"
-              style={{ width: `${(unit.currentHP / unit.maxHP) * 100}%` }}
+              style={{ width: `${hpPercent}%` }}
             />
           </div>
         </div>
