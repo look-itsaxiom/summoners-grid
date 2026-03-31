@@ -330,6 +330,159 @@ func move_summon(instance_id: String, to: Vector2i) -> void:
 	])
 
 
+# ─── Attack Resolution ───
+
+signal attack_resolved(result: Dictionary)
+
+func attack_with_summon(attacker_id: String, target_id: String) -> void:
+	var atk_idx := _find_summon_index(attacker_id)
+	var tgt_idx := _find_summon_index(target_id)
+	if atk_idx == -1 or tgt_idx == -1:
+		add_log("Invalid attacker or target.")
+		return
+
+	var attacker: Dictionary = board_summons[atk_idx]
+	var target_unit: Dictionary = board_summons[tgt_idx]
+
+	if attacker["owner"] != active_player:
+		add_log("Not your summon!")
+		return
+	if attacker["has_attacked"]:
+		add_log("%s has already attacked this turn!" % attacker["card"].get("name", "?"))
+		return
+	if target_unit["owner"] == active_player:
+		add_log("Cannot attack your own summon!")
+		return
+
+	var weapon: Dictionary = attacker["card"].get("equipment", {}).get("weapon", {})
+	if weapon.is_empty():
+		add_log("%s has no weapon equipped!" % attacker["card"].get("name", "?"))
+		return
+
+	# Range check
+	var distance := _chebyshev_distance(attacker["position"], target_unit["position"])
+	var weapon_range: int = weapon.get("range", 1)
+	if distance > weapon_range:
+		add_log("Target out of range! (distance: %d, range: %d)" % [distance, weapon_range])
+		return
+
+	var atk_stats: Dictionary = attacker["calculated_stats"]
+	var tgt_stats: Dictionary = target_unit["calculated_stats"]
+
+	# Hit calculation
+	var to_hit_pct: float = Stats.calculate_to_hit(
+		weapon.get("base_accuracy", 90.0), atk_stats.get("ACC", 10)
+	)
+	var hit_result: Dictionary = Stats.roll_hit(to_hit_pct)
+
+	add_log("%s attacks %s! To-hit: %.1f%%, rolled %d" % [
+		attacker["card"].get("name", "?"), target_unit["card"].get("name", "?"),
+		to_hit_pct, hit_result["roll"]
+	])
+
+	attacker["has_attacked"] = true
+
+	if not hit_result["hit"]:
+		add_log("Attack missed!")
+		attack_resolved.emit({ "hit": false, "damage": 0 })
+		return
+
+	# Crit calculation
+	var crit_pct: int = Stats.calculate_crit_chance(atk_stats.get("LCK", 10))
+	var crit_result: Dictionary = Stats.roll_crit(crit_pct)
+	var is_crit: bool = crit_result["crit"]
+
+	if is_crit:
+		add_log("CRITICAL HIT! (%d%% chance, rolled %d)" % [crit_pct, crit_result["roll"]])
+
+	# Damage calculation
+	var damage: int = 0
+	var damage_type: String = weapon.get("damage_type", "physical_melee")
+	var weapon_power: int = weapon.get("base_power", 0)
+
+	if damage_type == "physical_melee":
+		damage = Stats.calculate_physical_melee_damage(
+			atk_stats.get("STR", 10), weapon_power, tgt_stats.get("DEF", 10), is_crit
+		)
+	elif damage_type == "physical_ranged":
+		damage = Stats.calculate_physical_ranged_damage(
+			atk_stats.get("STR", 10), atk_stats.get("ACC", 10),
+			weapon_power, tgt_stats.get("DEF", 10), is_crit
+		)
+	else:  # magical
+		damage = Stats.calculate_magical_damage(
+			atk_stats.get("INT", 10), weapon_power, tgt_stats.get("MDF", 10), is_crit
+		)
+
+	# Elemental advantage
+	var atk_element: String = weapon.get("element", "neutral")
+	var def_element: String = target_unit["card"].get("element", "neutral")
+	var elem_mult: float = Stats.get_element_multiplier(atk_element, def_element)
+	if elem_mult > 1.0:
+		damage = floori(damage * elem_mult)
+		add_log("Elemental advantage! (%s > %s) x1.25" % [atk_element, def_element])
+
+	add_log("Deals %d damage!" % damage)
+
+	var new_hp: int = target_unit["current_hp"] - damage
+	var defeated: bool = new_hp <= 0
+
+	if defeated:
+		add_log("%s is defeated!" % target_unit["card"].get("name", "?"))
+		board_summons.remove_at(tgt_idx)
+
+		# Award VP based on role tier
+		var role_def: Dictionary = RolesData.get_definition(target_unit["current_role"])
+		var vp_gain: int = 2 if role_def.get("tier", 1) >= 2 else 1
+		players[active_player]["victory_points"] += vp_gain
+
+		# Move card to removed from play
+		var target_owner: String = target_unit["owner"]
+		players[target_owner]["removed_from_play"].append(target_unit["card"])
+
+		add_log("%s gains %d VP! (%d total)" % [
+			active_player, vp_gain, players[active_player]["victory_points"]
+		])
+
+		summon_defeated.emit(target_unit)
+		check_victory()
+	else:
+		target_unit["current_hp"] = maxi(0, new_hp)
+		add_log("%s HP: %d/%d" % [
+			target_unit["card"].get("name", "?"), target_unit["current_hp"], target_unit["max_hp"]
+		])
+
+	attack_resolved.emit({
+		"hit": true, "crit": is_crit, "damage": damage,
+		"defeated": defeated, "attacker": attacker_id, "target": target_id,
+	})
+
+
+## Get valid attack targets for a summon.
+func get_valid_attacks(instance_id: String) -> Array[String]:
+	var idx := _find_summon_index(instance_id)
+	if idx == -1:
+		return []
+
+	var unit: Dictionary = board_summons[idx]
+	if unit["has_attacked"]:
+		return []
+
+	var weapon: Dictionary = unit["card"].get("equipment", {}).get("weapon", {})
+	if weapon.is_empty():
+		return []
+
+	var weapon_range: int = weapon.get("range", 1)
+	var result: Array[String] = []
+
+	for s in board_summons:
+		if s["owner"] == unit["owner"]:
+			continue
+		if _chebyshev_distance(unit["position"], s["position"]) <= weapon_range:
+			result.append(s["instance_id"])
+	return result
+
+
 # ─── Helpers ───
 
 func _is_in_territory(pos: Vector2i, player_id: String) -> bool:
