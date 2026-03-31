@@ -1,0 +1,239 @@
+.pack-opening {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px;
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 70%);
+}
+
+.pack-header {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 800px;
+}
+
+.pack-header h2 {
+  color: #ffd700;
+  font-size: 24px;
+  margin: 0;
+  flex: 1;
+}
+
+.pack-close {
+  padding: 8px 16px;
+  background: #2a2a4a;
+  color: #aaa;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.pack-close:hover {
+  color: #fff;
+}
+
+.pack-unopened {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  margin-top: 48px;
+}
+
+.pack-visual {
+  width: 150px;
+  height: 200px;
+  background: linear-gradient(135deg, #2a1a4a, #1a2a4a);
+  border: 3px solid #ffd700;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.pack-glow {
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 60%);
+  animation: packPulse 2s ease-in-out infinite;
+}
+
+.pack-icon {
+  font-size: 48px;
+  color: #ffd700;
+  font-weight: bold;
+  z-index: 1;
+}
+
+.open-pack-btn {
+  padding: 14px 36px;
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.open-pack-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 215, 0, 0.3);
+}
+
+.pack-results {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.pack-cards {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.pack-card {
+  width: 150px;
+  height: 220px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.3s, box-shadow 0.3s;
+  perspective: 1000px;
+}
+
+.pack-card:hover {
+  transform: translateY(-4px);
+}
+
+.pack-card.face-down {
+  background: linear-gradient(135deg, #2a1a4a, #1a2a4a);
+  border: 2px solid #4a4a6a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pack-card.face-down:hover {
+  border-color: #ffd700;
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
+}
+
+.face-down-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.question-mark {
+  font-size: 36px;
+  color: #555;
+}
+
+.click-hint {
+  font-size: 10px;
+  color: #444;
+}
+
+.pack-card.revealed {
+  background: #1a1a30;
+  border: 2px solid var(--rarity-color, #aaa);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--rarity-color) 30%, transparent);
+  animation: cardReveal 0.4s ease-out;
+}
+
+.pack-card-content {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  height: 100%;
+}
+
+.rarity-badge {
+  font-size: 9px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.card-species {
+  font-size: 10px;
+  color: #666;
+  text-transform: capitalize;
+}
+
+.card-gen-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #eee;
+}
+
+.card-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px;
+  font-size: 9px;
+  font-family: monospace;
+  color: #aaa;
+  flex: 1;
+}
+
+.card-weapon {
+  font-size: 9px;
+  color: #886;
+  border-top: 1px solid #2a2a4a;
+  padding-top: 4px;
+}
+
+.pack-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.reveal-all-btn,
+.collect-btn,
+.open-another-btn {
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.reveal-all-btn {
+  background: #3a3a6a;
+  color: #aaf;
+}
+
+.collect-btn {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+}
+
+.open-another-btn {
+  background: #2a2a4a;
+  color: #aaa;
+  border: 1px solid #3a3a5a;
+}
+
+@keyframes packPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+@keyframes cardReveal {
+  from { transform: rotateY(90deg) scale(0.8); opacity: 0; }
+  to { transform: rotateY(0) scale(1); opacity: 1; }
+}

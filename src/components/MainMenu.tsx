@@ -4,9 +4,11 @@ import './MainMenu.css';
 
 interface MainMenuProps {
   onStartGame: () => void;
+  onOpenPacks?: () => void;
+  collectionCount?: number;
 }
 
-export function MainMenu({ onStartGame }: MainMenuProps) {
+export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
   const [showHowTo, setShowHowTo] = useState(false);
 
   return (
@@ -37,6 +39,11 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
           <button className="play-button" onClick={onStartGame}>
             Play vs AI
           </button>
+          {onOpenPacks && (
+            <button className="packs-button" onClick={onOpenPacks}>
+              Open Packs {collectionCount > 0 && `(${collectionCount} collected)`}
+            </button>
+          )}
           <button className="how-to-button" onClick={() => setShowHowTo(true)}>
             How to Play
           </button>

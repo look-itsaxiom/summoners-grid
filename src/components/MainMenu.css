@@ -98,6 +98,25 @@
   align-items: center;
 }
 
+.packs-button {
+  padding: 12px 36px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #ffd700;
+  background: transparent;
+  border: 2px solid #ffd700;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+
+.packs-button:hover {
+  background: rgba(255, 215, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 215, 0, 0.2);
+}
+
 .how-to-button {
   padding: 10px 32px;
   font-size: 14px;

@@ -7,18 +7,21 @@ import { CombatOverlay } from './components/CombatOverlay';
 import { AdvanceDeck } from './components/AdvanceDeck';
 import { MainMenu } from './components/MainMenu';
 import { GameOver } from './components/GameOver';
+import { PackOpening } from './components/PackOpening';
 import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
+import type { SummonCard } from './types';
 import './App.css';
 
-type Screen = 'menu' | 'game';
+type Screen = 'menu' | 'game' | 'packs';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('menu');
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState<number | null>(null);
+  const [collection, setCollection] = useState<SummonCard[]>([]);
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard } = useGameStore();
 
@@ -47,7 +50,22 @@ function App() {
   }, [activePlayer, phase, screen, gameOver]);
 
   if (screen === 'menu') {
-    return <MainMenu onStartGame={handleStartGame} />;
+    return (
+      <MainMenu
+        onStartGame={handleStartGame}
+        onOpenPacks={() => setScreen('packs')}
+        collectionCount={collection.length}
+      />
+    );
+  }
+
+  if (screen === 'packs') {
+    return (
+      <PackOpening
+        onAddToCollection={(cards) => setCollection(prev => [...prev, ...cards])}
+        onClose={() => setScreen('menu')}
+      />
+    );
   }
 
   return (
