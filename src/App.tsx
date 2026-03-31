@@ -12,10 +12,12 @@ import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
 import { DeckPreview } from './components/DeckPreview';
+import { CoinFlip } from './components/CoinFlip';
+import { EffectStack } from './components/EffectStack';
 import type { SummonCard } from './types';
 import './App.css';
 
-type Screen = 'menu' | 'game' | 'packs' | 'deck-preview';
+type Screen = 'menu' | 'game' | 'packs' | 'deck-preview' | 'coin-flip';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('menu');
@@ -26,11 +28,11 @@ function App() {
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard } = useGameStore();
 
-  const handleStartGame = () => {
+  const handleStartGame = (goFirst: boolean = true) => {
     const playerADeck = createPlayerADeck();
     const playerBDeck = createPlayerBDeck();
     initializeGame(playerADeck, playerBDeck);
-    decideTurnOrder('playerA');
+    decideTurnOrder(goFirst ? 'playerA' : 'playerB');
     setScreen('game');
     setSelectedCardIndex(null);
     setSelectedUnitId(null);
@@ -66,9 +68,15 @@ function App() {
       <DeckPreview
         summons={playerADeck.summonSlots}
         mainDeck={playerADeck.mainDeck}
-        onConfirm={handleStartGame}
+        onConfirm={() => setScreen('coin-flip')}
         onBack={() => setScreen('menu')}
       />
+    );
+  }
+
+  if (screen === 'coin-flip') {
+    return (
+      <CoinFlip onChoose={(goFirst) => handleStartGame(goFirst)} />
     );
   }
 
@@ -84,6 +92,7 @@ function App() {
   return (
     <div className="app">
       <CombatOverlay />
+      <EffectStack />
       {gameOver && (
         <GameOver onNewGame={handleStartGame} onMainMenu={handleMainMenu} />
       )}
