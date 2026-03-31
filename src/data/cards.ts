@@ -1042,6 +1042,38 @@ export const QUEST_CARDS: Record<string, QuestCard> = {
     vpReward: 0,
     activatedBy: 'owner',
   },
+  arena_champion: {
+    id: 'arena_champion',
+    name: 'Arena Champion',
+    cardType: 'quest',
+    element: 'fire',
+    description: 'Control a summon at level 12+. Reward: 1 VP and +5 STR permanently.',
+    requirements: [],
+    pileDestination: 'discard',
+    objective: 'Control a summon at level 12 or higher.',
+    rewardEffects: [{
+      id: 'arena_reward',
+      type: 'buff',
+      description: '+5 STR permanently',
+      duration: 'permanent',
+      statModifiers: { STR: 5 },
+    }],
+    vpReward: 1,
+    activatedBy: 'owner',
+  },
+  territorial_claim: {
+    id: 'territorial_claim',
+    name: 'Territorial Claim',
+    cardType: 'quest',
+    element: 'earth',
+    description: 'Have 3 summons on the board. Reward: 1 VP.',
+    requirements: [],
+    pileDestination: 'discard',
+    objective: 'Control 3 summons simultaneously.',
+    rewardEffects: [],
+    vpReward: 1,
+    activatedBy: 'owner',
+  },
 };
 
 // ─── Counter Cards ────────────────────────────────────────────────────────────
