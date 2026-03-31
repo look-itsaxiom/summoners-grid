@@ -13,17 +13,18 @@ const COMFYUI_PORT = process.env.COMFYUI_PORT ?? '8188';
 const COMFYUI_URL = `http://${COMFYUI_HOST}:${COMFYUI_PORT}`;
 
 /**
- * Basic text-to-image workflow for ComfyUI.
- * Uses SDXL checkpoint with KSampler for card art generation.
+ * Flux Schnell text-to-image workflow for ComfyUI.
+ * Uses flux1-schnell-fp8 checkpoint — fast, handles natural language prompts well.
+ * No negative prompt needed for Flux.
  */
-function buildWorkflow(prompt: string, negativePrompt: string = '', seed?: number): Record<string, unknown> {
+function buildFluxWorkflow(prompt: string, seed?: number): Record<string, unknown> {
   const actualSeed = seed ?? Math.floor(Math.random() * 2147483647);
 
   return {
     '1': {
       class_type: 'CheckpointLoaderSimple',
       inputs: {
-        ckpt_name: 'sd_xl_base_1.0.safetensors',
+        ckpt_name: 'flux1-schnell-fp8.safetensors',
       },
     },
     '2': {
@@ -34,13 +35,6 @@ function buildWorkflow(prompt: string, negativePrompt: string = '', seed?: numbe
       },
     },
     '3': {
-      class_type: 'CLIPTextEncode',
-      inputs: {
-        text: negativePrompt || 'blurry, low quality, deformed, ugly, nsfw, text, watermark',
-        clip: ['1', 1],
-      },
-    },
-    '4': {
       class_type: 'EmptyLatentImage',
       inputs: {
         width: 512,
@@ -48,32 +42,32 @@ function buildWorkflow(prompt: string, negativePrompt: string = '', seed?: numbe
         batch_size: 1,
       },
     },
-    '5': {
+    '4': {
       class_type: 'KSampler',
       inputs: {
         model: ['1', 0],
         positive: ['2', 0],
-        negative: ['3', 0],
-        latent_image: ['4', 0],
+        negative: ['2', 0], // Flux doesn't use negative prompts effectively
+        latent_image: ['3', 0],
         seed: actualSeed,
-        steps: 25,
-        cfg: 7.5,
-        sampler_name: 'euler_ancestral',
-        scheduler: 'normal',
+        steps: 4,             // Flux Schnell is fast — 4 steps is enough
+        cfg: 1.0,             // Flux uses low CFG
+        sampler_name: 'euler',
+        scheduler: 'simple',
         denoise: 1.0,
       },
     },
-    '6': {
+    '5': {
       class_type: 'VAEDecode',
       inputs: {
-        samples: ['5', 0],
+        samples: ['4', 0],
         vae: ['1', 2],
       },
     },
-    '7': {
+    '6': {
       class_type: 'SaveImage',
       inputs: {
-        images: ['6', 0],
+        images: ['5', 0],
         filename_prefix: 'summoners_grid',
       },
     },
@@ -95,7 +89,7 @@ export async function generateCardArt(
   seed?: number
 ): Promise<GenerationResult> {
   try {
-    const workflow = buildWorkflow(prompt, '', seed);
+    const workflow = buildFluxWorkflow(prompt, seed);
 
     const response = await fetch(`${COMFYUI_URL}/prompt`, {
       method: 'POST',

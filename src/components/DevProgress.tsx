@@ -49,6 +49,24 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Infrastructure', label: 'ComfyUI art pipeline (home.skib)', status: 'in-progress', detail: 'ComfyUI connected (RTX 4070), API routes built, IPFS pending' },
   { category: 'Infrastructure', label: 'Marketplace / Auction House', status: 'todo', detail: 'Phase 7: Immutable Orderbook' },
 
+  // ─── PRODUCTION INFRASTRUCTURE (tech demo → product) ───
+  { category: 'Production', label: 'Database (PostgreSQL)', status: 'todo', detail: 'User accounts, decks, pack history, art job status' },
+  { category: 'Production', label: 'User accounts + profiles', status: 'todo', detail: 'Username, avatar, stats, deck management' },
+  { category: 'Production', label: 'Session management', status: 'todo', detail: 'JWT refresh, token rotation, secure cookies' },
+  { category: 'Production', label: 'Rate limiting', status: 'todo', detail: 'Pack opens, API calls, minting — prevent abuse' },
+  { category: 'Production', label: 'Input validation + sanitization', status: 'todo', detail: 'Zod schemas for all API inputs' },
+  { category: 'Production', label: 'Error handling + logging', status: 'todo', detail: 'Structured logging, error tracking (Sentry/similar)' },
+  { category: 'Production', label: 'Audit trail', status: 'todo', detail: 'Log all transactions: mints, trades, pack opens' },
+  { category: 'Production', label: 'CORS + security headers', status: 'todo', detail: 'CSP, HSTS, X-Frame, rate limiting headers' },
+  { category: 'Production', label: 'Environment config', status: 'in-progress', detail: '.env.example created, needs production config management' },
+  { category: 'Production', label: 'CI/CD pipeline', status: 'todo', detail: 'Automated tests, build, deploy on push' },
+  { category: 'Production', label: 'Monitoring + alerting', status: 'todo', detail: 'Uptime monitoring, error rate alerts, performance metrics' },
+  { category: 'Production', label: 'IPFS upload service (Pinata)', status: 'todo', detail: 'Pin card art + sprites, manage CIDs' },
+  { category: 'Production', label: 'Background job queue', status: 'todo', detail: 'BullMQ + Redis for art generation, metadata refresh' },
+  { category: 'Production', label: 'Admin dashboard', status: 'todo', detail: 'View users, mints, trades, system health' },
+  { category: 'Production', label: 'Terms of Service + Privacy Policy', status: 'todo', detail: 'Legal requirements for NFT platform' },
+  { category: 'Production', label: 'Testnet → Mainnet migration plan', status: 'todo', detail: 'Security audit, data migration, launch checklist' },
+
   // ─── GAME CONTENT & POLISH ───
   { category: 'Content', label: '30 action cards', status: 'done' },
   { category: 'Content', label: '5 building cards', status: 'done' },
