@@ -48,4 +48,24 @@ describe('Card Play Mechanics', () => {
       expect(hpWithArmor).toBeGreaterThan(hpBase);
     });
   });
+
+  describe('Play Example Turn 5 Verification', () => {
+    it('should match Berserker weapon damage (STR=44, WP=40, DEF=16)', () => {
+      // Play Example: 44 * 1.4 * 2.75 = 169
+      const damage = calculatePhysicalMeleeDamage(44, 40, 16, false);
+      expect(damage).toBe(169);
+    });
+
+    it('should match Tempest Slash additional damage (STR=44, BP=30, DEF=16)', () => {
+      // Play Example: 44 * 1.3 * 2.75 = 157
+      const damage = calculatePhysicalMeleeDamage(44, 30, 16, false);
+      expect(damage).toBe(157);
+    });
+
+    it('should calculate total Turn 5 damage as 326', () => {
+      const weaponDmg = calculatePhysicalMeleeDamage(44, 40, 16, false);
+      const tempestDmg = calculatePhysicalMeleeDamage(44, 30, 16, false);
+      expect(weaponDmg + tempestDmg).toBe(326);
+    });
+  });
 });
