@@ -199,14 +199,37 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
+    // Check for Gignen Country building effect: Gignen summons on it get double level-ups
+    const gignenCountrySpaces = new Set<string>();
+    for (const building of board.buildings) {
+      if (building.card.id === 'gignen_country' && building.owner === activePlayer) {
+        for (const space of building.occupiedSpaces) {
+          gignenCountrySpaces.add(`${space.x},${space.y}`);
+        }
+      }
+    }
+
     const updatedSummons = board.summons.map(s => {
       if (s.owner !== activePlayer) return s;
       if (s.level >= 20) return s;
 
-      const leveled = applyLevelUp(s, 1);
-      get().addLog(
-        `${s.card.name} levels up: ${s.level} → ${leveled.level} (HP: ${leveled.currentHP}/${leveled.maxHP})`
-      );
+      // Check if this Gignen summon is on Gignen Country
+      const isOnGignenCountry =
+        s.card.species === 'gignen' &&
+        gignenCountrySpaces.has(`${s.position.x},${s.position.y}`);
+
+      const levelsGained = isOnGignenCountry ? 2 : 1;
+      const leveled = applyLevelUp(s, levelsGained);
+
+      if (isOnGignenCountry) {
+        get().addLog(
+          `${s.card.name} levels up: ${s.level} → ${leveled.level} (Gignen Country bonus!) (HP: ${leveled.currentHP}/${leveled.maxHP})`
+        );
+      } else {
+        get().addLog(
+          `${s.card.name} levels up: ${s.level} → ${leveled.level} (HP: ${leveled.currentHP}/${leveled.maxHP})`
+        );
+      }
       return leveled;
     });
 
