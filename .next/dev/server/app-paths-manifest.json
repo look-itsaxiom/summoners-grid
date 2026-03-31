@@ -1,5 +1,0 @@
-{
-  "/api/cards/[dna]/route": "app/api/cards/[dna]/route.js",
-  "/api/health/route": "app/api/health/route.js",
-  "/api/packs/open/route": "app/api/packs/open/route.js"
-}
