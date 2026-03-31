@@ -1,0 +1,140 @@
+.game-board {
+  display: inline-block;
+  border: 2px solid #2a2a3a;
+  background: #1a1a2e;
+  border-radius: 8px;
+  padding: 8px;
+  user-select: none;
+}
+
+.board-row {
+  display: flex;
+  align-items: center;
+}
+
+.row-label {
+  width: 24px;
+  text-align: center;
+  font-size: 10px;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.col-labels {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+}
+
+.col-label {
+  width: 56px;
+  text-align: center;
+  font-size: 10px;
+  color: #666;
+}
+
+.board-cell {
+  width: 56px;
+  height: 56px;
+  border: 1px solid #2a2a3a;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.board-cell:hover {
+  border-color: #4a4a6a;
+}
+
+.cell-coord {
+  position: absolute;
+  bottom: 1px;
+  right: 2px;
+  font-size: 7px;
+  color: #333;
+}
+
+/* Territory colors */
+.territory-playerA {
+  background: #1a2a1a;
+}
+
+.territory-playerB {
+  background: #2a1a1a;
+}
+
+.territory-unclaimed {
+  background: #1a1a2e;
+}
+
+/* Selected states */
+.board-cell.selected {
+  border-color: #ffd700;
+  box-shadow: inset 0 0 8px rgba(255, 215, 0, 0.3);
+}
+
+.board-cell.valid-move {
+  background: rgba(0, 150, 255, 0.2);
+  border-color: #0096ff;
+}
+
+.board-cell.valid-attack {
+  background: rgba(255, 50, 50, 0.2);
+  border-color: #ff3232;
+}
+
+/* Unit display */
+.unit-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  width: 100%;
+  padding: 2px;
+}
+
+.unit-name {
+  font-size: 8px;
+  font-weight: bold;
+  color: #ddd;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  width: 100%;
+  text-align: center;
+}
+
+.unit-hp {
+  font-size: 9px;
+  color: #8f8;
+}
+
+.unit-level {
+  font-size: 8px;
+  color: #aaf;
+}
+
+.hp-bar {
+  width: 100%;
+  height: 3px;
+  background: #333;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.hp-fill {
+  height: 100%;
+  background: linear-gradient(to right, #4a2, #8f4);
+  transition: width 0.3s;
+}
+
+.unit-playerA .unit-name {
+  color: #4af;
+}
+
+.unit-playerB .unit-name {
+  color: #f44;
+}

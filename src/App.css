@@ -1,0 +1,14 @@
+.app {
+  min-height: 100vh;
+  background: #0e0e1a;
+  color: #ddd;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  padding: 16px;
+}
+
+.game-layout {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  align-items: flex-start;
+}

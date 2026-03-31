@@ -1,0 +1,368 @@
+import { create } from 'zustand';
+import type {
+  GameState,
+  PlayerId,
+  TurnPhase,
+  Card,
+  SummonCard,
+  SummonUnit,
+  Position,
+  PlayerState,
+  GameLogEntry,
+  AdvanceCard,
+} from '../types';
+import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT } from '../types';
+import { createSummonUnit, applyLevelUp, calculateMovementSpeed } from '../engine/stats';
+
+function createEmptyPlayer(id: PlayerId): PlayerState {
+  return {
+    id,
+    hand: [],
+    mainDeck: [],
+    advanceDeck: [],
+    discardPile: [],
+    rechargePile: [],
+    removedFromPlay: [],
+    victoryPoints: 0,
+    summonSlots: [],
+    hasPlayedTurnSummon: false,
+    faceDownCards: [],
+  };
+}
+
+function createInitialState(): GameState {
+  return {
+    phase: 'draw',
+    turnNumber: 1,
+    activePlayer: 'playerA',
+    players: {
+      playerA: createEmptyPlayer('playerA'),
+      playerB: createEmptyPlayer('playerB'),
+    },
+    board: {
+      summons: [],
+      buildings: [],
+    },
+    effectStack: [],
+    priorityPlayer: 'playerA',
+    winner: null,
+    gameOver: false,
+    turnOrderDecided: false,
+    coinFlipWinner: null,
+    log: [],
+  };
+}
+
+export interface GameActions {
+  // Setup
+  initializeGame: (playerADeck: DeckConfig, playerBDeck: DeckConfig) => void;
+  decideTurnOrder: (firstPlayer: PlayerId) => void;
+
+  // Turn flow
+  advancePhase: () => void;
+  executeDrawPhase: () => void;
+  executeLevelPhase: () => void;
+  endActionPhase: () => void;
+  executeEndPhase: () => void;
+
+  // Actions
+  playSummon: (cardIndex: number, position: Position) => void;
+  moveSummon: (unitId: string, to: Position) => void;
+  attackWithSummon: (attackerId: string, targetId: string) => void;
+  playCard: (cardIndex: number, targets: string[]) => void;
+
+  // Utility
+  addLog: (message: string) => void;
+  checkVictory: () => void;
+  getOpponent: (player: PlayerId) => PlayerId;
+  getSummonsByOwner: (owner: PlayerId) => SummonUnit[];
+}
+
+export interface DeckConfig {
+  summonSlots: Array<{
+    summon: SummonCard;
+    roleId: 'warrior' | 'magician' | 'scout';
+  }>;
+  mainDeck: Card[];
+  advanceDeck: AdvanceCard[];
+}
+
+export type GameStore = GameState & GameActions;
+
+export const useGameStore = create<GameStore>((set, get) => ({
+  ...createInitialState(),
+
+  initializeGame: (playerADeck, playerBDeck) => {
+    const state = createInitialState();
+
+    // Set up Player A
+    state.players.playerA.summonSlots = playerADeck.summonSlots.map(s => s.summon);
+    state.players.playerA.hand = [...playerADeck.summonSlots.map(s => s.summon)];
+    state.players.playerA.mainDeck = [...playerADeck.mainDeck];
+    state.players.playerA.advanceDeck = [...playerADeck.advanceDeck];
+
+    // Set up Player B
+    state.players.playerB.summonSlots = playerBDeck.summonSlots.map(s => s.summon);
+    state.players.playerB.hand = [...playerBDeck.summonSlots.map(s => s.summon)];
+    state.players.playerB.mainDeck = [...playerBDeck.mainDeck];
+    state.players.playerB.advanceDeck = [...playerBDeck.advanceDeck];
+
+    // Shuffle decks
+    shuffleArray(state.players.playerA.mainDeck);
+    shuffleArray(state.players.playerB.mainDeck);
+
+    set(state);
+  },
+
+  decideTurnOrder: (firstPlayer) => {
+    set({
+      activePlayer: firstPlayer,
+      turnOrderDecided: true,
+      coinFlipWinner: firstPlayer,
+    });
+  },
+
+  advancePhase: () => {
+    const { phase } = get();
+    const phases: TurnPhase[] = ['draw', 'level', 'action', 'end'];
+    const currentIndex = phases.indexOf(phase);
+
+    if (currentIndex < phases.length - 1) {
+      set({ phase: phases[currentIndex + 1] });
+    }
+  },
+
+  executeDrawPhase: () => {
+    const { activePlayer, turnNumber, players } = get();
+
+    // Skip draw on first turn of game for first player
+    if (turnNumber === 1 && activePlayer === get().coinFlipWinner) {
+      get().addLog('First turn — draw phase skipped.');
+      get().advancePhase();
+      return;
+    }
+
+    const player = { ...players[activePlayer] };
+    const drawn = drawCards(player, 1);
+
+    if (drawn.length > 0) {
+      get().addLog(`Drew: ${drawn.map(c => c.name).join(', ')}`);
+    } else {
+      get().addLog('No cards to draw.');
+    }
+
+    set({
+      players: { ...players, [activePlayer]: player },
+    });
+    get().advancePhase();
+  },
+
+  executeLevelPhase: () => {
+    const { activePlayer, board } = get();
+    const summons = board.summons.filter(s => s.owner === activePlayer);
+
+    if (summons.length === 0) {
+      get().addLog('No summons in play — level phase skipped.');
+      get().advancePhase();
+      return;
+    }
+
+    const updatedSummons = board.summons.map(s => {
+      if (s.owner !== activePlayer) return s;
+      if (s.level >= 20) return s;
+
+      const leveled = applyLevelUp(s, 1);
+      get().addLog(
+        `${s.card.name} levels up: ${s.level} → ${leveled.level} (HP: ${leveled.currentHP}/${leveled.maxHP})`
+      );
+      return leveled;
+    });
+
+    set({
+      board: { ...board, summons: updatedSummons },
+    });
+    get().advancePhase();
+  },
+
+  endActionPhase: () => {
+    set({ phase: 'end' });
+    get().executeEndPhase();
+  },
+
+  executeEndPhase: () => {
+    const { activePlayer, players, board, turnNumber } = get();
+    const player = { ...players[activePlayer] };
+
+    // Discard excess cards (hand limit = 6)
+    while (player.hand.length > HAND_LIMIT) {
+      const discarded = player.hand.pop()!;
+      player.rechargePile.push(discarded);
+      get().addLog(`Discarded ${discarded.name} (hand limit).`);
+    }
+
+    // Reset summon actions for next turn
+    const resetSummons = board.summons.map(s => {
+      if (s.owner !== activePlayer) return s;
+      return {
+        ...s,
+        hasAttacked: false,
+        movementRemaining: calculateMovementSpeed(s.calculatedStats.SPD),
+      };
+    });
+
+    // Switch active player
+    const nextPlayer = activePlayer === 'playerA' ? 'playerB' : 'playerA';
+    const nextTurn = activePlayer === 'playerB' ? turnNumber + 1 : turnNumber;
+
+    set({
+      players: { ...players, [activePlayer]: player },
+      board: { ...board, summons: resetSummons },
+      activePlayer: nextPlayer,
+      phase: 'draw',
+      turnNumber: nextTurn,
+    });
+
+    // Reset turn summon flag for next player
+    set(state => ({
+      players: {
+        ...state.players,
+        [nextPlayer]: { ...state.players[nextPlayer], hasPlayedTurnSummon: false },
+      },
+    }));
+
+    get().addLog(`--- Turn ${nextTurn}, ${nextPlayer}'s turn ---`);
+  },
+
+  playSummon: (cardIndex, position) => {
+    const { activePlayer, players, board } = get();
+    const player = { ...players[activePlayer] };
+
+    if (player.hasPlayedTurnSummon) {
+      get().addLog('Already played a summon this turn!');
+      return;
+    }
+
+    const card = player.hand[cardIndex];
+    if (!card || card.cardType !== 'summon') {
+      get().addLog('Invalid summon card.');
+      return;
+    }
+
+    const summonCard = card as SummonCard;
+
+    // Determine starting role from the summon's equipment/slot configuration
+    // For now, infer from the first role requirement or default
+    const roleId = 'warrior' as const; // This will be improved when deck config includes role
+
+    const unit = createSummonUnit(summonCard, activePlayer, position, roleId);
+
+    // Remove from hand
+    player.hand = player.hand.filter((_, i) => i !== cardIndex);
+    player.hasPlayedTurnSummon = true;
+
+    // Draw 3 cards (Summon Draws)
+    const drawn = drawCards(player, SUMMON_DRAW_COUNT);
+
+    set({
+      players: { ...players, [activePlayer]: player },
+      board: { ...board, summons: [...board.summons, unit] },
+    });
+
+    get().addLog(
+      `Played ${summonCard.name} at (${position.x},${position.y}). Drew ${drawn.length} cards.`
+    );
+  },
+
+  moveSummon: (unitId, to) => {
+    const { board } = get();
+    const unitIndex = board.summons.findIndex(s => s.instanceId === unitId);
+    if (unitIndex === -1) return;
+
+    const unit = board.summons[unitIndex];
+    const dx = Math.abs(to.x - unit.position.x);
+    const dy = Math.abs(to.y - unit.position.y);
+    const distance = Math.max(dx, dy); // Chebyshev distance for diagonal movement
+
+    if (distance > unit.movementRemaining) {
+      get().addLog('Not enough movement remaining!');
+      return;
+    }
+
+    const updatedSummons = [...board.summons];
+    updatedSummons[unitIndex] = {
+      ...unit,
+      position: to,
+      movementRemaining: unit.movementRemaining - distance,
+    };
+
+    set({ board: { ...board, summons: updatedSummons } });
+    get().addLog(`Moved ${unit.card.name} to (${to.x},${to.y}).`);
+  },
+
+  attackWithSummon: (_attackerId, _targetId) => {
+    // Will be implemented in Phase 2
+    get().addLog('Attack system not yet implemented.');
+  },
+
+  playCard: (_cardIndex, _targets) => {
+    // Will be implemented in Phase 2
+    get().addLog('Card play system not yet implemented.');
+  },
+
+  addLog: (message) => {
+    const { turnNumber, phase, activePlayer, log } = get();
+    const entry: GameLogEntry = {
+      turn: turnNumber,
+      phase,
+      player: activePlayer,
+      message,
+      timestamp: Date.now(),
+    };
+    set({ log: [...log, entry] });
+  },
+
+  checkVictory: () => {
+    const { players } = get();
+    for (const id of ['playerA', 'playerB'] as PlayerId[]) {
+      if (players[id].victoryPoints >= VP_TO_WIN) {
+        set({ winner: id, gameOver: true });
+        get().addLog(`${id} wins with ${players[id].victoryPoints} VP!`);
+        return;
+      }
+    }
+  },
+
+  getOpponent: (player) => (player === 'playerA' ? 'playerB' : 'playerA'),
+
+  getSummonsByOwner: (owner) => get().board.summons.filter(s => s.owner === owner),
+}));
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+
+function shuffleArray<T>(array: T[]): void {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function drawCards(player: PlayerState, count: number): Card[] {
+  const drawn: Card[] = [];
+
+  for (let i = 0; i < count; i++) {
+    if (player.mainDeck.length === 0) {
+      if (player.rechargePile.length === 0) break;
+      player.mainDeck = [...player.rechargePile];
+      player.rechargePile = [];
+      shuffleArray(player.mainDeck);
+    }
+
+    const card = player.mainDeck.pop();
+    if (card) {
+      player.hand.push(card);
+      drawn.push(card);
+    }
+  }
+
+  return drawn;
+}
