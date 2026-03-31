@@ -22,7 +22,6 @@ function getCardTypeColor(cardType: string): string {
 
 function CardInHand({
   card,
-  index,
   isSelected,
   onClick,
 }: {

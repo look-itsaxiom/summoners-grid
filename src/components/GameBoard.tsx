@@ -100,7 +100,7 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
     return board.summons.find(s => s.position.x === x && s.position.y === y);
   };
 
-  const isInTerritory = (x: number, y: number): boolean => {
+  const isInTerritory = (_x: number, y: number): boolean => {
     if (activePlayer === 'playerA') return y < TERRITORY_DEPTH;
     return y >= BOARD_HEIGHT - TERRITORY_DEPTH;
   };

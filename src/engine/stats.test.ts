@@ -14,7 +14,7 @@ import {
   applyLevelUp,
   createSummonUnit,
 } from './stats';
-import type { SummonCard, GrowthRateType } from '../types';
+import type { SummonCard } from '../types';
 
 // ─── Helper: Create a minimal summon card for testing ─────────────────────────
 

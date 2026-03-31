@@ -1,9 +1,7 @@
 import {
   type BaseStats,
-  type GrowthRates,
   type GrowthRateType,
   type RoleId,
-  type StatKey,
   type SummonCard,
   type SummonUnit,
   GROWTH_RATE_VALUES,
