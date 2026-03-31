@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { HowToPlay } from './HowToPlay';
 import './MainMenu.css';
 
 interface MainMenuProps {
@@ -5,6 +7,8 @@ interface MainMenuProps {
 }
 
 export function MainMenu({ onStartGame }: MainMenuProps) {
+  const [showHowTo, setShowHowTo] = useState(false);
+
   return (
     <div className="main-menu">
       <div className="menu-backdrop" />
@@ -29,14 +33,21 @@ export function MainMenu({ onStartGame }: MainMenuProps) {
           </div>
         </div>
 
-        <button className="play-button" onClick={onStartGame}>
-          Play vs AI
-        </button>
+        <div className="menu-buttons">
+          <button className="play-button" onClick={onStartGame}>
+            Play vs AI
+          </button>
+          <button className="how-to-button" onClick={() => setShowHowTo(true)}>
+            How to Play
+          </button>
+        </div>
 
         <div className="version-info">
           Alpha Build — Summoner's Grid
         </div>
       </div>
+
+      {showHowTo && <HowToPlay onClose={() => setShowHowTo(false)} />}
     </div>
   );
 }
