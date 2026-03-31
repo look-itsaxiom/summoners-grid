@@ -95,7 +95,7 @@ func _test_data_integrity() -> void:
 	# Tier 1 roles
 	_check("3 tier-1 roles", 3, _roles.get_tier1_roles().size())
 	# Warrior advances
-	var warrior_advances := _roles.get_advances_for("warrior")
+	var warrior_advances = _roles.get_advances_for("warrior")
 	_check("Warrior → knight,berserker", 2, warrior_advances.size())
 
 

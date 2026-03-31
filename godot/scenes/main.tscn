@@ -12,9 +12,10 @@ layout_mode = 0
 text = "Running formula verification..."
 autowrap_mode = 3
 
+[node name="VersionLabel" type="Label" parent="."]
+layout_mode = 0
+text = "v0.1 — Phase 2"
+
 [node name="@Label@2" type="Label" parent="."]
 layout_mode = 0
-offset_right = 1.0
-offset_bottom = 23.0
-text = "Running formula verification..."
-autowrap_mode = 3
+text = "v0.1"
