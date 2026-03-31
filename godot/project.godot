@@ -12,6 +12,10 @@ config/features=PackedStringArray("4.3")
 
 [autoload]
 
+RolesData="*res://scripts/data/roles.gd"
+
+SpeciesData="*res://scripts/data/species.gd"
+
 
 Stats="*res://scripts/engine/stats.gd"
 
