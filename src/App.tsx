@@ -27,6 +27,7 @@ function App() {
   const [pendingAdvance, setPendingAdvance] = useState<number | null>(null);
   const [collection, setCollection] = useState<SummonCard[]>([]);
   const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
+  const [spectatorMode, setSpectatorMode] = useState(false);
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard } = useGameStore();
 
@@ -36,6 +37,7 @@ function App() {
     initializeGame(playerADeck, playerBDeck);
     decideTurnOrder(goFirst ? 'playerA' : 'playerB');
     setScreen('game');
+    setSpectatorMode(false);
     setSelectedCardIndex(null);
     setSelectedUnitId(null);
     setPendingAdvance(null);
@@ -47,6 +49,19 @@ function App() {
     initializeGame(playerADeck, playerBDeck);
     decideTurnOrder(Math.random() < 0.5 ? 'playerA' : 'playerB');
     setScreen('game');
+    setSpectatorMode(false);
+    setSelectedCardIndex(null);
+    setSelectedUnitId(null);
+    setPendingAdvance(null);
+  };
+
+  const handleSpectatorGame = () => {
+    const deckA = createRandomDeck();
+    const deckB = createRandomDeck();
+    initializeGame(deckA, deckB);
+    decideTurnOrder('playerA');
+    setScreen('game');
+    setSpectatorMode(true);
     setSelectedCardIndex(null);
     setSelectedUnitId(null);
     setPendingAdvance(null);
@@ -57,13 +72,18 @@ function App() {
   };
 
   useEffect(() => {
-    if (activePlayer === 'playerB' && phase === 'draw' && screen === 'game' && !gameOver) {
+    if (screen !== 'game' || gameOver) return;
+
+    // AI plays for Player B always, and Player A in spectator mode
+    const isAITurn = activePlayer === 'playerB' || spectatorMode;
+    if (isAITurn && phase === 'draw') {
+      const delay = spectatorMode ? 500 : 800;
       const timer = setTimeout(() => {
         executeAITurn(useGameStore.getState());
-      }, 800);
+      }, delay);
       return () => clearTimeout(timer);
     }
-  }, [activePlayer, phase, screen, gameOver]);
+  }, [activePlayer, phase, screen, gameOver, spectatorMode]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -101,6 +121,7 @@ function App() {
       <MainMenu
         onStartGame={() => setScreen('deck-preview')}
         onStartRandomGame={handleRandomGame}
+        onSpectatorGame={handleSpectatorGame}
         onOpenPacks={() => setScreen('packs')}
         collectionCount={collection.length}
       />

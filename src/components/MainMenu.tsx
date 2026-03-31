@@ -6,11 +6,12 @@ import './MainMenu.css';
 interface MainMenuProps {
   onStartGame: () => void;
   onStartRandomGame?: () => void;
+  onSpectatorGame?: () => void;
   onOpenPacks?: () => void;
   collectionCount?: number;
 }
 
-export function MainMenu({ onStartGame, onStartRandomGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
+export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
   const [showHowTo, setShowHowTo] = useState(false);
   const stats = getStats();
 
@@ -45,6 +46,11 @@ export function MainMenu({ onStartGame, onStartRandomGame, onOpenPacks, collecti
           {onStartRandomGame && (
             <button className="random-btn" onClick={onStartRandomGame}>
               Random Deck Game
+            </button>
+          )}
+          {onSpectatorGame && (
+            <button className="spectator-btn" onClick={onSpectatorGame}>
+              Watch AI vs AI
             </button>
           )}
           {onOpenPacks && (
