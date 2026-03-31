@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HowToPlay } from './HowToPlay';
+import { LoginButton } from './LoginButton';
 import { getStats } from '../engine/matchHistory';
 import { hasSavedGame } from '../engine/saveLoad';
 import { getSettings, updateSettings } from '../engine/settings';
@@ -22,6 +23,10 @@ export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onCo
     <div className="main-menu">
       <div className="menu-backdrop" />
       <div className="menu-content">
+        <div className="menu-auth-bar">
+          <LoginButton />
+        </div>
+
         <div className="game-title">
           <h1>Summoner's Grid</h1>
           <p className="subtitle">Tactical Grid-Based RPG Card Game</p>

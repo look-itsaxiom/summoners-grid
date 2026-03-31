@@ -7,6 +7,12 @@
   z-index: 200;
 }
 
+.menu-auth-bar {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+
 .menu-backdrop {
   position: absolute;
   inset: 0;
