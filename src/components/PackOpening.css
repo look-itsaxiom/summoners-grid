@@ -196,6 +196,14 @@
   padding-top: 4px;
 }
 
+.card-dna {
+  font-size: 7px;
+  color: #444;
+  font-family: monospace;
+  margin-top: 2px;
+  cursor: help;
+}
+
 .pack-actions {
   display: flex;
   gap: 12px;

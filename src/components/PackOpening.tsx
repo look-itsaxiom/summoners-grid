@@ -1,9 +1,24 @@
 import { useState } from 'react';
-import type { SummonCard } from '../types';
-import { generatePack, RARITY_COLORS } from '../engine/cardGenerator';
+import type { SummonCard, Rarity } from '../types';
+import { RARITY_COLORS } from '../engine/cardGenerator';
+import { generateDNA, reconstructCardFromDNA } from '../engine/dna';
 import { GROWTH_RATE_SYMBOLS } from '../types';
 import { SFX } from '../engine/sound';
 import './PackOpening.css';
+
+// DNA-based pack generation (replaces old generatePack)
+function generateDNAPack(size: number = 5): SummonCard[] {
+  const cards: SummonCard[] = [];
+  for (let i = 0; i < size; i++) {
+    // Last card guaranteed rare+, second-to-last uncommon+
+    let rarity: Rarity | undefined;
+    if (i === size - 1) rarity = Math.random() < 0.7 ? 'rare' : Math.random() < 0.8 ? 'legend' : 'myth';
+    else if (i === size - 2) rarity = Math.random() < 0.6 ? 'uncommon' : Math.random() < 0.8 ? 'rare' : 'legend';
+    const dna = generateDNA(undefined, rarity);
+    cards.push(reconstructCardFromDNA(dna));
+  }
+  return cards;
+}
 
 interface PackOpeningProps {
   onAddToCollection: (cards: SummonCard[]) => void;
@@ -15,7 +30,7 @@ export function PackOpening({ onAddToCollection, onClose }: PackOpeningProps) {
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
 
   const openPack = () => {
-    setPack(generatePack(5));
+    setPack(generateDNAPack(5));
     setRevealed(new Set());
     SFX.packOpen();
   };
@@ -87,6 +102,11 @@ export function PackOpening({ onAddToCollection, onClose }: PackOpeningProps) {
                       <span>LCK:{card.baseStats.LCK}{GROWTH_RATE_SYMBOLS[card.growthRates.LCK]}</span>
                     </div>
                     <div className="card-weapon">{card.equipment.weapon?.name ?? 'No weapon'}</div>
+                    {card.dna && (
+                      <div className="card-dna" title={`DNA: ${card.dna}`}>
+                        DNA: {card.dna.slice(0, 8)}...
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="face-down-content">
