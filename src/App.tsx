@@ -15,6 +15,7 @@ import { DeckPreview } from './components/DeckPreview';
 import { CoinFlip } from './components/CoinFlip';
 import { EffectStack } from './components/EffectStack';
 import { CardInspector } from './components/CardInspector';
+import { TurnBanner } from './components/TurnBanner';
 import type { SummonCard, Card } from './types';
 import './App.css';
 
@@ -159,6 +160,7 @@ function App() {
     <div className="app">
       <CombatOverlay />
       <EffectStack />
+      <TurnBanner />
       {inspectedCard && (
         <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
       )}

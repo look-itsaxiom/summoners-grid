@@ -1,0 +1,36 @@
+.turn-banner {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 180;
+  text-align: center;
+  pointer-events: none;
+  animation: bannerAppear 1.5s ease-out forwards;
+}
+
+.banner-turn {
+  font-size: 14px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.banner-who {
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.banner-player .banner-turn { color: #4af; }
+.banner-player .banner-who { color: #4af; text-shadow: 0 0 20px rgba(68, 170, 255, 0.4); }
+.banner-ai .banner-turn { color: #f44; }
+.banner-ai .banner-who { color: #f44; text-shadow: 0 0 20px rgba(255, 68, 68, 0.4); }
+
+@keyframes bannerAppear {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+  30% { transform: translate(-50%, -50%) scale(1); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -40%); }
+}
