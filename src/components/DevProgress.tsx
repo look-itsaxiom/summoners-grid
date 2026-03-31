@@ -46,7 +46,7 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Infrastructure', label: 'NFT minting on pack open', status: 'todo', detail: 'Phase 4: Immutable Minting API integration' },
   { category: 'Infrastructure', label: 'Ownership verification (Indexer)', status: 'todo', detail: 'Phase 5: query owned NFTs' },
   { category: 'Infrastructure', label: 'Deck builder from owned NFTs', status: 'todo', detail: 'Phase 5: select cards you own' },
-  { category: 'Infrastructure', label: 'ComfyUI art pipeline (home.skib)', status: 'in-progress', detail: 'ComfyUI connected (RTX 4070), API routes built, IPFS pending' },
+  { category: 'Infrastructure', label: 'ComfyUI art pipeline (home.skib)', status: 'done', detail: '7 cards generated! Flux Schnell, ~5s/card, RTX 4070. IPFS upload in Production.' },
   { category: 'Infrastructure', label: 'Marketplace / Auction House', status: 'todo', detail: 'Phase 7: Immutable Orderbook' },
 
   // ─── PRODUCTION INFRASTRUCTURE (tech demo → product) ───
