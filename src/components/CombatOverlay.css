@@ -1,0 +1,76 @@
+.combat-overlay {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.combat-event {
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  text-align: center;
+  animation: combatSlideIn 0.3s ease-out, combatFadeOut 0.5s ease-in 2.5s forwards;
+  white-space: nowrap;
+}
+
+.combat-damage {
+  background: rgba(255, 50, 50, 0.9);
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+.combat-heal {
+  background: rgba(50, 200, 50, 0.9);
+  color: #fff;
+}
+
+.combat-miss {
+  background: rgba(128, 128, 128, 0.8);
+  color: #fff;
+}
+
+.combat-crit {
+  background: rgba(255, 200, 0, 0.95);
+  color: #000;
+  font-size: 15px;
+}
+
+.combat-defeat {
+  background: rgba(150, 0, 0, 0.95);
+  color: #ffd700;
+  font-size: 15px;
+}
+
+.combat-vp {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+  font-size: 15px;
+}
+
+.combat-info {
+  background: rgba(68, 170, 255, 0.8);
+  color: #fff;
+}
+
+@keyframes combatSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes combatFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}

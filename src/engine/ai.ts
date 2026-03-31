@@ -2,8 +2,6 @@ import type {
   PlayerId,
   SummonUnit,
   Position,
-  Card,
-  SummonCard,
 } from '../types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
 import type { GameStore } from '../store/gameStore';
@@ -21,78 +19,83 @@ export function executeAITurn(store: GameStore): void {
   // Execute draw phase
   store.executeDrawPhase();
 
-  // Execute level phase
-  store.executeLevelPhase();
+  // Execute level phase (store auto-advances to action phase)
+  // Note: executeLevelPhase is called by advancePhase chain
 
-  // Action phase — play summon, move, attack
-  const actions = planActions(store, player);
-  for (const action of actions) {
-    action();
-    // Check if game ended
-    if (store.gameOver) return;
+  // Wait — the store advances phases automatically. After draw, it's level. After level, it's action.
+  // We need to check current phase and execute accordingly.
+  if (store.phase === 'level') {
+    store.executeLevelPhase();
   }
 
-  // End turn
-  store.endActionPhase();
-}
-
-function planActions(store: GameStore, player: PlayerId): Array<() => void> {
-  const actions: Array<() => void> = [];
-  const state = store;
-
-  // 1. Play a summon if we haven't yet and have one in hand
-  if (!state.players[player].hasPlayedTurnSummon) {
-    const hand = state.players[player].hand;
+  // Now in action phase — execute actions one at a time, re-reading state each time
+  // 1. Play a summon
+  if (!store.players[player].hasPlayedTurnSummon) {
+    const hand = store.players[player].hand;
     const summonIndex = hand.findIndex(c => c.cardType === 'summon');
     if (summonIndex >= 0) {
-      const pos = findBestSummonPlacement(state, player);
+      const pos = findBestSummonPlacement(store, player);
       if (pos) {
-        actions.push(() => store.playSummon(summonIndex, pos));
+        store.playSummon(summonIndex, pos);
       }
     }
   }
 
-  // 2. Move summons toward enemies and attack
-  const mySummons = state.board.summons.filter(s => s.owner === player);
-  const enemySummons = state.board.summons.filter(s => s.owner !== player);
+  if (store.gameOver) return;
 
-  for (const unit of mySummons) {
-    // Try to attack first if in range
-    if (!unit.hasAttacked && enemySummons.length > 0) {
-      const target = findBestAttackTarget(unit, enemySummons);
-      if (target) {
-        const weapon = unit.card.equipment.weapon;
-        if (weapon) {
-          const dist = chebyshevDistance(unit.position, target.position);
-          if (dist <= weapon.range) {
-            actions.push(() => store.attackWithSummon(unit.instanceId, target.instanceId));
-          } else {
-            // Move toward target, then attack if in range
-            const moveTarget = findMoveTowardTarget(unit, target.position, state);
-            if (moveTarget) {
-              actions.push(() => store.moveSummon(unit.instanceId, moveTarget));
-              // Check if we can attack after moving
-              const newDist = chebyshevDistance(moveTarget, target.position);
-              if (weapon && newDist <= weapon.range) {
-                actions.push(() => store.attackWithSummon(unit.instanceId, target.instanceId));
-              }
+  // 2. Move and attack with each summon
+  const mySummonIds = store.board.summons
+    .filter(s => s.owner === player)
+    .map(s => s.instanceId);
+
+  for (const unitId of mySummonIds) {
+    if (store.gameOver) return;
+
+    // Re-read unit from current state (may have been destroyed)
+    const unit = store.board.summons.find(s => s.instanceId === unitId);
+    if (!unit) continue;
+
+    const enemies = store.board.summons.filter(s => s.owner !== player);
+    if (enemies.length === 0) continue;
+
+    const weapon = unit.card.equipment.weapon;
+    if (!weapon) continue;
+
+    // Find best target
+    const target = findBestAttackTarget(unit, enemies);
+    if (!target) continue;
+
+    const dist = chebyshevDistance(unit.position, target.position);
+
+    if (dist <= weapon.range && !unit.hasAttacked) {
+      // In range — attack directly
+      store.attackWithSummon(unit.instanceId, target.instanceId);
+    } else {
+      // Move toward target
+      const moveTarget = findMoveTowardTarget(unit, target.position, store);
+      if (moveTarget) {
+        store.moveSummon(unit.instanceId, moveTarget);
+
+        // Re-read unit after move and check if we can attack now
+        const movedUnit = store.board.summons.find(s => s.instanceId === unitId);
+        if (movedUnit && !movedUnit.hasAttacked) {
+          // Re-check target still exists
+          const currentTarget = store.board.summons.find(s => s.instanceId === target.instanceId);
+          if (currentTarget) {
+            const newDist = chebyshevDistance(movedUnit.position, currentTarget.position);
+            if (newDist <= weapon.range) {
+              store.attackWithSummon(movedUnit.instanceId, currentTarget.instanceId);
             }
           }
         }
       }
-    } else if (enemySummons.length > 0) {
-      // Just move toward nearest enemy
-      const nearest = findNearestEnemy(unit, enemySummons);
-      if (nearest) {
-        const moveTarget = findMoveTowardTarget(unit, nearest.position, state);
-        if (moveTarget) {
-          actions.push(() => store.moveSummon(unit.instanceId, moveTarget));
-        }
-      }
     }
   }
 
-  return actions;
+  if (store.gameOver) return;
+
+  // End turn
+  store.endActionPhase();
 }
 
 function findBestSummonPlacement(state: GameStore, player: PlayerId): Position | null {
@@ -149,13 +152,6 @@ function findBestAttackTarget(attacker: SummonUnit, enemies: SummonUnit[]): Summ
     const distA = chebyshevDistance(attacker.position, a.position);
     const distB = chebyshevDistance(attacker.position, b.position);
     return distA - distB;
-  })[0];
-}
-
-function findNearestEnemy(unit: SummonUnit, enemies: SummonUnit[]): SummonUnit | null {
-  if (enemies.length === 0) return null;
-  return enemies.sort((a, b) => {
-    return chebyshevDistance(unit.position, a.position) - chebyshevDistance(unit.position, b.position);
   })[0];
 }
 

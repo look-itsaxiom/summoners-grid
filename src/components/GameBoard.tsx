@@ -1,7 +1,6 @@
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
-import type { Position, TerritoryOwner, SummonUnit } from '../types';
+import type { TerritoryOwner, SummonUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
-import { calculateMovementSpeed } from '../engine/stats';
 import './GameBoard.css';
 
 function getTerritoryOwner(y: number): TerritoryOwner {

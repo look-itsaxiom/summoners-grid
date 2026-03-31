@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { GameBoard } from './components/GameBoard';
 import { GameInfo } from './components/GameInfo';
 import { HandDisplay } from './components/HandDisplay';
 import { PhaseControls } from './components/PhaseControls';
+import { CombatOverlay } from './components/CombatOverlay';
 import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
@@ -14,7 +15,6 @@ function App() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase } = useGameStore();
-  const store = useGameStore();
 
   const handleStartGame = () => {
     const playerADeck = createPlayerADeck();
@@ -23,18 +23,6 @@ function App() {
     decideTurnOrder('playerA');
     setGameStarted(true);
   };
-
-  // AI takes over for Player B
-  const runAI = useCallback(() => {
-    if (!gameStarted || gameOver || activePlayer !== 'playerB') return;
-
-    // Delay AI actions slightly so player can see what's happening
-    const timer = setTimeout(() => {
-      executeAITurn(useGameStore.getState());
-    }, 800);
-
-    return () => clearTimeout(timer);
-  }, [gameStarted, gameOver, activePlayer]);
 
   useEffect(() => {
     // Trigger AI when it becomes Player B's turn and we're at draw phase
@@ -48,6 +36,7 @@ function App() {
 
   return (
     <div className="app">
+      <CombatOverlay />
       <div className="game-layout">
         <div className="board-column">
           <PhaseControls onStartGame={handleStartGame} gameStarted={gameStarted} />
