@@ -27,7 +27,7 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Correctness', label: 'Role advancement stat recalculation', status: 'done', detail: 'Warrior→Berserker: STR increases' },
   { category: 'Correctness', label: 'AI vs AI games complete without crashes', status: 'done', detail: '8 integration tests + 3 balance tests' },
   { category: 'Correctness', label: 'Effect stack (LIFO)', status: 'done', detail: '8 tests: LIFO order, speed lock, counter>reaction>action' },
-  { category: 'Correctness', label: 'Play Example card-by-card verification', status: 'in-progress', detail: 'Verify every card from Play Example does what the GDD says' },
+  { category: 'Correctness', label: 'Play Example card-by-card verification', status: 'done', detail: '114 tests: every card verified (properties, effects, types)' },
 
   // ─── DNA / BLOCKCHAIN INFRASTRUCTURE ───
   { category: 'Infrastructure', label: 'Card DNA system (128-bit hex)', status: 'done', detail: '17 DNA tests, round-trip verified' },
