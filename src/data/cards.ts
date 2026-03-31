@@ -910,6 +910,24 @@ export const BUILDING_CARDS: Record<string, BuildingCard> = {
     }],
     isTrap: false,
   },
+  spike_trap: {
+    id: 'spike_trap',
+    name: 'Spike Trap',
+    cardType: 'building',
+    element: 'earth',
+    description: 'Played face-down. When an opponent summon moves onto this space, deal 30 damage.',
+    requirements: [],
+    pileDestination: 'discard',
+    dimensions: { width: 1, height: 1 },
+    effects: [{
+      id: 'spike_damage',
+      type: 'damage',
+      description: 'Deal 30 damage when triggered',
+      basePower: 30,
+      duration: 'instant',
+    }],
+    isTrap: true,
+  },
 };
 
 // ─── Quest Cards ──────────────────────────────────────────────────────────────
@@ -1238,6 +1256,84 @@ export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
     pileDestination: 'discard',
     targetRole: 'assassin',
   },
+  lumina_starweaver: {
+    id: 'lumina_starweaver',
+    name: 'Lumina Starweaver, Archmagus',
+    cardType: 'advance',
+    advanceType: 'named_summon',
+    element: 'light',
+    description: 'Transform a level 12+ Elemental Mage into Lumina Starweaver. Gains "Starfall" unique action.',
+    requirements: [
+      { type: 'role', roleId: 'elemental_mage', description: 'Target must be Elemental Mage' },
+      { type: 'level', minLevel: 12, description: 'Target must be level 12+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'sorcerer',
+    namedSummonName: 'Lumina Starweaver, Archmagus',
+    namedSummonGrowthOverrides: {
+      STR: 'minimal', END: 'normal', DEF: 'steady',
+      INT: 'exceptional', SPI: 'accelerated', MDF: 'gradual',
+      SPD: 'normal', ACC: 'gradual', LCK: 'gradual',
+    },
+    uniqueActionCards: [{
+      id: 'starfall',
+      name: 'Starfall',
+      cardType: 'action',
+      speed: 'action',
+      element: 'light',
+      description: 'Deal massive magical light damage. Heals caster for 25% of damage dealt.',
+      requirements: [],
+      pileDestination: 'recharge',
+      effects: [{
+        id: 'starfall_damage',
+        type: 'damage',
+        description: 'Massive magical light damage + lifesteal',
+        basePower: 90,
+        damageType: 'magical',
+        element: 'light',
+        canCrit: true,
+        duration: 'instant',
+      }],
+      targetType: 'enemy_summon',
+    }],
+  },
+  ironhide_sentinel: {
+    id: 'ironhide_sentinel',
+    name: 'Ironhide, the Unbreakable',
+    cardType: 'advance',
+    advanceType: 'named_summon',
+    element: 'earth',
+    description: 'Transform a level 12+ Knight into Ironhide. Gains "Fortress Stance" unique action.',
+    requirements: [
+      { type: 'role', roleId: 'knight', description: 'Target must be Knight' },
+      { type: 'level', minLevel: 12, description: 'Target must be level 12+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'sentinel',
+    namedSummonName: 'Ironhide, the Unbreakable',
+    namedSummonGrowthOverrides: {
+      STR: 'gradual', END: 'exceptional', DEF: 'exceptional',
+      INT: 'minimal', SPI: 'steady', MDF: 'gradual',
+      SPD: 'minimal', ACC: 'normal', LCK: 'normal',
+    },
+    uniqueActionCards: [{
+      id: 'fortress_stance',
+      name: 'Fortress Stance',
+      cardType: 'action',
+      speed: 'action',
+      element: 'earth',
+      description: 'Double DEF and MDF until end of opponent next turn. Cannot move.',
+      requirements: [],
+      pileDestination: 'recharge',
+      effects: [{
+        id: 'fortress_buff',
+        type: 'buff',
+        description: '2x DEF and MDF, immobilized',
+        duration: 'end_of_next_turn',
+      }],
+      targetType: 'ally_summon',
+    }],
+  },
 };
 
 // ─── Demo Deck Builder ────────────────────────────────────────────────────────
@@ -1279,6 +1375,7 @@ export function createPlayerADeck(): DeckConfig {
       ADVANCE_CARDS.berserker_rage,
       ADVANCE_CARDS.knights_oath,
       ADVANCE_CARDS.alrecht_barkstep,
+      ADVANCE_CARDS.ironhide_sentinel,
     ],
   };
 }
@@ -1323,6 +1420,7 @@ export function createPlayerBDeck(): DeckConfig {
       ADVANCE_CARDS.rogues_shadow,
       ADVANCE_CARDS.elemental_focus,
       ADVANCE_CARDS.assassins_creed,
+      ADVANCE_CARDS.lumina_starweaver,
     ],
   };
 }
