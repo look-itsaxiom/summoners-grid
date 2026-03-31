@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { HowToPlay } from './HowToPlay';
 import { getStats } from '../engine/matchHistory';
 import { hasSavedGame } from '../engine/saveLoad';
+import { getSettings, updateSettings } from '../engine/settings';
 import './MainMenu.css';
 
 interface MainMenuProps {
@@ -84,9 +85,16 @@ export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onCo
           <label className="setting-toggle">
             <input
               type="checkbox"
-              onChange={(e) => {
-                document.body.classList.toggle('colorblind-mode', e.target.checked);
-              }}
+              defaultChecked={getSettings().soundEnabled}
+              onChange={(e) => updateSettings({ soundEnabled: e.target.checked })}
+            />
+            <span>Sound Effects</span>
+          </label>
+          <label className="setting-toggle">
+            <input
+              type="checkbox"
+              defaultChecked={getSettings().colorBlindMode}
+              onChange={(e) => updateSettings({ colorBlindMode: e.target.checked })}
             />
             <span>Color Blind Mode</span>
           </label>

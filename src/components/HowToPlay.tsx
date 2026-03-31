@@ -56,8 +56,32 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
             <ul>
               <li><strong>Summons enter at Level 5</strong>, max level 20</li>
               <li><strong>HP Damage Retention:</strong> When leveling up, damage stays the same (HP increases)</li>
-              <li><strong>Role Advancement:</strong> Use advance cards to upgrade summons to powerful Tier 2/3 roles</li>
-              <li><strong>Gignen Country:</strong> Gignen summons standing on it level up twice per turn</li>
+              <li><strong>Role Advancement:</strong> Use advance cards to upgrade summons to powerful Tier 2/3 roles (27 roles across 3 families)</li>
+              <li><strong>Elemental Advantages:</strong> Fire &gt; Wind &gt; Earth &gt; Water &gt; Fire. Light &lt;&gt; Dark. 1.25x damage bonus.</li>
+              <li><strong>Counter Cards:</strong> Set face-down, trigger automatically (e.g., revive defeated summon)</li>
+              <li><strong>Territory Control:</strong> Occupy undefended enemy territory for 1 VP per turn</li>
+              <li><strong>Buildings:</strong> Place on board for ongoing effects (Gignen Country = double level-ups, Healing Spring = heal each turn)</li>
+              <li><strong>Named Summons:</strong> Transform advanced summons into unique heroes with special abilities</li>
+            </ul>
+          </div>
+
+          <div className="htp-section">
+            <h3>Game Content</h3>
+            <ul>
+              <li>30 action cards, 5 buildings, 6 quests, 5 counters, 3 reactions</li>
+              <li>14 advance cards (3 named summons with unique actions)</li>
+              <li>7 species, 27 roles, 5 rarities, 7 elements</li>
+              <li>6 weapons, 4 armor sets, 4 accessories</li>
+            </ul>
+          </div>
+
+          <div className="htp-section">
+            <h3>Controls</h3>
+            <ul>
+              <li><strong>[1-9]</strong> Select card from hand</li>
+              <li><strong>[E]</strong> End turn</li>
+              <li><strong>[Esc]</strong> Deselect</li>
+              <li><strong>Right-click</strong> card to inspect full details</li>
             </ul>
           </div>
         </div>

@@ -3,6 +3,8 @@
  * Generates procedural sound effects — no external files needed.
  */
 
+import { isSoundEnabled } from './settings';
+
 let audioCtx: AudioContext | null = null;
 
 function getCtx(): AudioContext {
@@ -17,8 +19,9 @@ function playTone(
   duration: number,
   type: OscillatorType = 'sine',
   volume: number = 0.15,
-  detune: number = 0
+  _detune: number = 0
 ) {
+  if (!isSoundEnabled()) return;
   try {
     const ctx = getCtx();
     const osc = ctx.createOscillator();
@@ -26,7 +29,7 @@ function playTone(
 
     osc.type = type;
     osc.frequency.value = frequency;
-    osc.detune.value = detune;
+    osc.detune.value = _detune;
 
     gain.gain.setValueAtTime(volume, ctx.currentTime);
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
