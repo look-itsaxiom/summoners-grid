@@ -1,17 +1,19 @@
 import { useState } from 'react';
 import { HowToPlay } from './HowToPlay';
 import { getStats } from '../engine/matchHistory';
+import { hasSavedGame } from '../engine/saveLoad';
 import './MainMenu.css';
 
 interface MainMenuProps {
   onStartGame: () => void;
   onStartRandomGame?: () => void;
   onSpectatorGame?: () => void;
+  onContinueGame?: () => void;
   onOpenPacks?: () => void;
   collectionCount?: number;
 }
 
-export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
+export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onContinueGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
   const [showHowTo, setShowHowTo] = useState(false);
   const stats = getStats();
 
@@ -40,6 +42,11 @@ export function MainMenu({ onStartGame, onStartRandomGame, onSpectatorGame, onOp
         </div>
 
         <div className="menu-buttons">
+          {onContinueGame && hasSavedGame() && (
+            <button className="continue-button" onClick={onContinueGame}>
+              Continue Game
+            </button>
+          )}
           <button className="play-button" onClick={onStartGame}>
             Play vs AI
           </button>

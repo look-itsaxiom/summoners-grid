@@ -10,6 +10,7 @@ import { GameOver } from './components/GameOver';
 import { PackOpening } from './components/PackOpening';
 import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck, createRandomDeck } from './data/cards';
+import { saveGame, loadGame, deleteSave } from './engine/saveLoad';
 import { executeAITurn } from './engine/ai';
 import { DeckPreview } from './components/DeckPreview';
 import { CoinFlip } from './components/CoinFlip';
@@ -31,7 +32,7 @@ function App() {
   const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
   const [spectatorMode, setSpectatorMode] = useState(false);
 
-  const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard } = useGameStore();
+  const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, turnNumber, playAdvanceCard } = useGameStore();
 
   const handleStartGame = (goFirst: boolean = true) => {
     const playerADeck = createPlayerADeck();
@@ -72,6 +73,23 @@ function App() {
   const handleMainMenu = () => {
     setScreen('menu');
   };
+
+  const handleContinueGame = () => {
+    if (loadGame()) {
+      setScreen('game');
+      setSpectatorMode(false);
+    }
+  };
+
+  // Auto-save when turns change
+  useEffect(() => {
+    if (screen === 'game' && !gameOver && !spectatorMode) {
+      saveGame();
+    }
+    if (gameOver) {
+      deleteSave();
+    }
+  }, [turnNumber, screen, gameOver, spectatorMode]);
 
   useEffect(() => {
     if (screen !== 'game' || gameOver) return;
@@ -124,6 +142,7 @@ function App() {
         onStartGame={() => setScreen('deck-preview')}
         onStartRandomGame={handleRandomGame}
         onSpectatorGame={handleSpectatorGame}
+        onContinueGame={handleContinueGame}
         onOpenPacks={() => setScreen('packs')}
         collectionCount={collection.length}
       />
