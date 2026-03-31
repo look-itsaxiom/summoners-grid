@@ -7,7 +7,7 @@ interface GameOverProps {
 }
 
 export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
-  const { winner, players, turnNumber, log } = useGameStore();
+  const { winner, players, turnNumber, log, board } = useGameStore();
 
   if (!winner) return null;
 
@@ -17,8 +17,12 @@ export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
   const playerAVP = players.playerA.victoryPoints;
   const playerBVP = players.playerB.victoryPoints;
 
-  // Count defeats from log
+  // Count stats from log
   const defeats = log.filter(e => e.message.includes('defeated')).length;
+  const cardsPlayed = log.filter(e => e.message.startsWith('Played ')).length;
+  const attacks = log.filter(e => e.message.includes('attacks')).length;
+  const crits = log.filter(e => e.message.includes('CRITICAL')).length;
+  const survivingSummons = board.summons.length;
 
   return (
     <div className="game-over-overlay">
@@ -34,17 +38,34 @@ export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
             <span className="stat-label">Turns Played</span>
             <span className="stat-value">{turnNumber}</span>
           </div>
-          <div className="stat-row">
+          <div className="stat-row highlight">
             <span className="stat-label">Player A VP</span>
-            <span className="stat-value">{playerAVP}</span>
+            <span className="stat-value vp-gold">{playerAVP}</span>
           </div>
-          <div className="stat-row">
+          <div className="stat-row highlight">
             <span className="stat-label">Player B VP</span>
-            <span className="stat-value">{playerBVP}</span>
+            <span className="stat-value vp-gold">{playerBVP}</span>
           </div>
+          <div className="stat-divider" />
           <div className="stat-row">
             <span className="stat-label">Summons Defeated</span>
             <span className="stat-value">{defeats}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Cards Played</span>
+            <span className="stat-value">{cardsPlayed}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Attacks Made</span>
+            <span className="stat-value">{attacks}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Critical Hits</span>
+            <span className="stat-value">{crits}</span>
+          </div>
+          <div className="stat-row">
+            <span className="stat-label">Surviving Summons</span>
+            <span className="stat-value">{survivingSummons}</span>
           </div>
         </div>
 

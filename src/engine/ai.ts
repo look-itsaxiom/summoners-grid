@@ -260,6 +260,19 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
       }
     }
   }
+
+  // Try to play quest cards on eligible summons
+  for (let i = hand.length - 1; i >= 0; i--) {
+    if (store.gameOver) return;
+    const card = hand[i];
+    if (card.cardType !== 'quest') continue;
+
+    // Play quest on first eligible ally summon
+    if (mySummons.length > 0) {
+      store.playCard(i, [mySummons[0].instanceId]);
+      return;
+    }
+  }
 }
 
 function chebyshevDistance(a: Position, b: Position): number {

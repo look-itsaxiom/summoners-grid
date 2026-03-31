@@ -68,6 +68,20 @@
   font-size: 14px;
 }
 
+.stat-value.vp-gold {
+  color: #ffd700;
+}
+
+.stat-row.highlight {
+  background: rgba(255, 215, 0, 0.05);
+}
+
+.stat-divider {
+  height: 1px;
+  background: #2a2a4a;
+  margin: 4px 0;
+}
+
 .game-over-actions {
   display: flex;
   gap: 12px;
