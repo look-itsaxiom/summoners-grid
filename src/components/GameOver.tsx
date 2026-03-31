@@ -1,4 +1,6 @@
+import { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
+import { SFX } from '../engine/sound';
 import './GameOver.css';
 
 interface GameOverProps {
@@ -8,6 +10,11 @@ interface GameOverProps {
 
 export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
   const { winner, players, turnNumber, log, board } = useGameStore();
+
+  useEffect(() => {
+    if (winner === 'playerA') SFX.victory();
+    else if (winner === 'playerB') SFX.gameDefeat();
+  }, [winner]);
 
   if (!winner) return null;
 

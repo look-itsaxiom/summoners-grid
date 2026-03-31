@@ -2,6 +2,7 @@ import { useState } from 'react';
 import type { SummonCard } from '../types';
 import { generatePack, RARITY_COLORS } from '../engine/cardGenerator';
 import { GROWTH_RATE_SYMBOLS } from '../types';
+import { SFX } from '../engine/sound';
 import './PackOpening.css';
 
 interface PackOpeningProps {
@@ -16,10 +17,12 @@ export function PackOpening({ onAddToCollection, onClose }: PackOpeningProps) {
   const openPack = () => {
     setPack(generatePack(5));
     setRevealed(new Set());
+    SFX.packOpen();
   };
 
   const revealCard = (index: number) => {
     setRevealed(prev => new Set([...prev, index]));
+    SFX.cardReveal();
   };
 
   const revealAll = () => {
