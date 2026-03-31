@@ -112,14 +112,14 @@ const PROGRESS: ProgressItem[] = [
 
   // ─── VISUAL POLISH (tech demo → real game look) ───
   { category: 'Polish', label: 'Card art (CSS/SVG generated)', status: 'todo', detail: 'Unique visual identity per species, rarity glow, equipment icons' },
-  { category: 'Polish', label: 'Grid tile textures', status: 'todo', detail: 'Territory grass/stone/dark themes instead of flat colors' },
+  { category: 'Polish', label: 'Grid tile textures', status: 'done', detail: 'Diagonal line textures, radial gradients, distinct territory zones' },
   { category: 'Polish', label: 'Summon sprites on board', status: 'todo', detail: 'Animated idle sprites replacing text labels' },
   { category: 'Polish', label: 'Card play animations', status: 'todo', detail: 'Cards fly from hand to board, dissolve effects' },
   { category: 'Polish', label: 'Attack animations', status: 'todo', detail: 'Slash/projectile/spell VFX on hit' },
   { category: 'Polish', label: 'Movement trail', status: 'todo', detail: 'Path visualization when summons move' },
   { category: 'Polish', label: 'Level-up VFX', status: 'todo', detail: 'Glow/particle burst on level gain' },
   { category: 'Polish', label: 'Elemental VFX', status: 'todo', detail: 'Fire/water/wind/earth/light/dark visual themes on abilities' },
-  { category: 'Polish', label: 'HP bar styling', status: 'todo', detail: 'Gradient bars, damage flash, smooth drain animation' },
+  { category: 'Polish', label: 'HP bar styling', status: 'done', detail: 'Bordered gradient bars, glow effects, 3-tier color thresholds, smooth drain' },
   { category: 'Polish', label: 'Card hover preview', status: 'todo', detail: 'Enlarged card tooltip on hover with full stats' },
   { category: 'Polish', label: 'Board zoom + pan', status: 'todo', detail: 'Mouse wheel zoom, click-drag pan for large grid' },
   { category: 'Polish', label: 'Background music', status: 'todo', detail: 'Menu theme, battle theme, victory/defeat stingers' },
