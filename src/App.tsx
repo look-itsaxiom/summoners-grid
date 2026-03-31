@@ -19,6 +19,7 @@ import { CardInspector } from './components/CardInspector';
 import { DNAViewer } from './components/DNAViewer';
 import { TurnBanner } from './components/TurnBanner';
 import { FloatingNumbers } from './components/FloatingNumbers';
+import { DevProgress } from './components/DevProgress';
 import type { SummonCard, Card } from './types';
 import './App.css';
 
@@ -138,16 +139,22 @@ function App() {
     return () => window.removeEventListener('keydown', handler);
   }, [screen, gameOver, activePlayer]);
 
+  // DevProgress overlay — visible on all screens
+  const devProgressOverlay = <DevProgress />;
+
   if (screen === 'menu') {
     return (
-      <MainMenu
-        onStartGame={() => setScreen('deck-preview')}
-        onStartRandomGame={handleRandomGame}
-        onSpectatorGame={handleSpectatorGame}
-        onContinueGame={handleContinueGame}
-        onOpenPacks={() => setScreen('packs')}
-        collectionCount={collection.length}
-      />
+      <>
+        <MainMenu
+          onStartGame={() => setScreen('deck-preview')}
+          onStartRandomGame={handleRandomGame}
+          onSpectatorGame={handleSpectatorGame}
+          onContinueGame={handleContinueGame}
+          onOpenPacks={() => setScreen('packs')}
+          collectionCount={collection.length}
+        />
+        {devProgressOverlay}
+      </>
     );
   }
 
@@ -251,6 +258,7 @@ function App() {
         </div>
         <GameInfo />
       </div>
+      {devProgressOverlay}
     </div>
   );
 }
