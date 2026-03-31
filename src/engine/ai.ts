@@ -232,54 +232,71 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
   const mySummons = store.board.summons.filter(s => s.owner === player);
   const enemies = store.board.summons.filter(s => s.owner !== player);
 
-  // Try to play damage cards on enemies
-  for (let i = hand.length - 1; i >= 0; i--) {
-    if (store.gameOver) return;
-
-    const card = hand[i];
-    if (card.cardType !== 'action') continue;
-
-    const ac = card as import('../types').ActionCard;
-
-    // Play damage cards on lowest HP enemy
-    if (ac.targetType === 'enemy_summon' && enemies.length > 0) {
-      const target = enemies.sort((a, b) => a.currentHP - b.currentHP)[0];
-      const hasDamage = ac.effects.some(e => e.type === 'damage');
-      if (hasDamage) {
+  // Priority 1: Emergency heal if any summon below 30% HP
+  const criticalSummons = mySummons.filter(s => s.currentHP / s.maxHP < 0.3);
+  if (criticalSummons.length > 0) {
+    for (let i = hand.length - 1; i >= 0; i--) {
+      if (store.gameOver) return;
+      const card = hand[i];
+      if (card.cardType !== 'action') continue;
+      const ac = card as import('../types').ActionCard;
+      if (ac.targetType === 'ally_summon' && ac.effects.some(e => e.type === 'heal')) {
+        const target = criticalSummons.sort((a, b) => a.currentHP - b.currentHP)[0];
         store.playCard(i, [target.instanceId]);
-        return; // Play one card at a time to re-check state
-      }
-    }
-
-    // Play heal cards on damaged allies
-    if (ac.targetType === 'ally_summon' && mySummons.length > 0) {
-      const hasHeal = ac.effects.some(e => e.type === 'heal');
-      if (hasHeal) {
-        const damaged = mySummons.filter(s => s.currentHP < s.maxHP);
-        if (damaged.length > 0) {
-          const target = damaged.sort((a, b) => (a.currentHP / a.maxHP) - (b.currentHP / b.maxHP))[0];
-          store.playCard(i, [target.instanceId]);
-          return;
-        }
-      }
-
-      // Play buff cards on strongest ally
-      const hasBuff = ac.effects.some(e => e.type === 'buff');
-      if (hasBuff) {
-        const strongest = mySummons.sort((a, b) => b.calculatedStats.STR - a.calculatedStats.STR)[0];
-        store.playCard(i, [strongest.instanceId]);
         return;
       }
     }
   }
 
-  // Try to play quest cards on eligible summons
+  // Priority 2: Play buff cards on summons before they attack
+  for (let i = hand.length - 1; i >= 0; i--) {
+    if (store.gameOver) return;
+    const card = hand[i];
+    if (card.cardType !== 'action') continue;
+    const ac = card as import('../types').ActionCard;
+    if (ac.targetType === 'ally_summon' && ac.effects.some(e => e.type === 'buff') && mySummons.length > 0) {
+      const strongest = [...mySummons].sort((a, b) => b.calculatedStats.STR - a.calculatedStats.STR)[0];
+      store.playCard(i, [strongest.instanceId]);
+      return;
+    }
+  }
+
+  // Priority 3: Play damage cards on lowest HP enemy
+  if (enemies.length > 0) {
+    for (let i = hand.length - 1; i >= 0; i--) {
+      if (store.gameOver) return;
+      const card = hand[i];
+      if (card.cardType !== 'action') continue;
+      const ac = card as import('../types').ActionCard;
+      if (ac.targetType === 'enemy_summon' && ac.effects.some(e => e.type === 'damage')) {
+        const target = [...enemies].sort((a, b) => a.currentHP - b.currentHP)[0];
+        store.playCard(i, [target.instanceId]);
+        return;
+      }
+    }
+  }
+
+  // Priority 4: Heal damaged allies (> 30% HP but not full)
+  const damagedSummons = mySummons.filter(s => s.currentHP < s.maxHP);
+  if (damagedSummons.length > 0) {
+    for (let i = hand.length - 1; i >= 0; i--) {
+      if (store.gameOver) return;
+      const card = hand[i];
+      if (card.cardType !== 'action') continue;
+      const ac = card as import('../types').ActionCard;
+      if (ac.targetType === 'ally_summon' && ac.effects.some(e => e.type === 'heal')) {
+        const target = [...damagedSummons].sort((a, b) => (a.currentHP / a.maxHP) - (b.currentHP / b.maxHP))[0];
+        store.playCard(i, [target.instanceId]);
+        return;
+      }
+    }
+  }
+
+  // Priority 5: Play quest cards on eligible summons
   for (let i = hand.length - 1; i >= 0; i--) {
     if (store.gameOver) return;
     const card = hand[i];
     if (card.cardType !== 'quest') continue;
-
-    // Play quest on first eligible ally summon
     if (mySummons.length > 0) {
       store.playCard(i, [mySummons[0].instanceId]);
       return;
