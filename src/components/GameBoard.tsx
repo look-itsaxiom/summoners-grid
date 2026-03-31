@@ -31,12 +31,13 @@ interface CellProps {
   isValidPlacement: boolean;
   isCardTarget: boolean;
   isAdvanceTarget: boolean;
+  isWeaponRange: boolean;
   onClick: () => void;
   onMouseEnter: (e: React.MouseEvent) => void;
   onMouseLeave: () => void;
 }
 
-const Cell = memo(function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick, onMouseEnter, onMouseLeave }: CellProps) {
+const Cell = memo(function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, isWeaponRange, onClick, onMouseEnter, onMouseLeave }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -48,6 +49,7 @@ const Cell = memo(function Cell({ x, y, unit, building, isSelected, isValidMove,
     isValidPlacement ? 'valid-placement' : '',
     isCardTarget ? 'card-target' : '',
     isAdvanceTarget ? 'advance-target' : '',
+    isWeaponRange ? 'weapon-range' : '',
     unit ? `unit-${unit.owner}` : '',
     unit?.isNamedSummon ? 'named-summon' : '',
     building ? `building building-${building.owner}` : '',
@@ -168,6 +170,21 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
     return distance <= weapon.range;
   };
 
+  const isInWeaponRange = (x: number, y: number): boolean => {
+    if (!selectedUnit || selectedUnit.hasAttacked) return false;
+    if (selectedUnit.owner !== activePlayer || phase !== 'action') return false;
+    const weapon = selectedUnit.card.equipment.weapon;
+    if (!weapon) return false;
+    const dx = Math.abs(x - selectedUnit.position.x);
+    const dy = Math.abs(y - selectedUnit.position.y);
+    const distance = Math.max(dx, dy);
+    if (distance === 0 || distance > weapon.range) return false;
+    // Only show range indicator on empty cells or ally cells (not enemies — those get red)
+    const unitAtPos = getUnitAt(x, y);
+    if (unitAtPos && unitAtPos.owner !== activePlayer) return false; // Handled by valid-attack
+    return true;
+  };
+
   // Check if selected card is an action/quest that targets a summon
   const isCardTargetable = (x: number, y: number): boolean => {
     if (selectedCardIndex === null || phase !== 'action') return false;
@@ -269,6 +286,7 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
           isValidPlacement={isValidPlacement(x, y)}
           isCardTarget={isCardTargetable(x, y)}
           isAdvanceTarget={unit ? advanceTargetIds.has(unit.instanceId) : false}
+          isWeaponRange={isInWeaponRange(x, y)}
           onClick={() => handleCellClick(x, y)}
           onMouseEnter={(e) => {
             if (unit) {
