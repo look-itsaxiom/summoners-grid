@@ -1,5 +1,5 @@
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
-import type { TerritoryOwner, SummonUnit } from '../types';
+import type { TerritoryOwner, SummonUnit, BuildingUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
 import './GameBoard.css';
 
@@ -21,6 +21,7 @@ interface CellProps {
   x: number;
   y: number;
   unit: SummonUnit | undefined;
+  building: BuildingUnit | undefined;
   isSelected: boolean;
   isValidMove: boolean;
   isValidAttack: boolean;
@@ -30,7 +31,7 @@ interface CellProps {
   onClick: () => void;
 }
 
-function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick }: CellProps) {
+function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -44,6 +45,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
     isAdvanceTarget ? 'advance-target' : '',
     unit ? `unit-${unit.owner}` : '',
     unit?.isNamedSummon ? 'named-summon' : '',
+    building ? `building building-${building.owner}` : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -72,6 +74,11 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
           </div>
         </div>
       )}
+      {building && !unit && (
+        <div className="building-display">
+          <div className="building-name">{building.card.name.slice(0, 8)}</div>
+        </div>
+      )}
       <span className="cell-coord">
         {x},{y}
       </span>
@@ -80,7 +87,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
 }
 
 export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, onSelectUnit, onClearCard }: GameBoardProps) {
-  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard, getPlayableAdvanceCards } = useGameStore();
+  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard, placeBuilding, getPlayableAdvanceCards } = useGameStore();
 
   // Get valid advance targets
   const advanceTargetIds = new Set<string>();
@@ -95,6 +102,12 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
   const selectedUnit = selectedUnitId
     ? board.summons.find(s => s.instanceId === selectedUnitId)
     : undefined;
+
+  const getBuildingAt = (x: number, y: number): BuildingUnit | undefined => {
+    return board.buildings.find(b =>
+      b.occupiedSpaces.some(s => s.x === x && s.y === y)
+    );
+  };
 
   const getUnitAt = (x: number, y: number): SummonUnit | undefined => {
     return board.summons.find(s => s.position.x === x && s.position.y === y);
@@ -183,6 +196,16 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
       return;
     }
 
+    // If we have a building card selected, place it
+    if (selectedCardIndex !== null && phase === 'action') {
+      const selectedCard = players[activePlayer].hand[selectedCardIndex];
+      if (selectedCard?.cardType === 'building') {
+        placeBuilding(selectedCardIndex, { x, y });
+        onClearCard();
+        return;
+      }
+    }
+
     // If we have a card selected, try to place it (summon)
     if (selectedCardIndex !== null && isValidPlacement(x, y)) {
       playSummon(selectedCardIndex, { x, y });
@@ -219,12 +242,14 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
     const cells = [];
     for (let x = 0; x < BOARD_WIDTH; x++) {
       const unit = getUnitAt(x, y);
+      const buildingAtCell = getBuildingAt(x, y);
       cells.push(
         <Cell
           key={`${x}-${y}`}
           x={x}
           y={y}
           unit={unit}
+          building={buildingAtCell}
           isSelected={unit?.instanceId === selectedUnitId}
           isValidMove={isValidMove(x, y)}
           isValidAttack={isValidAttackTarget(x, y)}

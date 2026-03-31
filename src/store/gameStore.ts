@@ -11,9 +11,11 @@ import type {
   GameLogEntry,
   AdvanceCard,
   ActionCard,
+  BuildingCard,
+  BuildingUnit,
   RoleId,
 } from '../types';
-import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT, TERRITORY_DEPTH, BOARD_HEIGHT } from '../types';
+import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT, TERRITORY_DEPTH, BOARD_HEIGHT, BOARD_WIDTH } from '../types';
 import {
   createSummonUnit,
   applyLevelUp,
@@ -89,6 +91,7 @@ export interface GameActions {
   attackWithSummon: (attackerId: string, targetId: string) => void;
   playCard: (cardIndex: number, targets: string[]) => void;
   playAdvanceCard: (advanceIndex: number, targetUnitId: string) => void;
+  placeBuilding: (cardIndex: number, position: Position) => void;
   getPlayableAdvanceCards: () => Array<{ index: number; card: AdvanceCard; validTargets: SummonUnit[] }>;
 
   // Utility
@@ -680,6 +683,74 @@ export const useGameStore = create<GameStore>((set, get) => ({
   getOpponent: (player) => (player === 'playerA' ? 'playerB' : 'playerA'),
 
   getSummonsByOwner: (owner) => get().board.summons.filter(s => s.owner === owner),
+
+  placeBuilding: (cardIndex, position) => {
+    const { activePlayer, players, board } = get();
+    const player = { ...players[activePlayer] };
+    const card = player.hand[cardIndex];
+
+    if (!card || card.cardType !== 'building') {
+      get().addLog('Not a building card.');
+      return;
+    }
+
+    const building = card as BuildingCard;
+    const { width, height } = building.dimensions;
+
+    // Calculate occupied spaces
+    const occupiedSpaces: Position[] = [];
+    for (let dx = 0; dx < width; dx++) {
+      for (let dy = 0; dy < height; dy++) {
+        const bx = position.x + dx;
+        const by = position.y + dy;
+        if (bx >= BOARD_WIDTH || by >= BOARD_HEIGHT) {
+          get().addLog('Building extends beyond board!');
+          return;
+        }
+        occupiedSpaces.push({ x: bx, y: by });
+      }
+    }
+
+    // Check if any spaces are already occupied by buildings
+    for (const space of occupiedSpaces) {
+      const occupied = board.buildings.some(b =>
+        b.occupiedSpaces.some(s => s.x === space.x && s.y === space.y)
+      );
+      if (occupied) {
+        get().addLog('Space already occupied by a building!');
+        return;
+      }
+    }
+
+    // Remove card from hand
+    player.hand = player.hand.filter((_, i) => i !== cardIndex);
+    if (card.pileDestination === 'discard') {
+      player.discardPile.push(card);
+    } else {
+      player.rechargePile.push(card);
+    }
+
+    const buildingUnit: BuildingUnit = {
+      instanceId: `building-${card.id}-${Date.now()}`,
+      card: building,
+      owner: activePlayer,
+      position,
+      occupiedSpaces,
+      isFaceDown: building.isTrap,
+    };
+
+    get().addLog(
+      `Placed ${building.name} at (${position.x},${position.y}) covering ${occupiedSpaces.length} spaces.`
+    );
+
+    set({
+      players: { ...players, [activePlayer]: player },
+      board: {
+        ...board,
+        buildings: [...board.buildings, buildingUnit],
+      },
+    });
+  },
 
   getPlayableAdvanceCards: () => {
     const { activePlayer, players, board } = get();
