@@ -72,9 +72,19 @@ export function executeAITurn(store: GameStore): void {
     if (!unit) continue;
 
     const enemies = store.board.summons.filter(s => s.owner !== player);
-    if (enemies.length === 0) continue;
-
     const weapon = unit.card.equipment.weapon;
+
+    if (enemies.length === 0) {
+      // No enemies — advance toward board center
+      const centerTarget: Position = {
+        x: Math.floor(BOARD_WIDTH / 2),
+        y: Math.floor(BOARD_HEIGHT / 2),
+      };
+      const moveTarget = findMoveTowardTarget(unit, centerTarget, store);
+      if (moveTarget) store.moveSummon(unit.instanceId, moveTarget);
+      continue;
+    }
+
     if (!weapon) continue;
 
     // Find best target
@@ -95,11 +105,10 @@ export function executeAITurn(store: GameStore): void {
         // Re-read unit after move and check if we can attack now
         const movedUnit = store.board.summons.find(s => s.instanceId === unitId);
         if (movedUnit && !movedUnit.hasAttacked) {
-          // Re-check target still exists
           const currentTarget = store.board.summons.find(s => s.instanceId === target.instanceId);
           if (currentTarget) {
             const newDist = chebyshevDistance(movedUnit.position, currentTarget.position);
-            if (newDist <= weapon.range) {
+            if (weapon && newDist <= weapon.range) {
               store.attackWithSummon(movedUnit.instanceId, currentTarget.instanceId);
             }
           }

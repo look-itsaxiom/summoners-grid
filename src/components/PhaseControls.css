@@ -33,6 +33,15 @@
   color: #f44;
 }
 
+.phase-indicator {
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffd700;
+  padding: 2px 8px;
+  background: rgba(255, 215, 0, 0.1);
+  border-radius: 4px;
+}
+
 .phase-buttons {
   display: flex;
   gap: 8px;

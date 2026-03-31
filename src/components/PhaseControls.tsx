@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useGameStore } from '../store/gameStore';
 import './PhaseControls.css';
 
@@ -18,6 +19,20 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
     endActionPhase,
   } = useGameStore();
 
+  // Auto-advance draw and level phases for human player (they have no choices)
+  useEffect(() => {
+    if (!gameStarted || gameOver || activePlayer !== 'playerA') return;
+
+    if (phase === 'draw') {
+      const timer = setTimeout(executeDrawPhase, 400);
+      return () => clearTimeout(timer);
+    }
+    if (phase === 'level') {
+      const timer = setTimeout(executeLevelPhase, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [phase, activePlayer, gameStarted, gameOver, executeDrawPhase, executeLevelPhase]);
+
   if (!gameStarted) {
     return (
       <div className="phase-controls">
@@ -34,7 +49,7 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
         <div className="game-over-msg">
           {winner === 'playerA' ? 'Player A' : 'Player B'} Wins!
         </div>
-        <button className="start-btn" onClick={() => window.location.reload()}>
+        <button className="start-btn" onClick={onStartGame}>
           New Game
         </button>
       </div>
@@ -48,30 +63,24 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
       <div className="phase-status">
         <span className="turn-label">Turn {turnNumber}</span>
         <span className={`player-label player-${activePlayer}`}>{playerLabel}</span>
+        <span className="phase-indicator">
+          {phase === 'draw' && 'Drawing...'}
+          {phase === 'level' && 'Leveling...'}
+          {phase === 'action' && 'ACTION PHASE'}
+        </span>
       </div>
       <div className="phase-buttons">
-        {phase === 'draw' && (
-          <button className="phase-btn draw-btn" onClick={executeDrawPhase}>
-            Draw Phase
-          </button>
-        )}
-        {phase === 'level' && (
-          <button className="phase-btn level-btn" onClick={executeLevelPhase}>
-            Level Phase
-          </button>
-        )}
         {phase === 'action' && (
           <button className="phase-btn end-btn" onClick={endActionPhase}>
             End Turn
           </button>
         )}
       </div>
-      <div className="phase-hint">
-        {phase === 'draw' && 'Click to draw a card'}
-        {phase === 'level' && 'Click to level up your summons'}
-        {phase === 'action' && 'Play cards, move summons, or attack. Click End Turn when done.'}
-        {phase === 'end' && 'Ending turn...'}
-      </div>
+      {phase === 'action' && (
+        <div className="phase-hint">
+          Play cards, move, attack — then End Turn
+        </div>
+      )}
     </div>
   );
 }
