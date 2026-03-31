@@ -67,6 +67,24 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Production', label: 'Terms of Service + Privacy Policy', status: 'todo', detail: 'Legal requirements for NFT platform' },
   { category: 'Production', label: 'Testnet → Mainnet migration plan', status: 'todo', detail: 'Security audit, data migration, launch checklist' },
 
+  // ─── MULTIPLAYER + SOCIAL ───
+  { category: 'Multiplayer', label: 'PvP matchmaking', status: 'todo', detail: 'Queue system, ELO rating, deck validation' },
+  { category: 'Multiplayer', label: 'Real-time game sync', status: 'todo', detail: 'WebSocket or SSE for live PvP games' },
+  { category: 'Multiplayer', label: 'Anti-cheat / game integrity', status: 'todo', detail: 'Server-authoritative game state, move validation' },
+  { category: 'Multiplayer', label: 'Friends list + social', status: 'todo', detail: 'Add friends, challenge, spectate' },
+  { category: 'Multiplayer', label: 'Leaderboards', status: 'todo', detail: 'Global + seasonal rankings' },
+  { category: 'Multiplayer', label: 'Chat system', status: 'todo', detail: 'In-game chat, pre-game lobby' },
+
+  // ─── ECONOMY + MARKETPLACE ───
+  { category: 'Economy', label: 'Pack pricing + store', status: 'todo', detail: 'Pack tiers, pricing in IMX, purchase flow' },
+  { category: 'Economy', label: 'Marketplace browse UI', status: 'todo', detail: 'Filter, sort, search cards for sale' },
+  { category: 'Economy', label: 'List/delist cards', status: 'todo', detail: 'Gasless listing via Orderbook, cancel flow' },
+  { category: 'Economy', label: 'Buy/bid flow', status: 'todo', detail: 'Purchase confirmation, wallet transaction' },
+  { category: 'Economy', label: 'Trade history + activity feed', status: 'todo', detail: 'Recent sales, price charts, trending cards' },
+  { category: 'Economy', label: 'Royalty configuration', status: 'todo', detail: 'Secondary sale royalty % on collection' },
+  { category: 'Economy', label: 'Collection value tracker', status: 'todo', detail: 'Portfolio value based on market prices' },
+  { category: 'Economy', label: 'Gameplay rewards', status: 'todo', detail: 'Win rewards, daily quests, season passes' },
+
   // ─── GAME CONTENT & POLISH ───
   { category: 'Content', label: '30 action cards', status: 'done' },
   { category: 'Content', label: '5 building cards', status: 'done' },
