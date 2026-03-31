@@ -258,6 +258,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().addLog(`Discarded ${discarded.name} (hand limit).`);
     }
 
+    // Territory control VP check — if you have a summon in opponent territory
+    // and opponent has NO summons in their own territory, gain 1 VP
+    const opponent = activePlayer === 'playerA' ? 'playerB' : 'playerA';
+    const opponentTerritoryYStart = opponent === 'playerA' ? 0 : BOARD_HEIGHT - TERRITORY_DEPTH;
+    const opponentTerritoryYEnd = opponent === 'playerA' ? TERRITORY_DEPTH : BOARD_HEIGHT;
+
+    const mySummonsInOpponentTerritory = board.summons.filter(s =>
+      s.owner === activePlayer &&
+      s.position.y >= opponentTerritoryYStart &&
+      s.position.y < opponentTerritoryYEnd
+    );
+    const opponentSummonsInOwnTerritory = board.summons.filter(s =>
+      s.owner === opponent &&
+      s.position.y >= opponentTerritoryYStart &&
+      s.position.y < opponentTerritoryYEnd
+    );
+
+    if (mySummonsInOpponentTerritory.length > 0 && opponentSummonsInOwnTerritory.length === 0) {
+      player.victoryPoints = (player.victoryPoints || 0) + 1;
+      get().addLog(`Territory control! ${activePlayer} gains 1 VP for occupying undefended territory (${player.victoryPoints} total).`);
+
+      // Check triggers
+      get().checkTriggers('victory_point_gained', { targetOwner: opponent });
+    }
+
     // Reset summon actions for next turn
     const resetSummons = board.summons.map(s => {
       if (s.owner !== activePlayer) return s;
@@ -268,12 +293,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       };
     });
 
+    // Check victory from territory VP before switching
+    set({ players: { ...players, [activePlayer]: player } });
+    get().checkVictory();
+    if (get().gameOver) return;
+
     // Switch active player
     const nextPlayer = activePlayer === 'playerA' ? 'playerB' : 'playerA';
     const nextTurn = activePlayer === 'playerB' ? turnNumber + 1 : turnNumber;
 
     set({
-      players: { ...players, [activePlayer]: player },
+      players: { ...get().players },
       board: { ...board, summons: resetSummons },
       activePlayer: nextPlayer,
       phase: 'draw',
