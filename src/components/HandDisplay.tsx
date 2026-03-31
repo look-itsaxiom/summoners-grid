@@ -7,6 +7,7 @@ import './HandDisplay.css';
 
 interface HandDisplayProps {
   selectedCardIndex: number | null;
+  onInspectCard?: (card: Card) => void;
   onSelectCard: (index: number | null) => void;
 }
 
@@ -41,11 +42,13 @@ function CardInHand({
   index,
   isSelected,
   onClick,
+  onRightClick,
 }: {
   card: Card;
   index: number;
   isSelected: boolean;
   onClick: () => void;
+  onRightClick?: () => void;
 }) {
   const borderColor = getCardTypeColor(card.cardType);
   const isSummon = card.cardType === 'summon';
@@ -56,6 +59,7 @@ function CardInHand({
       className={`hand-card ${isSelected ? 'selected' : ''}`}
       style={{ borderColor }}
       onClick={onClick}
+      onContextMenu={(e) => { e.preventDefault(); onRightClick?.(); }}
     >
       <div className="card-header-row">
         <div className="card-type-badge" style={{ background: borderColor }}>
@@ -100,7 +104,7 @@ function CardInHand({
   );
 }
 
-export function HandDisplay({ selectedCardIndex, onSelectCard }: HandDisplayProps) {
+export function HandDisplay({ selectedCardIndex, onSelectCard, onInspectCard }: HandDisplayProps) {
   const { activePlayer, players, phase, setFaceDown } = useGameStore();
   const hand = players[activePlayer].hand;
 
@@ -139,6 +143,7 @@ export function HandDisplay({ selectedCardIndex, onSelectCard }: HandDisplayProp
             index={i}
             isSelected={selectedCardIndex === i}
             onClick={() => onSelectCard(selectedCardIndex === i ? null : i)}
+            onRightClick={() => onInspectCard?.(card)}
           />
         ))}
         {hand.length === 0 && <div className="hand-empty">No cards in hand</div>}

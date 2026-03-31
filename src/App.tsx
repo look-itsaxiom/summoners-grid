@@ -14,7 +14,8 @@ import { executeAITurn } from './engine/ai';
 import { DeckPreview } from './components/DeckPreview';
 import { CoinFlip } from './components/CoinFlip';
 import { EffectStack } from './components/EffectStack';
-import type { SummonCard } from './types';
+import { CardInspector } from './components/CardInspector';
+import type { SummonCard, Card } from './types';
 import './App.css';
 
 type Screen = 'menu' | 'game' | 'packs' | 'deck-preview' | 'coin-flip';
@@ -25,6 +26,7 @@ function App() {
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
   const [pendingAdvance, setPendingAdvance] = useState<number | null>(null);
   const [collection, setCollection] = useState<SummonCard[]>([]);
+  const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard } = useGameStore();
 
@@ -124,6 +126,9 @@ function App() {
     <div className="app">
       <CombatOverlay />
       <EffectStack />
+      {inspectedCard && (
+        <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
+      )}
       {gameOver && (
         <GameOver onNewGame={handleStartGame} onMainMenu={handleMainMenu} />
       )}
@@ -154,6 +159,7 @@ function App() {
                 setPendingAdvance(null);
               }
             }}
+            onInspectCard={(card) => setInspectedCard(card)}
           />
           <AdvanceDeck
             onSelectAdvanceTarget={(advIdx) => {
