@@ -99,7 +99,7 @@ function CardInHand({
 }
 
 export function HandDisplay({ selectedCardIndex, onSelectCard }: HandDisplayProps) {
-  const { activePlayer, players, phase } = useGameStore();
+  const { activePlayer, players, phase, setFaceDown } = useGameStore();
   const hand = players[activePlayer].hand;
 
   if (phase !== 'action') {
@@ -119,6 +119,14 @@ export function HandDisplay({ selectedCardIndex, onSelectCard }: HandDisplayProp
         {activePlayer === 'playerA' ? 'Player A' : 'Player B'}'s Hand ({hand.length} cards)
         {selectedCardIndex !== null && (
           <span className="selected-hint"> — {getTargetHint(hand[selectedCardIndex])}</span>
+        )}
+        {selectedCardIndex !== null && (hand[selectedCardIndex]?.cardType === 'counter' || hand[selectedCardIndex]?.cardType === 'reaction') && (
+          <button
+            className="set-face-down-btn"
+            onClick={() => { setFaceDown(selectedCardIndex); onSelectCard(null); }}
+          >
+            Set Face-Down
+          </button>
         )}
       </div>
       <div className="hand-cards">

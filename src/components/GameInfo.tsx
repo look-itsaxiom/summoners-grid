@@ -36,6 +36,9 @@ export function GameInfo() {
             <span>Hand: {players.playerA.hand.length}</span>
             <span>Deck: {players.playerA.mainDeck.length}</span>
             <span>Advance: {players.playerA.advanceDeck.length}</span>
+            {players.playerA.faceDownCards.length > 0 && (
+              <span className="face-down-count">Set: {players.playerA.faceDownCards.length}</span>
+            )}
           </div>
         </div>
 
@@ -50,6 +53,9 @@ export function GameInfo() {
             <span>Hand: {players.playerB.hand.length}</span>
             <span>Deck: {players.playerB.mainDeck.length}</span>
             <span>Advance: {players.playerB.advanceDeck.length}</span>
+            {players.playerB.faceDownCards.length > 0 && (
+              <span className="face-down-count">Set: {players.playerB.faceDownCards.length}</span>
+            )}
           </div>
         </div>
       </div>

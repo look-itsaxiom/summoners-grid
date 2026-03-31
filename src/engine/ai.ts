@@ -43,6 +43,18 @@ export function executeAITurn(store: GameStore): void {
 
   if (store.gameOver) return;
 
+  // 1.4. Set counter/reaction cards face-down
+  const hand = store.players[player].hand;
+  for (let i = hand.length - 1; i >= 0; i--) {
+    const card = hand[i];
+    if (card.cardType === 'counter' || card.cardType === 'reaction') {
+      store.setFaceDown(i);
+      break; // Set one per turn
+    }
+  }
+
+  if (store.gameOver) return;
+
   // 1.5. Try to play action cards from hand
   tryPlayActionCards(store, player);
 

@@ -104,6 +104,11 @@
   margin-bottom: 4px;
 }
 
+.face-down-count {
+  color: #f4f;
+  font-weight: bold;
+}
+
 .player-panel h3 {
   margin: 0 0 4px 0;
   font-size: 14px;

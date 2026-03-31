@@ -92,6 +92,8 @@ export interface GameActions {
   playCard: (cardIndex: number, targets: string[]) => void;
   playAdvanceCard: (advanceIndex: number, targetUnitId: string) => void;
   placeBuilding: (cardIndex: number, position: Position) => void;
+  setFaceDown: (cardIndex: number) => void;
+  checkTriggers: (event: 'summon_defeated' | 'victory_point_gained', context: { targetOwner: PlayerId; defeatedUnit?: SummonUnit }) => void;
   getPlayableAdvanceCards: () => Array<{ index: number; card: AdvanceCard; validTargets: SummonUnit[] }>;
 
   // Utility
@@ -486,6 +488,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
         players: updatedPlayers,
       });
 
+      // Check triggers for defeat and VP gain
+      get().checkTriggers('summon_defeated', { targetOwner: target.owner, defeatedUnit: target });
+      get().checkTriggers('victory_point_gained', { targetOwner: target.owner });
+
       // Check victory
       get().checkVictory();
     } else {
@@ -706,6 +712,121 @@ export const useGameStore = create<GameStore>((set, get) => ({
   getOpponent: (player) => (player === 'playerA' ? 'playerB' : 'playerA'),
 
   getSummonsByOwner: (owner) => get().board.summons.filter(s => s.owner === owner),
+
+  setFaceDown: (cardIndex) => {
+    const { activePlayer, players } = get();
+    const player = { ...players[activePlayer] };
+    const card = player.hand[cardIndex];
+
+    if (!card || (card.cardType !== 'counter' && card.cardType !== 'reaction')) {
+      get().addLog('Only counter and reaction cards can be set face-down.');
+      return;
+    }
+
+    player.hand = player.hand.filter((_, i) => i !== cardIndex);
+    player.faceDownCards = [...player.faceDownCards, card];
+
+    get().addLog(`Set a card face-down.`);
+
+    set({ players: { ...players, [activePlayer]: player } });
+  },
+
+  checkTriggers: (event, context) => {
+    // Check both players' face-down cards for matching triggers
+    const { players, board } = get();
+
+    for (const playerId of ['playerA', 'playerB'] as PlayerId[]) {
+      const player = players[playerId];
+      if (player.faceDownCards.length === 0) continue;
+
+      for (let i = player.faceDownCards.length - 1; i >= 0; i--) {
+        const card = player.faceDownCards[i];
+        if (card.cardType !== 'counter') continue;
+
+        const counter = card as import('../types').CounterCard;
+
+        if (counter.triggerCondition === event) {
+          // Trigger the counter!
+          get().addLog(`${playerId} activates face-down counter: ${counter.name}!`);
+
+          const updatedPlayer = { ...players[playerId] };
+          updatedPlayer.faceDownCards = updatedPlayer.faceDownCards.filter((_, idx) => idx !== i);
+
+          // Resolve counter effects
+          if (counter.id === 'dramatic_return' && context.defeatedUnit) {
+            // Return defeated summon with 10% HP
+            const unit = context.defeatedUnit;
+            const reviveHP = Math.max(1, Math.floor(unit.maxHP * 0.1));
+
+            // Find a valid territory position
+            const yStart = context.targetOwner === 'playerA' ? 0 : BOARD_HEIGHT - TERRITORY_DEPTH;
+            const yEnd = context.targetOwner === 'playerA' ? TERRITORY_DEPTH : BOARD_HEIGHT;
+            const occupied = new Set(board.summons.map(s => `${s.position.x},${s.position.y}`));
+
+            let revivePos = null;
+            for (let y = yStart; y < yEnd && !revivePos; y++) {
+              for (let x = 0; x < BOARD_WIDTH && !revivePos; x++) {
+                if (!occupied.has(`${x},${y}`)) {
+                  revivePos = { x, y };
+                }
+              }
+            }
+
+            if (revivePos) {
+              const revived = {
+                ...unit,
+                currentHP: reviveHP,
+                position: revivePos,
+              };
+              get().addLog(
+                `${unit.card.name} returns at (${revivePos.x},${revivePos.y}) with ${reviveHP} HP!`
+              );
+
+              if (counter.pileDestination === 'discard') {
+                updatedPlayer.discardPile = [...updatedPlayer.discardPile, counter];
+              }
+
+              set({
+                players: { ...players, [playerId]: updatedPlayer },
+                board: { ...board, summons: [...board.summons, revived] },
+              });
+              return;
+            }
+          }
+
+          if (counter.id === 'graverobbing') {
+            // Nullify VP gain — remove 1 VP from the player who gained it
+            const gainerId = context.targetOwner === 'playerA' ? 'playerB' : 'playerA';
+            const gainerPlayer = { ...players[gainerId] };
+            if (gainerPlayer.victoryPoints > 0) {
+              gainerPlayer.victoryPoints--;
+              get().addLog(`Graverobbing nullifies VP gain! ${gainerId} back to ${gainerPlayer.victoryPoints} VP.`);
+            }
+
+            if (counter.pileDestination === 'discard') {
+              updatedPlayer.discardPile = [...updatedPlayer.discardPile, counter];
+            }
+
+            set({
+              players: {
+                ...players,
+                [playerId]: updatedPlayer,
+                [gainerId]: gainerPlayer,
+              },
+            });
+            return;
+          }
+
+          // Generic: just discard the counter
+          if (counter.pileDestination === 'discard') {
+            updatedPlayer.discardPile = [...updatedPlayer.discardPile, counter];
+          }
+          set({ players: { ...players, [playerId]: updatedPlayer } });
+          return;
+        }
+      }
+    }
+  },
 
   placeBuilding: (cardIndex, position) => {
     const { activePlayer, players, board } = get();
