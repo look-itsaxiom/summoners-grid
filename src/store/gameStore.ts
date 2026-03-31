@@ -10,6 +10,7 @@ import type {
   PlayerState,
   GameLogEntry,
   AdvanceCard,
+  ActionCard,
   RoleId,
 } from '../types';
 import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT, TERRITORY_DEPTH, BOARD_HEIGHT } from '../types';
@@ -24,8 +25,10 @@ import {
   calculateMagicalDamage,
   rollHit,
   rollCrit,
+  calculateHealing,
 } from '../engine/stats';
 import { getRoleDefinition } from '../data/roles';
+import { canPlayCard } from '../engine/cardEffects';
 
 function createEmptyPlayer(id: PlayerId): PlayerState {
   return {
@@ -461,9 +464,190 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
   },
 
-  playCard: (_cardIndex, _targets) => {
-    // Will be implemented in Phase 2
-    get().addLog('Card play system not yet implemented.');
+  playCard: (cardIndex, targets) => {
+    const { activePlayer, players, board } = get();
+    const player = { ...players[activePlayer] };
+    const card = player.hand[cardIndex];
+
+    if (!card) {
+      get().addLog('Invalid card index.');
+      return;
+    }
+
+    if (card.cardType === 'summon') {
+      get().addLog('Use playSummon for summon cards.');
+      return;
+    }
+
+    // Check requirements
+    if (!canPlayCard(card, get(), activePlayer)) {
+      get().addLog(`Cannot play ${card.name} — requirements not met.`);
+      return;
+    }
+
+    const targetUnit = targets[0]
+      ? board.summons.find(s => s.instanceId === targets[0])
+      : undefined;
+
+    // Remove card from hand
+    player.hand = player.hand.filter((_, i) => i !== cardIndex);
+
+    // Send to appropriate pile
+    if (card.pileDestination === 'discard') {
+      player.discardPile.push(card);
+    } else if (card.pileDestination === 'recharge') {
+      player.rechargePile.push(card);
+    }
+
+    get().addLog(`Played ${card.name}.`);
+
+    // Resolve effects
+    if (card.cardType === 'action' && targetUnit) {
+      const actionCard = card as ActionCard;
+
+      // Find caster (for cards requiring a specific summon role)
+      const mySummons = board.summons.filter(s => s.owner === activePlayer);
+      let caster: SummonUnit | undefined;
+
+      for (const req of actionCard.requirements) {
+        if (req.roleFamily) {
+          caster = mySummons.find(s => {
+            const role = getRoleDefinition(s.currentRole);
+            return role.family === req.roleFamily;
+          });
+        }
+      }
+      if (!caster && mySummons.length > 0) {
+        caster = mySummons[0]; // Default to first summon
+      }
+
+      let updatedSummons = [...board.summons];
+
+      for (const effect of actionCard.effects) {
+        const currentTarget = updatedSummons.find(s => s.instanceId === targetUnit.instanceId);
+        if (!currentTarget) break;
+
+        switch (effect.type) {
+          case 'damage': {
+            if (!caster) break;
+            // Hit check
+            const toHitPct = calculateToHit(85, caster.calculatedStats.ACC);
+            const hitResult = rollHit(toHitPct);
+            get().addLog(`To-hit: ${toHitPct.toFixed(1)}%, rolled ${hitResult.roll}`);
+
+            if (!hitResult.hit) {
+              get().addLog('Attack missed!');
+              break;
+            }
+
+            // Crit
+            let isCrit = false;
+            if (effect.canCrit) {
+              const critPct = calculateCritChance(caster.calculatedStats.LCK);
+              const critResult = rollCrit(critPct);
+              isCrit = critResult.crit;
+              if (isCrit) get().addLog(`CRITICAL HIT! (${critPct}%)`);
+            }
+
+            // Damage
+            let damage = 0;
+            const bp = effect.basePower ?? 0;
+            if (effect.damageType === 'magical') {
+              damage = calculateMagicalDamage(caster.calculatedStats.INT, bp, currentTarget.calculatedStats.MDF, isCrit);
+            } else {
+              damage = calculatePhysicalMeleeDamage(caster.calculatedStats.STR, bp, currentTarget.calculatedStats.DEF, isCrit);
+            }
+            get().addLog(`Deals ${damage} damage!`);
+
+            const newHP = currentTarget.currentHP - damage;
+            updatedSummons = updatedSummons.map(s =>
+              s.instanceId === currentTarget.instanceId ? { ...s, currentHP: Math.max(0, newHP) } : s
+            );
+
+            if (newHP <= 0) {
+              get().addLog(`${currentTarget.card.name} is defeated!`);
+              updatedSummons = updatedSummons.filter(s => s.instanceId !== currentTarget.instanceId);
+
+              const role = getRoleDefinition(currentTarget.currentRole);
+              const vpGain = role.tier >= 2 ? 2 : 1;
+              player.victoryPoints = (players[activePlayer].victoryPoints || 0) + vpGain;
+
+              const targetOwner = currentTarget.owner;
+              const updatedPlayers = { ...players, [activePlayer]: player };
+              updatedPlayers[targetOwner] = {
+                ...updatedPlayers[targetOwner],
+                removedFromPlay: [...updatedPlayers[targetOwner].removedFromPlay, currentTarget.card],
+              };
+
+              get().addLog(`${activePlayer} gains ${vpGain} VP!`);
+              set({
+                board: { ...board, summons: updatedSummons },
+                players: updatedPlayers,
+              });
+              get().checkVictory();
+              return; // Early return after defeat
+            }
+            break;
+          }
+
+          case 'heal': {
+            if (!caster) break;
+            let isCrit = false;
+            if (effect.canCrit) {
+              const critPct = calculateCritChance(caster.calculatedStats.LCK);
+              const critResult = rollCrit(critPct);
+              isCrit = critResult.crit;
+              if (isCrit) get().addLog(`Critical heal! (${critPct}%)`);
+            }
+            const bp = effect.basePower ?? 0;
+            const healAmount = calculateHealing(caster.calculatedStats.SPI, bp, isCrit);
+            const healed = Math.min(currentTarget.maxHP - currentTarget.currentHP, healAmount);
+            updatedSummons = updatedSummons.map(s =>
+              s.instanceId === currentTarget.instanceId ? { ...s, currentHP: s.currentHP + healed } : s
+            );
+            get().addLog(`${currentTarget.card.name} heals ${healed} HP (${currentTarget.currentHP + healed}/${currentTarget.maxHP})`);
+            break;
+          }
+
+          case 'buff': {
+            get().addLog(`${currentTarget.card.name} gains: ${effect.description}`);
+            break;
+          }
+
+          case 'debuff': {
+            get().addLog(`${currentTarget.card.name}: ${effect.description}`);
+            break;
+          }
+
+          default: {
+            get().addLog(`Effect: ${effect.description}`);
+            break;
+          }
+        }
+      }
+
+      set({
+        players: { ...players, [activePlayer]: player },
+        board: { ...board, summons: updatedSummons },
+      });
+    } else if (card.cardType === 'quest' && targetUnit) {
+      // Quest completion — award level-ups
+      const questCard = card as import('../types').QuestCard;
+      if (questCard.rewardEffects.length > 0) {
+        const leveled = applyLevelUp(targetUnit, 2); // Nearwood grants 2 levels
+        const updatedSummons = board.summons.map(s =>
+          s.instanceId === targetUnit.instanceId ? leveled : s
+        );
+        get().addLog(`${targetUnit.card.name} gains 2 levels: ${targetUnit.level} → ${leveled.level}`);
+        set({
+          players: { ...players, [activePlayer]: player },
+          board: { ...board, summons: updatedSummons },
+        });
+      }
+    } else {
+      // Card played without target (or building/counter)
+      set({ players: { ...players, [activePlayer]: player } });
+    }
   },
 
   addLog: (message) => {

@@ -24,10 +24,11 @@ interface CellProps {
   isValidMove: boolean;
   isValidAttack: boolean;
   isValidPlacement: boolean;
+  isCardTarget: boolean;
   onClick: () => void;
 }
 
-function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, onClick }: CellProps) {
+function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, onClick }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -37,6 +38,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
     isValidMove ? 'valid-move' : '',
     isValidAttack ? 'valid-attack' : '',
     isValidPlacement ? 'valid-placement' : '',
+    isCardTarget ? 'card-target' : '',
     unit ? `unit-${unit.owner}` : '',
   ]
     .filter(Boolean)
@@ -67,7 +69,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
 }
 
 export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onClearCard }: GameBoardProps) {
-  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon } = useGameStore();
+  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard } = useGameStore();
 
   const selectedUnit = selectedUnitId
     ? board.summons.find(s => s.instanceId === selectedUnitId)
@@ -119,10 +121,42 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onC
     return distance <= weapon.range;
   };
 
+  // Check if selected card is an action/quest that targets a summon
+  const isCardTargetable = (x: number, y: number): boolean => {
+    if (selectedCardIndex === null || phase !== 'action') return false;
+    const card = players[activePlayer].hand[selectedCardIndex];
+    if (!card || card.cardType === 'summon') return false;
+    const unitAtPos = getUnitAt(x, y);
+    if (!unitAtPos) return false;
+
+    // Action cards with ally/self targets need ally summons
+    if (card.cardType === 'action') {
+      const ac = card as import('../types').ActionCard;
+      if (ac.targetType === 'ally_summon' || ac.targetType === 'self_summon') {
+        return unitAtPos.owner === activePlayer;
+      }
+      if (ac.targetType === 'enemy_summon') {
+        return unitAtPos.owner !== activePlayer;
+      }
+      if (ac.targetType === 'any_summon') return true;
+    }
+    if (card.cardType === 'quest') {
+      return unitAtPos.owner === activePlayer;
+    }
+    return false;
+  };
+
   const handleCellClick = (x: number, y: number) => {
     const unitAtCell = getUnitAt(x, y);
 
-    // If we have a card selected, try to place it
+    // If we have a non-summon card selected, try to play it on a target
+    if (selectedCardIndex !== null && isCardTargetable(x, y) && unitAtCell) {
+      playCard(selectedCardIndex, [unitAtCell.instanceId]);
+      onClearCard();
+      return;
+    }
+
+    // If we have a card selected, try to place it (summon)
     if (selectedCardIndex !== null && isValidPlacement(x, y)) {
       playSummon(selectedCardIndex, { x, y });
       onClearCard();
@@ -168,6 +202,7 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onC
           isValidMove={isValidMove(x, y)}
           isValidAttack={isValidAttackTarget(x, y)}
           isValidPlacement={isValidPlacement(x, y)}
+          isCardTarget={isCardTargetable(x, y)}
           onClick={() => handleCellClick(x, y)}
         />
       );

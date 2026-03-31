@@ -91,6 +91,12 @@
   border-color: #0f6;
 }
 
+.board-cell.card-target {
+  background: rgba(255, 200, 0, 0.2);
+  border-color: #ffc800;
+  box-shadow: inset 0 0 6px rgba(255, 200, 0, 0.3);
+}
+
 /* Unit display */
 .unit-display {
   display: flex;

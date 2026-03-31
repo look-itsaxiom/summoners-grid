@@ -43,6 +43,11 @@ export function executeAITurn(store: GameStore): void {
 
   if (store.gameOver) return;
 
+  // 1.5. Try to play action cards from hand
+  tryPlayActionCards(store, player);
+
+  if (store.gameOver) return;
+
   // 2. Move and attack with each summon
   const mySummonIds = store.board.summons
     .filter(s => s.owner === player)
@@ -188,6 +193,53 @@ function findMoveTowardTarget(unit: SummonUnit, target: Position, state: GameSto
   }
 
   return bestPos;
+}
+
+function tryPlayActionCards(store: GameStore, player: PlayerId): void {
+  const hand = store.players[player].hand;
+  const mySummons = store.board.summons.filter(s => s.owner === player);
+  const enemies = store.board.summons.filter(s => s.owner !== player);
+
+  // Try to play damage cards on enemies
+  for (let i = hand.length - 1; i >= 0; i--) {
+    if (store.gameOver) return;
+
+    const card = hand[i];
+    if (card.cardType !== 'action') continue;
+
+    const ac = card as import('../types').ActionCard;
+
+    // Play damage cards on lowest HP enemy
+    if (ac.targetType === 'enemy_summon' && enemies.length > 0) {
+      const target = enemies.sort((a, b) => a.currentHP - b.currentHP)[0];
+      const hasDamage = ac.effects.some(e => e.type === 'damage');
+      if (hasDamage) {
+        store.playCard(i, [target.instanceId]);
+        return; // Play one card at a time to re-check state
+      }
+    }
+
+    // Play heal cards on damaged allies
+    if (ac.targetType === 'ally_summon' && mySummons.length > 0) {
+      const hasHeal = ac.effects.some(e => e.type === 'heal');
+      if (hasHeal) {
+        const damaged = mySummons.filter(s => s.currentHP < s.maxHP);
+        if (damaged.length > 0) {
+          const target = damaged.sort((a, b) => (a.currentHP / a.maxHP) - (b.currentHP / b.maxHP))[0];
+          store.playCard(i, [target.instanceId]);
+          return;
+        }
+      }
+
+      // Play buff cards on strongest ally
+      const hasBuff = ac.effects.some(e => e.type === 'buff');
+      if (hasBuff) {
+        const strongest = mySummons.sort((a, b) => b.calculatedStats.STR - a.calculatedStats.STR)[0];
+        store.playCard(i, [strongest.instanceId]);
+        return;
+      }
+    }
+  }
 }
 
 function chebyshevDistance(a: Position, b: Position): number {
