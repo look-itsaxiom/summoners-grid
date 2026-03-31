@@ -18,6 +18,8 @@ import {
   createSummonUnit,
   applyLevelUp,
   calculateMovementSpeed,
+  calculateAllStats,
+  calculateMaxHP,
   calculateToHit,
   calculateCritChance,
   calculatePhysicalMeleeDamage,
@@ -86,6 +88,8 @@ export interface GameActions {
   moveSummon: (unitId: string, to: Position) => void;
   attackWithSummon: (attackerId: string, targetId: string) => void;
   playCard: (cardIndex: number, targets: string[]) => void;
+  playAdvanceCard: (advanceIndex: number, targetUnitId: string) => void;
+  getPlayableAdvanceCards: () => Array<{ index: number; card: AdvanceCard; validTargets: SummonUnit[] }>;
 
   // Utility
   addLog: (message: string) => void;
@@ -676,6 +680,142 @@ export const useGameStore = create<GameStore>((set, get) => ({
   getOpponent: (player) => (player === 'playerA' ? 'playerB' : 'playerA'),
 
   getSummonsByOwner: (owner) => get().board.summons.filter(s => s.owner === owner),
+
+  getPlayableAdvanceCards: () => {
+    const { activePlayer, players, board } = get();
+    const advanceDeck = players[activePlayer].advanceDeck;
+    const mySummons = board.summons.filter(s => s.owner === activePlayer);
+    const results: Array<{ index: number; card: AdvanceCard; validTargets: SummonUnit[] }> = [];
+
+    advanceDeck.forEach((card, index) => {
+      const validTargets: SummonUnit[] = [];
+
+      for (const unit of mySummons) {
+        let meetsReqs = true;
+
+        for (const req of card.requirements) {
+          if (req.type === 'role') {
+            if (req.roleId && unit.currentRole !== req.roleId) meetsReqs = false;
+            if (req.roleFamily) {
+              const role = getRoleDefinition(unit.currentRole);
+              if (role.family !== req.roleFamily) meetsReqs = false;
+            }
+          }
+          if (req.type === 'level' && req.minLevel && unit.level < req.minLevel) {
+            meetsReqs = false;
+          }
+        }
+
+        if (meetsReqs) validTargets.push(unit);
+      }
+
+      if (validTargets.length > 0) {
+        results.push({ index, card, validTargets });
+      }
+    });
+
+    return results;
+  },
+
+  playAdvanceCard: (advanceIndex, targetUnitId) => {
+    const { activePlayer, players, board } = get();
+    const player = { ...players[activePlayer] };
+    const card = player.advanceDeck[advanceIndex];
+
+    if (!card) {
+      get().addLog('Invalid advance card.');
+      return;
+    }
+
+    const unit = board.summons.find(s => s.instanceId === targetUnitId);
+    if (!unit || unit.owner !== activePlayer) {
+      get().addLog('Invalid target for advance card.');
+      return;
+    }
+
+    // Remove from advance deck
+    player.advanceDeck = player.advanceDeck.filter((_, i) => i !== advanceIndex);
+
+    // Send to discard
+    player.discardPile.push(card);
+
+    if (card.advanceType === 'role_change') {
+      // Change the unit's role
+      const newRole = card.targetRole;
+      const newStats = calculateAllStats(unit.card, unit.level, newRole);
+      const newMaxHP = calculateMaxHP(newStats.END);
+      const damageTaken = unit.maxHP - unit.currentHP;
+
+      const updatedSummons = board.summons.map(s => {
+        if (s.instanceId !== targetUnitId) return s;
+        return {
+          ...s,
+          currentRole: newRole,
+          calculatedStats: newStats,
+          maxHP: newMaxHP,
+          currentHP: newMaxHP - damageTaken,
+          movementRemaining: calculateMovementSpeed(newStats.SPD),
+        };
+      });
+
+      const roleDef = getRoleDefinition(newRole);
+      get().addLog(
+        `${unit.card.name} advances to ${roleDef.name}! (HP: ${newMaxHP - damageTaken}/${newMaxHP})`
+      );
+
+      set({
+        players: { ...players, [activePlayer]: player },
+        board: { ...board, summons: updatedSummons },
+      });
+    } else if (card.advanceType === 'named_summon') {
+      // Named summon transformation
+      const newRole = card.targetRole;
+      const newGrowthRates = card.namedSummonGrowthOverrides
+        ? { ...unit.card.growthRates, ...card.namedSummonGrowthOverrides }
+        : unit.card.growthRates;
+
+      // Create modified card with new growth rates
+      const modifiedCard: SummonCard = {
+        ...unit.card,
+        growthRates: newGrowthRates,
+      };
+
+      const newStats = calculateAllStats(modifiedCard, unit.level, newRole);
+      const newMaxHP = calculateMaxHP(newStats.END);
+
+      const updatedSummons = board.summons.map(s => {
+        if (s.instanceId !== targetUnitId) return s;
+        return {
+          ...s,
+          card: modifiedCard,
+          currentRole: newRole,
+          calculatedStats: newStats,
+          maxHP: newMaxHP,
+          currentHP: newMaxHP, // Named summons get full HP
+          movementRemaining: calculateMovementSpeed(newStats.SPD),
+          isNamedSummon: true,
+          namedSummonName: card.namedSummonName,
+        };
+      });
+
+      get().addLog(
+        `${unit.card.name} transforms into ${card.namedSummonName}!`
+      );
+
+      // Add unique action cards to hand
+      if (card.uniqueActionCards) {
+        for (const actionCard of card.uniqueActionCards) {
+          player.hand.push(actionCard);
+          get().addLog(`Added "${actionCard.name}" to hand.`);
+        }
+      }
+
+      set({
+        players: { ...players, [activePlayer]: player },
+        board: { ...board, summons: updatedSummons },
+      });
+    }
+  },
 }));
 
 // ─── Utilities ────────────────────────────────────────────────────────────────

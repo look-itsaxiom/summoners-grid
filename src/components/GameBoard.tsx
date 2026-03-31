@@ -12,6 +12,7 @@ function getTerritoryOwner(y: number): TerritoryOwner {
 interface GameBoardProps {
   selectedCardIndex: number | null;
   selectedUnitId: string | null;
+  pendingAdvance: number | null;
   onSelectUnit: (id: string | null) => void;
   onClearCard: () => void;
 }
@@ -25,10 +26,11 @@ interface CellProps {
   isValidAttack: boolean;
   isValidPlacement: boolean;
   isCardTarget: boolean;
+  isAdvanceTarget: boolean;
   onClick: () => void;
 }
 
-function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, onClick }: CellProps) {
+function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -39,6 +41,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
     isValidAttack ? 'valid-attack' : '',
     isValidPlacement ? 'valid-placement' : '',
     isCardTarget ? 'card-target' : '',
+    isAdvanceTarget ? 'advance-target' : '',
     unit ? `unit-${unit.owner}` : '',
   ]
     .filter(Boolean)
@@ -68,8 +71,18 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlace
   );
 }
 
-export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onClearCard }: GameBoardProps) {
-  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard } = useGameStore();
+export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, onSelectUnit, onClearCard }: GameBoardProps) {
+  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard, getPlayableAdvanceCards } = useGameStore();
+
+  // Get valid advance targets
+  const advanceTargetIds = new Set<string>();
+  if (pendingAdvance !== null) {
+    const playable = getPlayableAdvanceCards();
+    const entry = playable.find(p => p.index === pendingAdvance);
+    if (entry) {
+      entry.validTargets.forEach(t => advanceTargetIds.add(t.instanceId));
+    }
+  }
 
   const selectedUnit = selectedUnitId
     ? board.summons.find(s => s.instanceId === selectedUnitId)
@@ -149,6 +162,12 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onC
   const handleCellClick = (x: number, y: number) => {
     const unitAtCell = getUnitAt(x, y);
 
+    // If advance card pending, click a valid target to advance it
+    if (pendingAdvance !== null && unitAtCell && advanceTargetIds.has(unitAtCell.instanceId)) {
+      onSelectUnit(unitAtCell.instanceId);
+      return;
+    }
+
     // If we have a non-summon card selected, try to play it on a target
     if (selectedCardIndex !== null && isCardTargetable(x, y) && unitAtCell) {
       playCard(selectedCardIndex, [unitAtCell.instanceId]);
@@ -203,6 +222,7 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onC
           isValidAttack={isValidAttackTarget(x, y)}
           isValidPlacement={isValidPlacement(x, y)}
           isCardTarget={isCardTargetable(x, y)}
+          isAdvanceTarget={unit ? advanceTargetIds.has(unit.instanceId) : false}
           onClick={() => handleCellClick(x, y)}
         />
       );

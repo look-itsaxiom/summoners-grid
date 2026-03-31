@@ -4,6 +4,7 @@ import { GameInfo } from './components/GameInfo';
 import { HandDisplay } from './components/HandDisplay';
 import { PhaseControls } from './components/PhaseControls';
 import { CombatOverlay } from './components/CombatOverlay';
+import { AdvanceDeck } from './components/AdvanceDeck';
 import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
@@ -13,8 +14,9 @@ function App() {
   const [gameStarted, setGameStarted] = useState(false);
   const [selectedCardIndex, setSelectedCardIndex] = useState<number | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
+  const [pendingAdvance, setPendingAdvance] = useState<number | null>(null);
 
-  const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase } = useGameStore();
+  const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, playAdvanceCard, getPlayableAdvanceCards } = useGameStore();
 
   const handleStartGame = () => {
     const playerADeck = createPlayerADeck();
@@ -25,7 +27,6 @@ function App() {
   };
 
   useEffect(() => {
-    // Trigger AI when it becomes Player B's turn and we're at draw phase
     if (activePlayer === 'playerB' && phase === 'draw' && gameStarted && !gameOver) {
       const timer = setTimeout(() => {
         executeAITurn(useGameStore.getState());
@@ -33,6 +34,17 @@ function App() {
       return () => clearTimeout(timer);
     }
   }, [activePlayer, phase, gameStarted, gameOver]);
+
+  // Handle advance card targeting — when pendingAdvance is set and user clicks a unit
+  const handleAdvanceTarget = (advanceIndex: number) => {
+    if (pendingAdvance === advanceIndex) {
+      setPendingAdvance(null); // Deselect
+    } else {
+      setPendingAdvance(advanceIndex);
+      setSelectedCardIndex(null);
+      setSelectedUnitId(null);
+    }
+  };
 
   return (
     <div className="app">
@@ -43,7 +55,14 @@ function App() {
           <GameBoard
             selectedCardIndex={selectedCardIndex}
             selectedUnitId={selectedUnitId}
+            pendingAdvance={pendingAdvance}
             onSelectUnit={(id) => {
+              // If pending advance, play it on this unit
+              if (pendingAdvance !== null && id) {
+                playAdvanceCard(pendingAdvance, id);
+                setPendingAdvance(null);
+                return;
+              }
               setSelectedUnitId(id);
               if (id) setSelectedCardIndex(null);
             }}
@@ -53,8 +72,15 @@ function App() {
             selectedCardIndex={selectedCardIndex}
             onSelectCard={(index) => {
               setSelectedCardIndex(index);
-              if (index !== null) setSelectedUnitId(null);
+              if (index !== null) {
+                setSelectedUnitId(null);
+                setPendingAdvance(null);
+              }
             }}
+          />
+          <AdvanceDeck
+            onSelectAdvanceTarget={handleAdvanceTarget}
+            pendingAdvance={pendingAdvance}
           />
         </div>
         <GameInfo />

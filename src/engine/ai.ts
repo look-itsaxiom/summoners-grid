@@ -48,6 +48,17 @@ export function executeAITurn(store: GameStore): void {
 
   if (store.gameOver) return;
 
+  // 1.7. Try to play advance cards
+  const playableAdvances = store.getPlayableAdvanceCards();
+  for (const entry of playableAdvances) {
+    if (entry.validTargets.length > 0) {
+      store.playAdvanceCard(entry.index, entry.validTargets[0].instanceId);
+      break; // One advance per turn is enough
+    }
+  }
+
+  if (store.gameOver) return;
+
   // 2. Move and attack with each summon
   const mySummonIds = store.board.summons
     .filter(s => s.owner === player)
