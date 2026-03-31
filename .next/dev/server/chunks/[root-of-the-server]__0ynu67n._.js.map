@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 46, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/ChaseSkibeness/Projects/summoners-grid/app/api/health/route.ts"],"sourcesContent":["import { NextResponse } from 'next/server';\n\nexport async function GET() {\n  return NextResponse.json({\n    status: 'ok',\n    game: 'Summoner\\'s Grid',\n    version: '0.3.0-alpha',\n    timestamp: new Date().toISOString(),\n  });\n}\n"],"names":["GET","json","status","game","version","timestamp","Date","toISOString"],"mappings":";;;;AAAA;;AAEO,eAAeA;IACpB,OAAO,gJAAY,CAACC,IAAI,CAAC;QACvBC,QAAQ;QACRC,MAAM;QACNC,SAAS;QACTC,WAAW,IAAIC,OAAOC,WAAW;IACnC;AACF"}}]
+}

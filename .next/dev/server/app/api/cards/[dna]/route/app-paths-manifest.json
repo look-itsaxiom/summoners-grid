@@ -1,0 +1,3 @@
+{
+  "/api/cards/[dna]/route": "app/api/cards/[dna]/route.js"
+}
