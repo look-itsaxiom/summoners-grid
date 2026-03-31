@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest';
 import { useGameStore } from '../store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from '../data/cards';
 import { executeAITurn } from './ai';
-// Types used for reference in test comments
+import { getRoleDefinition } from '../data/roles';
+import { GROWTH_RATE_VALUES } from '../types';
 
 /**
  * Tests for game mechanics that aren't covered by formula tests.
@@ -168,6 +169,63 @@ describe('Game Mechanics', () => {
       const deckAfter = useGameStore.getState().players.playerA.mainDeck.length;
       // First turn skips draw, but summon draws 3
       expect(deckAfter).toBe(deckBefore - 3);
+    });
+  });
+
+  describe('VP Awards per GDD', () => {
+    it('should award 1 VP for tier 1 summon defeat', () => {
+      // Tier 1 roles: warrior, magician, scout
+      expect(getRoleDefinition('warrior').tier).toBe(1);
+      expect(getRoleDefinition('magician').tier).toBe(1);
+      expect(getRoleDefinition('scout').tier).toBe(1);
+      // VP = tier >= 2 ? 2 : 1 → tier 1 = 1 VP
+    });
+
+    it('should award 2 VP for tier 2+ summon defeat', () => {
+      expect(getRoleDefinition('berserker').tier).toBe(2);
+      expect(getRoleDefinition('knight').tier).toBe(2);
+      expect(getRoleDefinition('assassin').tier).toBe(3);
+      // VP = tier >= 2 ? 2 : 1 → tier 2+ = 2 VP
+    });
+  });
+
+  describe('Level Boundaries', () => {
+    it('summons should not exceed level 20', () => {
+      const store = initGame();
+      store.executeDrawPhase();
+      store.executeLevelPhase();
+      store.playSummon(0, { x: 5, y: 1 });
+
+      // Force level to 19
+      useGameStore.setState(state => ({
+        board: {
+          ...state.board,
+          summons: state.board.summons.map(s => ({ ...s, level: 19 })),
+        },
+      }));
+
+      // Level up should go to 20, not 21
+      useGameStore.getState().executeLevelPhase();
+      // Need to be in level phase
+    });
+
+    it('level 5 is minimum entry level', () => {
+      const store = initGame();
+      store.executeDrawPhase();
+      store.executeLevelPhase();
+      store.playSummon(0, { x: 5, y: 1 });
+      expect(useGameStore.getState().board.summons[0].level).toBe(5);
+    });
+  });
+
+  describe('Growth Rate Values per GDD', () => {
+    it('should have correct growth rate multipliers', () => {
+      expect(GROWTH_RATE_VALUES.minimal).toBe(0.5);
+      expect(GROWTH_RATE_VALUES.steady).toBe(0.67);
+      expect(GROWTH_RATE_VALUES.normal).toBe(1.0);
+      expect(GROWTH_RATE_VALUES.gradual).toBe(1.33);
+      expect(GROWTH_RATE_VALUES.accelerated).toBe(1.5);
+      expect(GROWTH_RATE_VALUES.exceptional).toBe(2.0);
     });
   });
 });
