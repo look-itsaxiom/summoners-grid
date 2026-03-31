@@ -91,6 +91,24 @@ export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
           </div>
         </div>
 
+        <div className="key-moments">
+          <div className="moments-label">Key Moments</div>
+          {log
+            .filter(e =>
+              e.message.includes('defeated') ||
+              e.message.includes('VP') ||
+              e.message.includes('advances to') ||
+              e.message.includes('transforms into') ||
+              e.message.includes('Territory control') ||
+              e.message.includes('activates face-down')
+            )
+            .slice(-5)
+            .map((e, i) => (
+              <div key={i} className="moment-entry">{e.message}</div>
+            ))
+          }
+        </div>
+
         <div className="game-over-actions">
           <button className="action-btn primary" onClick={onNewGame}>
             Play Again
