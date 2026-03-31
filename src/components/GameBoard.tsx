@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
 import type { TerritoryOwner, SummonUnit, BuildingUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
+import { UnitTooltip } from './UnitTooltip';
 import './GameBoard.css';
 
 function getTerritoryOwner(y: number): TerritoryOwner {
@@ -29,9 +31,11 @@ interface CellProps {
   isCardTarget: boolean;
   isAdvanceTarget: boolean;
   onClick: () => void;
+  onMouseEnter: (e: React.MouseEvent) => void;
+  onMouseLeave: () => void;
 }
 
-function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick }: CellProps) {
+function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick, onMouseEnter, onMouseLeave }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -57,7 +61,7 @@ function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, is
     : unit?.card.name.slice(0, 10);
 
   return (
-    <div className={classes} onClick={onClick} title={unit ? `${unit.isNamedSummon ? unit.namedSummonName : unit.card.name} — Lv${unit.level} ${unit.currentRole}\nHP: ${unit.currentHP}/${unit.maxHP}\nSTR:${unit.calculatedStats.STR} DEF:${unit.calculatedStats.DEF} INT:${unit.calculatedStats.INT}\nSPD:${unit.calculatedStats.SPD} ACC:${unit.calculatedStats.ACC} LCK:${unit.calculatedStats.LCK}\nWeapon: ${unit.card.equipment.weapon?.name ?? 'None'}` : `(${x},${y})`}>
+    <div className={classes} onClick={onClick} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} title={unit ? `${unit.isNamedSummon ? unit.namedSummonName : unit.card.name} — Lv${unit.level} ${unit.currentRole}\nHP: ${unit.currentHP}/${unit.maxHP}\nSTR:${unit.calculatedStats.STR} DEF:${unit.calculatedStats.DEF} INT:${unit.calculatedStats.INT}\nSPD:${unit.calculatedStats.SPD} ACC:${unit.calculatedStats.ACC} LCK:${unit.calculatedStats.LCK}\nWeapon: ${unit.card.equipment.weapon?.name ?? 'None'}` : `(${x},${y})`}>
       {unit && (
         <div className="unit-display">
           {unit.isNamedSummon && <span className="named-tag">NAMED</span>}
@@ -88,6 +92,7 @@ function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, is
 
 export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, onSelectUnit, onClearCard }: GameBoardProps) {
   const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard, placeBuilding, getPlayableAdvanceCards } = useGameStore();
+  const [hoveredUnit, setHoveredUnit] = useState<{ unit: SummonUnit; pos: { x: number; y: number } } | null>(null);
 
   // Get valid advance targets
   const advanceTargetIds = new Set<string>();
@@ -257,6 +262,13 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
           isCardTarget={isCardTargetable(x, y)}
           isAdvanceTarget={unit ? advanceTargetIds.has(unit.instanceId) : false}
           onClick={() => handleCellClick(x, y)}
+          onMouseEnter={(e) => {
+            if (unit) {
+              const rect = (e.target as HTMLElement).getBoundingClientRect();
+              setHoveredUnit({ unit, pos: { x: rect.right + 8, y: rect.top } });
+            }
+          }}
+          onMouseLeave={() => setHoveredUnit(null)}
         />
       );
     }
@@ -279,6 +291,9 @@ export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, o
         ))}
       </div>
       {rows}
+      {hoveredUnit && (
+        <UnitTooltip unit={hoveredUnit.unit} position={hoveredUnit.pos} />
+      )}
     </div>
   );
 }
