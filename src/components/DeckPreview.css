@@ -1,0 +1,163 @@
+.deck-preview {
+  min-height: 100vh;
+  background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 70%);
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.dp-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.dp-header h2 {
+  flex: 1;
+  color: #ffd700;
+  font-size: 24px;
+  margin: 0;
+}
+
+.dp-back {
+  padding: 8px 16px;
+  background: #2a2a4a;
+  color: #aaa;
+  border: 1px solid #3a3a5a;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.dp-confirm {
+  padding: 10px 24px;
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.dp-confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+}
+
+.dp-section {
+  margin-bottom: 24px;
+}
+
+.dp-section h3 {
+  color: #aaf;
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+.dp-summons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dp-summon-card {
+  display: flex;
+  gap: 12px;
+  background: #1a1a30;
+  border: 1px solid #3a3a5a;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.dp-summon-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dp-summon-name {
+  font-size: 15px;
+  font-weight: bold;
+  color: #eee;
+}
+
+.dp-summon-role {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+}
+
+.dp-species {
+  color: #888;
+  text-transform: capitalize;
+}
+
+.dp-role {
+  color: #aaf;
+  text-transform: capitalize;
+}
+
+.dp-rarity {
+  font-weight: bold;
+  text-transform: capitalize;
+}
+
+.dp-stat-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.dp-stat {
+  font-size: 10px;
+  color: #aaa;
+  font-family: monospace;
+}
+
+.dp-stat sub {
+  color: #666;
+  font-size: 8px;
+}
+
+.dp-weapon {
+  font-size: 11px;
+  color: #886;
+}
+
+.dp-deck-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.dp-deck-card {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #1a1a30;
+  border: 1px solid #2a2a4a;
+  border-radius: 4px;
+  padding: 4px 8px;
+}
+
+.dp-card-type {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: bold;
+  color: #000;
+  flex-shrink: 0;
+}
+
+.dp-card-name {
+  font-size: 11px;
+  color: #bbb;
+}

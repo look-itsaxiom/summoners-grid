@@ -694,6 +694,62 @@ export const QUEST_CARDS: Record<string, QuestCard> = {
     vpReward: 0,
     activatedBy: 'owner',
   },
+  trial_of_strength: {
+    id: 'trial_of_strength',
+    name: 'Trial of Strength',
+    cardType: 'quest',
+    element: 'fire',
+    description: 'Control a Warrior summon level 8+. Reward: 1 VP and +3 STR permanently.',
+    requirements: [{ type: 'role', roleFamily: 'warrior', description: 'Requires a Warrior summon' }],
+    pileDestination: 'discard',
+    objective: 'Control a Warrior-family summon at level 8 or higher.',
+    rewardEffects: [{
+      id: 'trial_strength_reward',
+      type: 'buff',
+      description: '+3 STR permanently',
+      duration: 'permanent',
+      statModifiers: { STR: 3 },
+    }],
+    vpReward: 1,
+    activatedBy: 'owner',
+  },
+  arcane_research: {
+    id: 'arcane_research',
+    name: 'Arcane Research',
+    cardType: 'quest',
+    element: 'light',
+    description: 'Control a Magician summon. Reward: Draw 2 cards.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon' }],
+    pileDestination: 'recharge',
+    objective: 'Control a Magician-family summon.',
+    rewardEffects: [{
+      id: 'arcane_research_reward',
+      type: 'special',
+      description: 'Draw 2 cards',
+      duration: 'instant',
+    }],
+    vpReward: 0,
+    activatedBy: 'owner',
+  },
+  scouting_mission: {
+    id: 'scouting_mission',
+    name: 'Scouting Mission',
+    cardType: 'quest',
+    element: 'wind',
+    description: 'Control a Scout summon level 7+. Reward: Target gains +5 SPD and +5 ACC permanently.',
+    requirements: [{ type: 'role', roleFamily: 'scout', description: 'Requires a Scout summon' }],
+    pileDestination: 'discard',
+    objective: 'Control a Scout-family summon at level 7 or higher.',
+    rewardEffects: [{
+      id: 'scouting_reward',
+      type: 'buff',
+      description: '+5 SPD, +5 ACC permanently',
+      duration: 'permanent',
+      statModifiers: { SPD: 5, ACC: 5 },
+    }],
+    vpReward: 0,
+    activatedBy: 'owner',
+  },
 };
 
 // ─── Counter Cards ────────────────────────────────────────────────────────────
@@ -822,6 +878,7 @@ export function createPlayerADeck(): DeckConfig {
     BUILDING_CARDS.gignen_country,
     QUEST_CARDS.nearwood_forest_expedition,
     QUEST_CARDS.nearwood_forest_expedition,
+    QUEST_CARDS.trial_of_strength,
   ];
 
   return {
@@ -853,6 +910,8 @@ export function createPlayerBDeck(): DeckConfig {
     ACTION_CARDS.obliterate,
     ACTION_CARDS.stonewardens_command,
     BUILDING_CARDS.dark_altar,
+    QUEST_CARDS.arcane_research,
+    QUEST_CARDS.scouting_mission,
     COUNTER_CARDS.dramatic_return,
     COUNTER_CARDS.graverobbing,
   ];

@@ -11,10 +11,11 @@ import { PackOpening } from './components/PackOpening';
 import { useGameStore } from './store/gameStore';
 import { createPlayerADeck, createPlayerBDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
+import { DeckPreview } from './components/DeckPreview';
 import type { SummonCard } from './types';
 import './App.css';
 
-type Screen = 'menu' | 'game' | 'packs';
+type Screen = 'menu' | 'game' | 'packs' | 'deck-preview';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('menu');
@@ -52,9 +53,21 @@ function App() {
   if (screen === 'menu') {
     return (
       <MainMenu
-        onStartGame={handleStartGame}
+        onStartGame={() => setScreen('deck-preview')}
         onOpenPacks={() => setScreen('packs')}
         collectionCount={collection.length}
+      />
+    );
+  }
+
+  if (screen === 'deck-preview') {
+    const playerADeck = createPlayerADeck();
+    return (
+      <DeckPreview
+        summons={playerADeck.summonSlots}
+        mainDeck={playerADeck.mainDeck}
+        onConfirm={handleStartGame}
+        onBack={() => setScreen('menu')}
       />
     );
   }
