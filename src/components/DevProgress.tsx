@@ -40,7 +40,7 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Infrastructure', label: 'Client API service', status: 'done', detail: 'api.ts with health/openPack/lookupCard' },
   { category: 'Infrastructure', label: 'Server-backed pack opening', status: 'done', detail: 'Toggle in UI, fallback to local' },
   { category: 'Infrastructure', label: 'DNA Viewer component', status: 'done', detail: '4-tab viewer: card, DNA, NFT metadata, art prompt' },
-  { category: 'Infrastructure', label: 'Immutable Passport auth', status: 'todo', detail: 'Phase 3: Google/Apple/email login, embedded wallet' },
+  { category: 'Infrastructure', label: 'Immutable Passport auth', status: 'in-progress', detail: '@imtbl/sdk installed, passport service + useAuth hook + LoginButton' },
   { category: 'Infrastructure', label: 'ERC-721 contract deployment', status: 'todo', detail: 'Phase 4: deploy on Immutable testnet' },
   { category: 'Infrastructure', label: 'NFT minting on pack open', status: 'todo', detail: 'Phase 4: Immutable Minting API integration' },
   { category: 'Infrastructure', label: 'Ownership verification (Indexer)', status: 'todo', detail: 'Phase 5: query owned NFTs' },

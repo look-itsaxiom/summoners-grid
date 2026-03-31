@@ -1,0 +1,62 @@
+.login-btn {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #2a4a8a, #1a3a6a);
+  color: #fff;
+  border: 1px solid #4a6aaa;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.login-btn:hover {
+  background: linear-gradient(135deg, #3a5a9a, #2a4a7a);
+  transform: translateY(-1px);
+}
+
+.login-btn.loading {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.login-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wallet-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(42, 74, 138, 0.2);
+  border: 1px solid #2a4a8a;
+  border-radius: 6px;
+}
+
+.wallet-icon { font-size: 14px; }
+
+.wallet-address {
+  font-family: monospace;
+  font-size: 11px;
+  color: #aaf;
+}
+
+.wallet-email {
+  font-size: 10px;
+  color: #888;
+}
+
+.logout-btn {
+  padding: 4px 10px;
+  background: transparent;
+  border: 1px solid #555;
+  border-radius: 4px;
+  color: #888;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.logout-btn:hover { color: #fff; border-color: #aaa; }
