@@ -26,7 +26,7 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Correctness', label: 'Quest completion + level rewards', status: 'done', detail: 'Nearwood Forest: +2 levels verified' },
   { category: 'Correctness', label: 'Role advancement stat recalculation', status: 'done', detail: 'Warrior→Berserker: STR increases' },
   { category: 'Correctness', label: 'AI vs AI games complete without crashes', status: 'done', detail: '8 integration tests + 3 balance tests' },
-  { category: 'Correctness', label: 'Effect stack (LIFO)', status: 'in-progress', detail: 'UI visualization exists, resolution logic partial' },
+  { category: 'Correctness', label: 'Effect stack (LIFO)', status: 'done', detail: '8 tests: LIFO order, speed lock, counter>reaction>action' },
 
   // ─── DNA / BLOCKCHAIN INFRASTRUCTURE ───
   { category: 'Infrastructure', label: 'Card DNA system (128-bit hex)', status: 'done', detail: '17 DNA tests, round-trip verified' },
