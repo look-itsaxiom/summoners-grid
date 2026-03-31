@@ -196,6 +196,18 @@
   padding-top: 4px;
 }
 
+.server-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #555;
+  cursor: pointer;
+}
+
+.server-toggle input { accent-color: #ffd700; }
+.server-toggle:hover { color: #888; }
+
 .card-dna {
   font-size: 7px;
   color: #444;

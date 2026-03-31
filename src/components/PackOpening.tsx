@@ -28,10 +28,32 @@ interface PackOpeningProps {
 export function PackOpening({ onAddToCollection, onClose }: PackOpeningProps) {
   const [pack, setPack] = useState<SummonCard[] | null>(null);
   const [revealed, setRevealed] = useState<Set<number>>(new Set());
+  const [loading, setLoading] = useState(false);
+  const [useServer, setUseServer] = useState(false);
 
-  const openPack = () => {
-    setPack(generateDNAPack(5));
+  const openPack = async () => {
+    setLoading(true);
+    try {
+      if (useServer) {
+        // Server-side generation (blockchain-ready)
+        const { api } = await import('../services/api');
+        const result = await api.openPack(5);
+        if (result.success && result.data) {
+          const cards = result.data.cards.map(c => reconstructCardFromDNA(c.dna));
+          setPack(cards);
+        } else {
+          // Fallback to local
+          setPack(generateDNAPack(5));
+        }
+      } else {
+        // Local generation (offline mode)
+        setPack(generateDNAPack(5));
+      }
+    } catch {
+      setPack(generateDNAPack(5));
+    }
     setRevealed(new Set());
+    setLoading(false);
     SFX.packOpen();
   };
 
@@ -67,9 +89,17 @@ export function PackOpening({ onAddToCollection, onClose }: PackOpeningProps) {
             <div className="pack-glow" />
             <div className="pack-icon">?</div>
           </div>
-          <button className="open-pack-btn" onClick={openPack}>
-            Open Pack (5 Cards)
+          <button className="open-pack-btn" onClick={openPack} disabled={loading}>
+            {loading ? 'Opening...' : 'Open Pack (5 Cards)'}
           </button>
+          <label className="server-toggle">
+            <input
+              type="checkbox"
+              checked={useServer}
+              onChange={e => setUseServer(e.target.checked)}
+            />
+            <span>Server-side generation {useServer ? '(blockchain-ready)' : '(local)'}</span>
+          </label>
         </div>
       )}
 
