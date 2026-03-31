@@ -227,6 +227,10 @@ export interface SummonCard extends BaseCard {
     accessory: AccessoryCard | null;
   };
   digitalSignature: string;
+  dna?: string;           // 32-char hex DNA genome (undefined for legacy/offline cards)
+  tokenId?: string;       // Immutable NFT token ID (undefined for non-NFT cards)
+  artUrl?: string;        // IPFS URL for AI-generated card art
+  spriteUrl?: string;     // IPFS URL for board sprite
 }
 
 export interface ActionCard extends BaseCard {
