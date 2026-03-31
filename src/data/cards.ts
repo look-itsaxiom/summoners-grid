@@ -889,6 +889,38 @@ export const COUNTER_CARDS: Record<string, CounterCard> = {
       duration: 'instant',
     }],
   },
+  iron_will: {
+    id: 'iron_will',
+    name: 'Iron Will',
+    cardType: 'counter',
+    element: 'earth',
+    description: 'When your summon would be defeated, it survives with 1 HP instead.',
+    requirements: [],
+    pileDestination: 'discard',
+    triggerCondition: 'summon_defeated',
+    effects: [{
+      id: 'iron_will_survive',
+      type: 'special',
+      description: 'Survive defeat with 1 HP',
+      duration: 'instant',
+    }],
+  },
+  mirror_shield: {
+    id: 'mirror_shield',
+    name: 'Mirror Shield',
+    cardType: 'counter',
+    element: 'light',
+    description: 'When your summon is targeted by a spell, reflect 50% of the damage back.',
+    requirements: [],
+    pileDestination: 'discard',
+    triggerCondition: 'summon_defeated',
+    effects: [{
+      id: 'mirror_reflect',
+      type: 'damage',
+      description: 'Reflect 50% spell damage',
+      duration: 'instant',
+    }],
+  },
 };
 
 // ─── Advance Cards ────────────────────────────────────────────────────────────
@@ -981,6 +1013,8 @@ export function createPlayerADeck(): DeckConfig {
     QUEST_CARDS.nearwood_forest_expedition,
     QUEST_CARDS.nearwood_forest_expedition,
     QUEST_CARDS.trial_of_strength,
+    COUNTER_CARDS.iron_will,
+    COUNTER_CARDS.dramatic_return,
   ];
 
   return {
@@ -1016,6 +1050,7 @@ export function createPlayerBDeck(): DeckConfig {
     QUEST_CARDS.scouting_mission,
     COUNTER_CARDS.dramatic_return,
     COUNTER_CARDS.graverobbing,
+    COUNTER_CARDS.mirror_shield,
   ];
 
   return {
