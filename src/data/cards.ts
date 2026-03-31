@@ -1414,6 +1414,48 @@ export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
     pileDestination: 'discard',
     targetRole: 'red_mage',
   },
+  light_mage_prayer: {
+    id: 'light_mage_prayer',
+    name: 'Light Mage Prayer',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'light',
+    description: 'Advance a Magician (level 7+) to Light Mage. High SPI and healing.',
+    requirements: [
+      { type: 'role', roleId: 'magician', description: 'Target must be a Magician' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'light_mage',
+  },
+  dark_mage_pact: {
+    id: 'dark_mage_pact',
+    name: 'Dark Mage Pact',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'dark',
+    description: 'Advance a Magician (level 7+) to Dark Mage. High INT and LCK.',
+    requirements: [
+      { type: 'role', roleId: 'magician', description: 'Target must be a Magician' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'dark_mage',
+  },
+  berserker_fury: {
+    id: 'berserker_fury',
+    name: 'Berserker Fury',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'fire',
+    description: 'Advance a Warrior (level 10+) to Berserker. Massive STR, reduced DEF.',
+    requirements: [
+      { type: 'role', roleId: 'warrior', description: 'Target must be a Warrior' },
+      { type: 'level', minLevel: 10, description: 'Target must be level 10+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'berserker',
+  },
   lumina_starweaver: {
     id: 'lumina_starweaver',
     name: 'Lumina Starweaver, Archmagus',
@@ -1536,6 +1578,7 @@ export function createPlayerADeck(): DeckConfig {
       ADVANCE_CARDS.alrecht_barkstep,
       ADVANCE_CARDS.ironhide_sentinel,
       ADVANCE_CARDS.explorers_path,
+      ADVANCE_CARDS.light_mage_prayer,
     ],
   };
 }
@@ -1583,6 +1626,8 @@ export function createPlayerBDeck(): DeckConfig {
       ADVANCE_CARDS.assassins_creed,
       ADVANCE_CARDS.lumina_starweaver,
       ADVANCE_CARDS.red_mage_oath,
+      ADVANCE_CARDS.dark_mage_pact,
+      ADVANCE_CARDS.berserker_fury,
     ],
   };
 }
