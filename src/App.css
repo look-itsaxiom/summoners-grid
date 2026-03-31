@@ -24,6 +24,33 @@
   min-width: 0;
 }
 
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  background: #16162a;
+  border: 1px solid #2a2a4a;
+  border-radius: 6px;
+}
+
+.speed-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.speed-slider {
+  width: 100px;
+  accent-color: #ffd700;
+}
+
+.speed-value {
+  font-size: 10px;
+  color: #666;
+  min-width: 40px;
+  font-family: monospace;
+}
+
 /* Responsive: stack info panel below on smaller screens */
 @media (max-width: 1100px) {
   .game-layout {

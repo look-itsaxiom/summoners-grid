@@ -31,6 +31,7 @@ function App() {
   const [collection, setCollection] = useState<SummonCard[]>([]);
   const [inspectedCard, setInspectedCard] = useState<Card | null>(null);
   const [spectatorMode, setSpectatorMode] = useState(false);
+  const [gameSpeed, setGameSpeed] = useState(500); // ms delay between AI turns
 
   const { initializeGame, decideTurnOrder, activePlayer, gameOver, phase, turnNumber, playAdvanceCard } = useGameStore();
 
@@ -97,7 +98,7 @@ function App() {
     // AI plays for Player B always, and Player A in spectator mode
     const isAITurn = activePlayer === 'playerB' || spectatorMode;
     if (isAITurn && phase === 'draw') {
-      const delay = spectatorMode ? 500 : 800;
+      const delay = spectatorMode ? gameSpeed : 800;
       const timer = setTimeout(() => {
         executeAITurn(useGameStore.getState());
       }, delay);
@@ -191,6 +192,21 @@ function App() {
       <div className="game-layout">
         <div className="board-column">
           <PhaseControls onStartGame={handleStartGame} gameStarted={true} />
+          {spectatorMode && !gameOver && (
+            <div className="speed-control">
+              <span className="speed-label">Speed:</span>
+              <input
+                type="range"
+                min={100}
+                max={1500}
+                step={100}
+                value={1600 - gameSpeed}
+                onChange={(e) => setGameSpeed(1600 - parseInt(e.target.value))}
+                className="speed-slider"
+              />
+              <span className="speed-value">{gameSpeed}ms</span>
+            </div>
+          )}
           <GameBoard
             selectedCardIndex={selectedCardIndex}
             selectedUnitId={selectedUnitId}
