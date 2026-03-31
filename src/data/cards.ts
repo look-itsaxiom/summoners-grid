@@ -6,6 +6,8 @@ import type {
   CounterCard,
   AdvanceCard,
   WeaponCard,
+  ArmorCard,
+  AccessoryCard,
 } from '../types';
 
 // ─── Weapons ──────────────────────────────────────────────────────────────────
@@ -44,6 +46,106 @@ export const WEAPONS: Record<string, WeaponCard> = {
     baseAccuracy: 90,
     statBonuses: {},
   },
+  // ─── Advanced Weapons ──────────────────────
+  flame_blade: {
+    id: 'flame_blade',
+    name: 'Flame Blade',
+    slot: 'weapon',
+    basePower: 45,
+    damageType: 'physical_melee',
+    element: 'fire',
+    range: 1,
+    baseAccuracy: 85,
+    statBonuses: { STR: 3 },
+  },
+  frost_staff: {
+    id: 'frost_staff',
+    name: 'Frost Staff',
+    slot: 'weapon',
+    basePower: 50,
+    damageType: 'magical',
+    element: 'water',
+    range: 3,
+    baseAccuracy: 85,
+    statBonuses: { INT: 3 },
+  },
+  gale_bow: {
+    id: 'gale_bow',
+    name: 'Gale Bow',
+    slot: 'weapon',
+    basePower: 40,
+    damageType: 'physical_ranged',
+    element: 'wind',
+    range: 6,
+    baseAccuracy: 92,
+    statBonuses: { ACC: 3 },
+  },
+};
+
+// ─── Armor Cards ──────────────────────────────────────────────────────────────
+
+export const ARMOR_CARDS: Record<string, ArmorCard> = {
+  leather_armor: {
+    id: 'leather_armor',
+    name: 'Leather Armor',
+    slot: 'armor',
+    statBonuses: { DEF: 3, SPD: -1 },
+    effects: [],
+  },
+  iron_plate: {
+    id: 'iron_plate',
+    name: 'Iron Plate',
+    slot: 'armor',
+    statBonuses: { DEF: 6, MDF: 2, SPD: -3 },
+    effects: [],
+  },
+  mage_robe: {
+    id: 'mage_robe',
+    name: 'Mage Robe',
+    slot: 'armor',
+    statBonuses: { MDF: 5, INT: 2 },
+    effects: [],
+  },
+  scout_cloak: {
+    id: 'scout_cloak',
+    name: 'Scout Cloak',
+    slot: 'armor',
+    statBonuses: { SPD: 3, ACC: 2 },
+    effects: [],
+  },
+};
+
+// ─── Accessory Cards ──────────────────────────────────────────────────────────
+
+export const ACCESSORY_CARDS: Record<string, AccessoryCard> = {
+  lucky_charm: {
+    id: 'lucky_charm',
+    name: 'Lucky Charm',
+    slot: 'accessory',
+    statBonuses: { LCK: 5 },
+    effects: [],
+  },
+  warriors_ring: {
+    id: 'warriors_ring',
+    name: "Warrior's Ring",
+    slot: 'accessory',
+    statBonuses: { STR: 3, END: 2 },
+    effects: [],
+  },
+  sages_pendant: {
+    id: 'sages_pendant',
+    name: "Sage's Pendant",
+    slot: 'accessory',
+    statBonuses: { INT: 3, SPI: 2 },
+    effects: [],
+  },
+  swift_boots: {
+    id: 'swift_boots',
+    name: 'Swift Boots',
+    slot: 'accessory',
+    statBonuses: { SPD: 4, ACC: 1 },
+    effects: [],
+  },
 };
 
 // ─── Summon Cards (from Play Example) ─────────────────────────────────────────
@@ -72,8 +174,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.heirloom_sword, id: '034-heirloom_sword-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.leather_armor, id: 'armor-warrior-a' },
+      accessory: { ...ACCESSORY_CARDS.warriors_ring, id: 'acc-warrior-a' },
     },
     digitalSignature: 'sig-gignen-warrior-a',
   },
@@ -99,8 +201,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.hunting_bow, id: '037-hunting_bow-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.scout_cloak, id: 'armor-scout-a' },
+      accessory: { ...ACCESSORY_CARDS.swift_boots, id: 'acc-scout-a' },
     },
     digitalSignature: 'sig-gignen-scout-a',
   },
@@ -126,8 +228,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.apprentices_wand, id: '036-apprentices_wand-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.mage_robe, id: 'armor-magician-a' },
+      accessory: { ...ACCESSORY_CARDS.sages_pendant, id: 'acc-magician-a' },
     },
     digitalSignature: 'sig-gignen-magician-a',
   },
@@ -155,8 +257,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.apprentices_wand, id: '035-apprentices_wand-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.mage_robe, id: 'armor-magician-b' },
+      accessory: { ...ACCESSORY_CARDS.lucky_charm, id: 'acc-magician-b' },
     },
     digitalSignature: 'sig-fae-magician-b',
   },
@@ -182,8 +284,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.heirloom_sword, id: '038-heirloom_sword-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.iron_plate, id: 'armor-warrior-b' },
+      accessory: { ...ACCESSORY_CARDS.warriors_ring, id: 'acc-warrior-b' },
     },
     digitalSignature: 'sig-stoneheart-warrior-b',
   },
@@ -209,8 +311,8 @@ export const SUMMON_CARDS: Record<string, SummonCard> = {
     equipment: {
       weapon: { ...WEAPONS.hunting_bow, id: '036-hunting_bow-Alpha' },
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: { ...ARMOR_CARDS.scout_cloak, id: 'armor-scout-b' },
+      accessory: { ...ACCESSORY_CARDS.swift_boots, id: 'acc-scout-b' },
     },
     digitalSignature: 'sig-wilderling-scout-b',
   },

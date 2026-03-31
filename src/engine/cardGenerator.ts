@@ -9,7 +9,7 @@ import type {
 } from '../types';
 import { STAT_KEYS } from '../types';
 import { SPECIES } from '../data/species';
-import { WEAPONS } from '../data/cards';
+import { WEAPONS, ARMOR_CARDS, ACCESSORY_CARDS } from '../data/cards';
 
 // ─── Name Generation ──────────────────────────────────────────────────────────
 
@@ -153,18 +153,36 @@ function generateGrowthRates(rarity: Rarity): GrowthRates {
 }
 
 function getDefaultWeapon(species: SpeciesId): WeaponCard {
-  // Assign default weapons based on species tendencies
+  const allWeapons = Object.values(WEAPONS);
   switch (species) {
     case 'fae':
     case 'demar':
-    case 'angar':
-      return { ...WEAPONS.apprentices_wand, id: `wpn-${++generationCounter}` };
+    case 'angar': {
+      const magicWeapons = allWeapons.filter(w => w.damageType === 'magical');
+      return { ...magicWeapons[Math.floor(Math.random() * magicWeapons.length)], id: `wpn-${++generationCounter}` };
+    }
     case 'wilderling':
-    case 'creptilis':
-      return { ...WEAPONS.hunting_bow, id: `wpn-${++generationCounter}` };
-    default:
-      return { ...WEAPONS.heirloom_sword, id: `wpn-${++generationCounter}` };
+    case 'creptilis': {
+      const rangedWeapons = allWeapons.filter(w => w.damageType === 'physical_ranged');
+      return { ...rangedWeapons[Math.floor(Math.random() * rangedWeapons.length)], id: `wpn-${++generationCounter}` };
+    }
+    default: {
+      const meleeWeapons = allWeapons.filter(w => w.damageType === 'physical_melee');
+      return { ...meleeWeapons[Math.floor(Math.random() * meleeWeapons.length)], id: `wpn-${++generationCounter}` };
+    }
   }
+}
+
+function getRandomArmor() {
+  const armors = Object.values(ARMOR_CARDS);
+  const armor = armors[Math.floor(Math.random() * armors.length)];
+  return { ...armor, id: `armor-${++generationCounter}` };
+}
+
+function getRandomAccessory() {
+  const accessories = Object.values(ACCESSORY_CARDS);
+  const acc = accessories[Math.floor(Math.random() * accessories.length)];
+  return { ...acc, id: `acc-${++generationCounter}` };
 }
 
 export function generateSummonCard(rarity?: Rarity, species?: SpeciesId): SummonCard {
@@ -191,8 +209,8 @@ export function generateSummonCard(rarity?: Rarity, species?: SpeciesId): Summon
     equipment: {
       weapon: getDefaultWeapon(cardSpecies),
       offhand: null,
-      armor: null,
-      accessory: null,
+      armor: getRandomArmor(),
+      accessory: getRandomAccessory(),
     },
     digitalSignature: `sig-${id}`,
   };
