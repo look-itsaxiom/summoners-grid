@@ -330,6 +330,250 @@ func move_summon(instance_id: String, to: Vector2i) -> void:
 	])
 
 
+# ─── Card Play System ───
+
+signal card_played(card: Dictionary)
+
+func play_card(card_index: int, target_ids: Array = []) -> void:
+	var p: Dictionary = players[active_player]
+
+	if card_index < 0 or card_index >= p["hand"].size():
+		add_log("Invalid card index.")
+		return
+
+	var card: Dictionary = p["hand"][card_index]
+	var card_type: String = card.get("card_type", "")
+
+	if card_type == "summon":
+		add_log("Use play_summon for summon cards.")
+		return
+
+	# Remove from hand
+	p["hand"].remove_at(card_index)
+
+	# Send to appropriate pile
+	var dest: String = card.get("pile_destination", "recharge")
+	if dest == "discard":
+		p["discard_pile"].append(card)
+	elif dest == "recharge":
+		p["recharge_pile"].append(card)
+
+	add_log("Played %s." % card.get("name", "?"))
+	card_played.emit(card)
+
+	# Resolve based on card type
+	var target_unit: Dictionary = {}
+	if target_ids.size() > 0:
+		var tgt_idx := _find_summon_index(target_ids[0])
+		if tgt_idx >= 0:
+			target_unit = board_summons[tgt_idx]
+
+	if card_type == "action" and not target_unit.is_empty():
+		_resolve_action_card(card, target_unit)
+	elif card_type == "quest" and not target_unit.is_empty():
+		_resolve_quest_card(card, target_unit)
+	elif card_type == "building":
+		_resolve_building_card(card)
+
+
+func _resolve_action_card(card: Dictionary, target_unit: Dictionary) -> void:
+	# Find caster (first summon matching role family requirement, or first summon)
+	var my_summons := _get_summons_for(active_player)
+	var caster: Dictionary = {}
+
+	for req in card.get("requirements", []):
+		var req_family: String = req.get("role_family", "")
+		if req_family != "":
+			for s in my_summons:
+				var role_def: Dictionary = RolesData.get_definition(s["current_role"])
+				if role_def.get("family", "") == req_family:
+					caster = s
+					break
+		if not caster.is_empty():
+			break
+
+	if caster.is_empty() and my_summons.size() > 0:
+		caster = my_summons[0]
+
+	# Resolve each effect
+	for effect in card.get("effects", []):
+		# Re-find target (may have been defeated)
+		var tgt_idx := _find_summon_index(target_unit["instance_id"])
+		if tgt_idx == -1:
+			break
+		var current_target: Dictionary = board_summons[tgt_idx]
+
+		var effect_type: String = effect.get("type", "")
+
+		if effect_type == "damage":
+			_resolve_damage_effect(card, effect, caster, current_target)
+		elif effect_type == "heal":
+			_resolve_heal_effect(effect, caster, current_target)
+		elif effect_type == "buff":
+			_resolve_buff_effect(card, effect, current_target)
+		elif effect_type == "debuff":
+			add_log("%s: %s" % [current_target["card"].get("name", "?"), effect.get("description", "")])
+		else:
+			add_log("Effect: %s" % effect.get("description", ""))
+
+
+func _resolve_damage_effect(card: Dictionary, effect: Dictionary, caster: Dictionary, target_unit: Dictionary) -> void:
+	if caster.is_empty():
+		return
+
+	var caster_stats: Dictionary = caster["calculated_stats"]
+	var target_stats: Dictionary = target_unit["calculated_stats"]
+
+	# Hit check
+	var to_hit_pct: float = Stats.calculate_to_hit(85.0, caster_stats.get("ACC", 10))
+	var hit_result: Dictionary = Stats.roll_hit(to_hit_pct)
+	add_log("To-hit: %.1f%%, rolled %d" % [to_hit_pct, hit_result["roll"]])
+
+	if not hit_result["hit"]:
+		add_log("Attack missed!")
+		return
+
+	# Crit
+	var is_crit := false
+	if effect.get("can_crit", false):
+		var crit_pct: int = Stats.calculate_crit_chance(caster_stats.get("LCK", 10))
+		var crit_result: Dictionary = Stats.roll_crit(crit_pct)
+		is_crit = crit_result["crit"]
+		if is_crit:
+			add_log("CRITICAL HIT! (%d%%)" % crit_pct)
+
+	# Damage
+	var bp: int = effect.get("base_power", 0)
+	var damage: int = 0
+	var dmg_type: String = effect.get("damage_type", "magical")
+
+	if dmg_type == "magical":
+		damage = Stats.calculate_magical_damage(caster_stats.get("INT", 10), bp, target_stats.get("MDF", 10), is_crit)
+	else:
+		damage = Stats.calculate_physical_melee_damage(caster_stats.get("STR", 10), bp, target_stats.get("DEF", 10), is_crit)
+
+	# Elemental advantage
+	var spell_element: String = effect.get("element", card.get("element", "neutral"))
+	var def_element: String = target_unit["card"].get("element", "neutral")
+	var elem_mult: float = Stats.get_element_multiplier(spell_element, def_element)
+	if elem_mult > 1.0:
+		damage = floori(damage * elem_mult)
+		add_log("Elemental advantage! x1.25")
+
+	add_log("Deals %d damage!" % damage)
+
+	var new_hp: int = target_unit["current_hp"] - damage
+	if new_hp <= 0:
+		_handle_defeat(target_unit)
+	else:
+		target_unit["current_hp"] = maxi(0, new_hp)
+		add_log("%s HP: %d/%d" % [target_unit["card"].get("name", "?"), target_unit["current_hp"], target_unit["max_hp"]])
+
+
+func _resolve_heal_effect(effect: Dictionary, caster: Dictionary, target_unit: Dictionary) -> void:
+	if caster.is_empty():
+		return
+
+	var caster_stats: Dictionary = caster["calculated_stats"]
+	var is_crit := false
+	if effect.get("can_crit", false):
+		var crit_pct: int = Stats.calculate_crit_chance(caster_stats.get("LCK", 10))
+		var crit_result: Dictionary = Stats.roll_crit(crit_pct)
+		is_crit = crit_result["crit"]
+		if is_crit:
+			add_log("Critical heal! (%d%%)" % crit_pct)
+
+	var bp: int = effect.get("base_power", 0)
+	var heal_amount: int = Stats.calculate_healing(caster_stats.get("SPI", 10), bp, is_crit)
+	var actual_heal: int = mini(target_unit["max_hp"] - target_unit["current_hp"], heal_amount)
+	target_unit["current_hp"] += actual_heal
+	add_log("%s heals %d HP (%d/%d)" % [
+		target_unit["card"].get("name", "?"), actual_heal,
+		target_unit["current_hp"], target_unit["max_hp"]
+	])
+
+
+func _resolve_buff_effect(card: Dictionary, effect: Dictionary, target_unit: Dictionary) -> void:
+	# Special: Sharpened Blade — increase weapon base power by 10
+	if card.get("id", "") == "sharpened_blade":
+		var weapon: Dictionary = target_unit["card"].get("equipment", {}).get("weapon", {})
+		if not weapon.is_empty():
+			var old_power: int = weapon.get("base_power", 0)
+			weapon["base_power"] = old_power + 10
+			add_log("%s's weapon power increased by 10! (now %d)" % [
+				target_unit["card"].get("name", "?"), weapon["base_power"]
+			])
+			return
+	add_log("%s gains: %s" % [target_unit["card"].get("name", "?"), effect.get("description", "")])
+
+
+func _resolve_quest_card(card: Dictionary, target_unit: Dictionary) -> void:
+	var rewards: Array = card.get("reward_effects", [])
+	if rewards.size() > 0:
+		var tgt_idx := _find_summon_index(target_unit["instance_id"])
+		if tgt_idx >= 0:
+			var leveled: Dictionary = SummonFactory.apply_level_up(board_summons[tgt_idx], 2)
+			add_log("%s gains 2 levels: %d → %d" % [
+				target_unit["card"].get("name", "?"), target_unit["level"], leveled["level"]
+			])
+			board_summons[tgt_idx] = leveled
+
+	# VP reward
+	var vp: int = card.get("vp_reward", 0)
+	if vp > 0:
+		players[active_player]["victory_points"] += vp
+		add_log("%s gains %d VP from quest! (%d total)" % [
+			active_player, vp, players[active_player]["victory_points"]
+		])
+		check_victory()
+
+
+func _resolve_building_card(card: Dictionary) -> void:
+	# Buildings are placed on the board — simplified for now
+	add_log("Building %s placed." % card.get("name", "?"))
+
+
+func _handle_defeat(unit: Dictionary) -> void:
+	add_log("%s is defeated!" % unit["card"].get("name", "?"))
+
+	# Remove from board
+	var idx := _find_summon_index(unit["instance_id"])
+	if idx >= 0:
+		board_summons.remove_at(idx)
+
+	# Award VP
+	var role_def: Dictionary = RolesData.get_definition(unit["current_role"])
+	var vp_gain: int = 2 if role_def.get("tier", 1) >= 2 else 1
+	players[active_player]["victory_points"] += vp_gain
+
+	# Move card to removed from play
+	players[unit["owner"]]["removed_from_play"].append(unit["card"])
+
+	add_log("%s gains %d VP! (%d total)" % [
+		active_player, vp_gain, players[active_player]["victory_points"]
+	])
+
+	summon_defeated.emit(unit)
+	check_victory()
+
+
+## Set a counter/reaction card face-down.
+func set_face_down(card_index: int) -> void:
+	var p: Dictionary = players[active_player]
+	if card_index < 0 or card_index >= p["hand"].size():
+		return
+
+	var card: Dictionary = p["hand"][card_index]
+	var ct: String = card.get("card_type", "")
+	if ct != "counter" and ct != "reaction":
+		add_log("Only counter/reaction cards can be set face-down.")
+		return
+
+	p["hand"].remove_at(card_index)
+	face_down_cards[active_player].append(card)
+	add_log("Set %s face-down." % card.get("name", "?"))
+
+
 # ─── Attack Resolution ───
 
 signal attack_resolved(result: Dictionary)
@@ -428,24 +672,7 @@ func attack_with_summon(attacker_id: String, target_id: String) -> void:
 	var defeated: bool = new_hp <= 0
 
 	if defeated:
-		add_log("%s is defeated!" % target_unit["card"].get("name", "?"))
-		board_summons.remove_at(tgt_idx)
-
-		# Award VP based on role tier
-		var role_def: Dictionary = RolesData.get_definition(target_unit["current_role"])
-		var vp_gain: int = 2 if role_def.get("tier", 1) >= 2 else 1
-		players[active_player]["victory_points"] += vp_gain
-
-		# Move card to removed from play
-		var target_owner: String = target_unit["owner"]
-		players[target_owner]["removed_from_play"].append(target_unit["card"])
-
-		add_log("%s gains %d VP! (%d total)" % [
-			active_player, vp_gain, players[active_player]["victory_points"]
-		])
-
-		summon_defeated.emit(target_unit)
-		check_victory()
+		_handle_defeat(target_unit)
 	else:
 		target_unit["current_hp"] = maxi(0, new_hp)
 		add_log("%s HP: %d/%d" % [
