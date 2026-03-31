@@ -1044,6 +1044,63 @@ export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
       targetType: 'ally_summon',
     }],
   },
+  // ─── Tier 2 Advance Cards ──────────────
+  knights_oath: {
+    id: 'knights_oath',
+    name: "Knight's Oath",
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'neutral',
+    description: 'Advance a Warrior (level 7+) to Knight. High DEF and END.',
+    requirements: [
+      { type: 'role', roleId: 'warrior', description: 'Target must be a Warrior' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'knight',
+  },
+  rogues_shadow: {
+    id: 'rogues_shadow',
+    name: "Rogue's Shadow",
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'dark',
+    description: 'Advance a Scout (level 7+) to Rogue. High SPD and LCK.',
+    requirements: [
+      { type: 'role', roleId: 'scout', description: 'Target must be a Scout' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'rogue',
+  },
+  elemental_focus: {
+    id: 'elemental_focus',
+    name: 'Elemental Focus',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'fire',
+    description: 'Advance a Magician (level 7+) to Elemental Mage. High INT.',
+    requirements: [
+      { type: 'role', roleId: 'magician', description: 'Target must be a Magician' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'elemental_mage',
+  },
+  assassins_creed: {
+    id: 'assassins_creed',
+    name: "Assassin's Creed",
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'dark',
+    description: 'Advance a Rogue (level 12+) to Assassin. Tier 3 — devastating crits.',
+    requirements: [
+      { type: 'role', roleId: 'rogue', description: 'Target must be a Rogue' },
+      { type: 'level', minLevel: 12, description: 'Target must be level 12+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'assassin',
+  },
 };
 
 // ─── Demo Deck Builder ────────────────────────────────────────────────────────
@@ -1080,6 +1137,7 @@ export function createPlayerADeck(): DeckConfig {
     mainDeck,
     advanceDeck: [
       ADVANCE_CARDS.berserker_rage,
+      ADVANCE_CARDS.knights_oath,
       ADVANCE_CARDS.alrecht_barkstep,
     ],
   };
@@ -1118,6 +1176,9 @@ export function createPlayerBDeck(): DeckConfig {
     mainDeck,
     advanceDeck: [
       ADVANCE_CARDS.shadow_pact,
+      ADVANCE_CARDS.rogues_shadow,
+      ADVANCE_CARDS.elemental_focus,
+      ADVANCE_CARDS.assassins_creed,
     ],
   };
 }
