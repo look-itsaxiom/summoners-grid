@@ -1,0 +1,110 @@
+.game-over-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.game-over-panel {
+  background: #16162a;
+  border: 2px solid #3a3a6a;
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  min-width: 400px;
+  animation: slideUp 0.5s ease-out;
+}
+
+.result-banner {
+  font-size: 36px;
+  font-weight: bold;
+  letter-spacing: 4px;
+  margin-bottom: 16px;
+}
+
+.result-banner.victory {
+  color: #ffd700;
+  text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+
+.result-banner.defeat {
+  color: #f44;
+  text-shadow: 0 0 20px rgba(255, 68, 68, 0.4);
+}
+
+.winner-name {
+  color: #ddd;
+  font-size: 20px;
+  margin: 0 0 24px;
+}
+
+.match-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 32px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 4px;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 14px;
+}
+
+.stat-value {
+  color: #ddd;
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.game-over-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.action-btn {
+  padding: 12px 28px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+}
+
+.action-btn.secondary {
+  background: #2a2a4a;
+  color: #aaa;
+  border: 1px solid #3a3a5a;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
