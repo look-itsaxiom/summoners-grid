@@ -54,6 +54,12 @@
   font-size: 15px;
 }
 
+.combat-elemental {
+  background: linear-gradient(135deg, rgba(255, 100, 0, 0.9), rgba(255, 200, 0, 0.9));
+  color: #000;
+  font-size: 14px;
+}
+
 .combat-info {
   background: rgba(68, 170, 255, 0.8);
   color: #fff;

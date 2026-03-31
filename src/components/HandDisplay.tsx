@@ -38,6 +38,7 @@ function getTargetHint(card: Card): string {
 
 function CardInHand({
   card,
+  index,
   isSelected,
   onClick,
 }: {
@@ -60,6 +61,7 @@ function CardInHand({
         <div className="card-type-badge" style={{ background: borderColor }}>
           {card.cardType.toUpperCase()}
         </div>
+        <span className="card-key-hint">{index + 1}</span>
         {summon && (
           <span className="card-rarity" style={{ color: RARITY_COLORS[summon.rarity] }}>
             {summon.rarity.charAt(0).toUpperCase()}

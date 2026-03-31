@@ -6,7 +6,7 @@ import './CombatOverlay.css';
 interface CombatEvent {
   id: number;
   message: string;
-  type: 'damage' | 'heal' | 'miss' | 'crit' | 'defeat' | 'vp' | 'info';
+  type: 'damage' | 'heal' | 'miss' | 'crit' | 'defeat' | 'vp' | 'elemental' | 'info';
   timestamp: number;
 }
 
@@ -29,6 +29,7 @@ export function CombatOverlay() {
     else if (msg.includes('CRITICAL')) type = 'crit';
     else if (msg.includes('defeated')) type = 'defeat';
     else if (msg.includes('VP') || msg.includes('wins')) type = 'vp';
+    else if (msg.includes('Elemental advantage')) type = 'elemental';
 
     // Play sound effects based on event type
     if (type === 'damage') SFX.attackHit();
@@ -37,12 +38,13 @@ export function CombatOverlay() {
     else if (type === 'crit') SFX.criticalHit();
     else if (type === 'defeat') SFX.defeat();
     else if (type === 'vp') SFX.vpGain();
+    else if (type === 'elemental') SFX.criticalHit(); // Reuse crit SFX for elemental
     else if (msg.includes('levels up')) SFX.levelUp();
     else if (msg.includes('Played ')) SFX.cardPlay();
     else if (msg.includes('activates face-down')) SFX.counterTrigger();
 
     // Only show combat-relevant events
-    if (type === 'info' && !msg.includes('attacks') && !msg.includes('levels up')) return;
+    if (type === 'info' && !msg.includes('attacks') && !msg.includes('levels up') && !msg.includes('Elemental')) return;
 
     const event: CombatEvent = {
       id: ++eventCounter,
