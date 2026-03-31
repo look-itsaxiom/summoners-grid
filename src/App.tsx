@@ -16,6 +16,7 @@ import { DeckPreview } from './components/DeckPreview';
 import { CoinFlip } from './components/CoinFlip';
 import { EffectStack } from './components/EffectStack';
 import { CardInspector } from './components/CardInspector';
+import { DNAViewer } from './components/DNAViewer';
 import { TurnBanner } from './components/TurnBanner';
 import { FloatingNumbers } from './components/FloatingNumbers';
 import type { SummonCard, Card } from './types';
@@ -184,7 +185,9 @@ function App() {
       <TurnBanner />
       <FloatingNumbers />
       {inspectedCard && (
-        <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
+        inspectedCard.cardType === 'summon' && 'dna' in inspectedCard && (inspectedCard as import('./types').SummonCard).dna
+          ? <DNAViewer card={inspectedCard as import('./types').SummonCard} onClose={() => setInspectedCard(null)} />
+          : <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
       )}
       {gameOver && (
         <GameOver onNewGame={handleStartGame} onMainMenu={handleMainMenu} />
