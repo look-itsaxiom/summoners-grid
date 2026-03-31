@@ -63,6 +63,22 @@ export function GameInfo() {
 
       <Minimap />
 
+      {log.length > 0 && (() => {
+        const damages = log
+          .map(e => e.message.match(/Deals (\d+) damage/))
+          .filter(Boolean)
+          .map(m => parseInt(m![1]));
+        const totalDmg = damages.reduce((s, d) => s + d, 0);
+        const maxHit = damages.length > 0 ? Math.max(...damages) : 0;
+        return (
+          <div className="live-stats">
+            <span>Total dmg: {totalDmg}</span>
+            <span>Max hit: {maxHit}</span>
+            <span>Crits: {log.filter(e => e.message.includes('CRITICAL')).length}</span>
+          </div>
+        );
+      })()}
+
       <div className="game-log">
         <h3>Game Log</h3>
         <div className="log-entries">
