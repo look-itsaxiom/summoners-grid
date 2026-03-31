@@ -156,6 +156,27 @@
   color: #f44;
 }
 
+/* Team indicator bar under unit */
+.unit-playerA .unit-display::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #4af;
+  border-radius: 1px;
+  margin-top: 1px;
+}
+
+.unit-playerB .unit-display::after {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: #f44;
+  border-radius: 1px;
+  margin-top: 1px;
+}
+
 /* HP color thresholds */
 .hp-bar.hp-low .hp-fill {
   background: linear-gradient(to right, #a22, #f44);

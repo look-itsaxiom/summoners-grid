@@ -692,7 +692,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
           }
 
           case 'buff': {
-            get().addLog(`${currentTarget.card.name} gains: ${effect.description}`);
+            // Special: Sharpened Blade — increase weapon base power
+            if (actionCard.id === 'sharpened_blade' && currentTarget.card.equipment.weapon) {
+              const updatedCard = {
+                ...currentTarget.card,
+                equipment: {
+                  ...currentTarget.card.equipment,
+                  weapon: {
+                    ...currentTarget.card.equipment.weapon,
+                    basePower: currentTarget.card.equipment.weapon.basePower + 10,
+                  },
+                },
+              };
+              updatedSummons = updatedSummons.map(s =>
+                s.instanceId === currentTarget.instanceId
+                  ? { ...s, card: updatedCard }
+                  : s
+              );
+              get().addLog(`${currentTarget.card.name}'s weapon power increased by 10! (now ${currentTarget.card.equipment.weapon.basePower + 10})`);
+            } else {
+              get().addLog(`${currentTarget.card.name} gains: ${effect.description}`);
+            }
             break;
           }
 
