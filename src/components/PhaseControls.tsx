@@ -5,9 +5,10 @@ import './PhaseControls.css';
 interface PhaseControlsProps {
   onStartGame: () => void;
   gameStarted: boolean;
+  spectatorMode?: boolean;
 }
 
-export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) {
+export function PhaseControls({ onStartGame, gameStarted, spectatorMode }: PhaseControlsProps) {
   const {
     phase,
     activePlayer,
@@ -21,7 +22,7 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
 
   // Auto-advance draw and level phases for human player (they have no choices)
   useEffect(() => {
-    if (!gameStarted || gameOver || activePlayer !== 'playerA') return;
+    if (!gameStarted || gameOver || activePlayer !== 'playerA' || spectatorMode) return;
 
     if (phase === 'draw') {
       const timer = setTimeout(executeDrawPhase, 400);
@@ -31,7 +32,7 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
       const timer = setTimeout(executeLevelPhase, 400);
       return () => clearTimeout(timer);
     }
-  }, [phase, activePlayer, gameStarted, gameOver, executeDrawPhase, executeLevelPhase]);
+  }, [phase, activePlayer, gameStarted, gameOver, spectatorMode, executeDrawPhase, executeLevelPhase]);
 
   if (!gameStarted) {
     return (

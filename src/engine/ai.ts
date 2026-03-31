@@ -4,7 +4,7 @@ import type {
   Position,
 } from '../types';
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
-import type { GameStore } from '../store/gameStore';
+import { useGameStore, type GameStore } from '../store/gameStore';
 
 /**
  * Basic AI opponent that:
@@ -12,112 +12,113 @@ import type { GameStore } from '../store/gameStore';
  * 2. Moves summons toward enemy
  * 3. Attacks when in range
  * 4. Plays action cards when possible
+ *
+ * Note: store methods (playSummon, attackWithSummon, etc.) use Zustand's
+ * internal get() and work correctly. But reading store properties directly
+ * gives stale values after mutations. Use fresh() to re-read current state.
  */
 export function executeAITurn(store: GameStore): void {
+  const fresh = () => useGameStore.getState();
   const player = store.activePlayer;
 
-  // Execute draw phase
+  // Execute draw phase (advances to 'level')
   store.executeDrawPhase();
 
-  // Execute level phase (store auto-advances to action phase)
-  // Note: executeLevelPhase is called by advancePhase chain
-
-  // Wait — the store advances phases automatically. After draw, it's level. After level, it's action.
-  // We need to check current phase and execute accordingly.
-  if (store.phase === 'level') {
+  // Execute level phase (advances to 'action')
+  // Must re-read state — executeDrawPhase mutated it
+  if (fresh().phase === 'level') {
     store.executeLevelPhase();
   }
 
-  // Now in action phase — execute actions one at a time, re-reading state each time
+  // Now in action phase — re-read state for each operation
   // 1. Play a summon
-  if (!store.players[player].hasPlayedTurnSummon) {
-    const hand = store.players[player].hand;
+  const state1 = fresh();
+  if (!state1.players[player].hasPlayedTurnSummon) {
+    const hand = state1.players[player].hand;
     const summonIndex = hand.findIndex(c => c.cardType === 'summon');
     if (summonIndex >= 0) {
-      const pos = findBestSummonPlacement(store, player);
+      const pos = findBestSummonPlacement(fresh(), player);
       if (pos) {
         store.playSummon(summonIndex, pos);
       }
     }
   }
 
-  if (store.gameOver) return;
+  if (fresh().gameOver) return;
 
-  // 1.4. Set counter/reaction cards face-down
-  const hand = store.players[player].hand;
-  for (let i = hand.length - 1; i >= 0; i--) {
-    const card = hand[i];
+  // 1.4. Set counter/reaction cards face-down (re-read hand after summon play)
+  const hand2 = fresh().players[player].hand;
+  for (let i = hand2.length - 1; i >= 0; i--) {
+    const card = hand2[i];
     if (card.cardType === 'counter' || card.cardType === 'reaction') {
       store.setFaceDown(i);
-      break; // Set one per turn
+      break;
     }
   }
 
-  if (store.gameOver) return;
+  if (fresh().gameOver) return;
 
   // 1.5. Try to play action cards from hand
-  tryPlayActionCards(store, player);
+  tryPlayActionCards(store, player, fresh);
 
-  if (store.gameOver) return;
+  if (fresh().gameOver) return;
 
   // 1.7. Try to play advance cards
-  const playableAdvances = store.getPlayableAdvanceCards();
+  const playableAdvances = fresh().getPlayableAdvanceCards();
   for (const entry of playableAdvances) {
     if (entry.validTargets.length > 0) {
       store.playAdvanceCard(entry.index, entry.validTargets[0].instanceId);
-      break; // One advance per turn is enough
+      break;
     }
   }
 
-  if (store.gameOver) return;
+  if (fresh().gameOver) return;
 
   // 2. Move and attack with each summon
-  const mySummonIds = store.board.summons
+  const mySummonIds = fresh().board.summons
     .filter(s => s.owner === player)
     .map(s => s.instanceId);
 
   for (const unitId of mySummonIds) {
-    if (store.gameOver) return;
+    if (fresh().gameOver) return;
 
-    // Re-read unit from current state (may have been destroyed)
-    const unit = store.board.summons.find(s => s.instanceId === unitId);
+    // Re-read from fresh state (units may have been destroyed)
+    const currentState = fresh();
+    const unit = currentState.board.summons.find(s => s.instanceId === unitId);
     if (!unit) continue;
 
-    const enemies = store.board.summons.filter(s => s.owner !== player);
+    const enemies = currentState.board.summons.filter(s => s.owner !== player);
     const weapon = unit.card.equipment.weapon;
 
     if (enemies.length === 0) {
-      // No enemies — advance toward board center
       const centerTarget: Position = {
         x: Math.floor(BOARD_WIDTH / 2),
         y: Math.floor(BOARD_HEIGHT / 2),
       };
-      const moveTarget = findMoveTowardTarget(unit, centerTarget, store);
+      const moveTarget = findMoveTowardTarget(unit, centerTarget, fresh());
       if (moveTarget) store.moveSummon(unit.instanceId, moveTarget);
       continue;
     }
 
     if (!weapon) continue;
 
-    // Find best target
     const target = findBestAttackTarget(unit, enemies);
     if (!target) continue;
 
     const dist = chebyshevDistance(unit.position, target.position);
 
     if (dist <= weapon.range && !unit.hasAttacked) {
-      // In range — attack directly
       store.attackWithSummon(unit.instanceId, target.instanceId);
     } else {
-      // Move toward target
-      const moveTarget = findMoveTowardTarget(unit, target.position, store);
+      const moveTarget = findMoveTowardTarget(unit, target.position, fresh());
       if (moveTarget) {
         store.moveSummon(unit.instanceId, moveTarget);
 
-        // Re-read unit after move and check if we can attack now
-        const movedUnit = store.board.summons.find(s => s.instanceId === unitId);
+        // Re-read after move
+        const afterMove = fresh();
+        const movedUnit = afterMove.board.summons.find(s => s.instanceId === unitId);
         if (movedUnit && !movedUnit.hasAttacked) {
-          const currentTarget = store.board.summons.find(s => s.instanceId === target.instanceId);
+          const currentTarget = afterMove.board.summons.find(s => s.instanceId === target.instanceId);
           if (currentTarget) {
             const newDist = chebyshevDistance(movedUnit.position, currentTarget.position);
             if (weapon && newDist <= weapon.range) {
@@ -129,7 +130,7 @@ export function executeAITurn(store: GameStore): void {
     }
   }
 
-  if (store.gameOver) return;
+  if (fresh().gameOver) return;
 
   // End turn
   store.endActionPhase();
@@ -227,16 +228,18 @@ function findMoveTowardTarget(unit: SummonUnit, target: Position, state: GameSto
   return bestPos;
 }
 
-function tryPlayActionCards(store: GameStore, player: PlayerId): void {
-  const hand = store.players[player].hand;
-  const mySummons = store.board.summons.filter(s => s.owner === player);
-  const enemies = store.board.summons.filter(s => s.owner !== player);
+function tryPlayActionCards(store: GameStore, player: PlayerId, fresh: () => GameStore): void {
+  // Re-read state for each priority to get current hand/board
+  const state = fresh();
+  const hand = state.players[player].hand;
+  const mySummons = state.board.summons.filter(s => s.owner === player);
+  const enemies = state.board.summons.filter(s => s.owner !== player);
 
   // Priority 1: Emergency heal if any summon below 30% HP
   const criticalSummons = mySummons.filter(s => s.currentHP / s.maxHP < 0.3);
   if (criticalSummons.length > 0) {
     for (let i = hand.length - 1; i >= 0; i--) {
-      if (store.gameOver) return;
+      if (fresh().gameOver) return;
       const card = hand[i];
       if (card.cardType !== 'action') continue;
       const ac = card as import('../types').ActionCard;
@@ -250,7 +253,7 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
 
   // Priority 2: Play buff cards on summons before they attack
   for (let i = hand.length - 1; i >= 0; i--) {
-    if (store.gameOver) return;
+    if (fresh().gameOver) return;
     const card = hand[i];
     if (card.cardType !== 'action') continue;
     const ac = card as import('../types').ActionCard;
@@ -264,7 +267,7 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
   // Priority 3: Play damage cards on lowest HP enemy
   if (enemies.length > 0) {
     for (let i = hand.length - 1; i >= 0; i--) {
-      if (store.gameOver) return;
+      if (fresh().gameOver) return;
       const card = hand[i];
       if (card.cardType !== 'action') continue;
       const ac = card as import('../types').ActionCard;
@@ -280,7 +283,7 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
   const damagedSummons = mySummons.filter(s => s.currentHP < s.maxHP);
   if (damagedSummons.length > 0) {
     for (let i = hand.length - 1; i >= 0; i--) {
-      if (store.gameOver) return;
+      if (fresh().gameOver) return;
       const card = hand[i];
       if (card.cardType !== 'action') continue;
       const ac = card as import('../types').ActionCard;
@@ -294,7 +297,7 @@ function tryPlayActionCards(store: GameStore, player: PlayerId): void {
 
   // Priority 5: Play quest cards on eligible summons
   for (let i = hand.length - 1; i >= 0; i--) {
-    if (store.gameOver) return;
+    if (fresh().gameOver) return;
     const card = hand[i];
     if (card.cardType !== 'quest') continue;
     if (mySummons.length > 0) {

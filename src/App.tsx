@@ -201,7 +201,7 @@ function App() {
       )}
       <div className="game-layout">
         <div className="board-column">
-          <PhaseControls onStartGame={handleStartGame} gameStarted={true} />
+          <PhaseControls onStartGame={handleStartGame} gameStarted={true} spectatorMode={spectatorMode} />
           {spectatorMode && !gameOver && (
             <div className="speed-control">
               <span className="speed-label">Speed:</span>
