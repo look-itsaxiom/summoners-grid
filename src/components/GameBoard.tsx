@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
 import type { TerritoryOwner, SummonUnit, BuildingUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
@@ -36,7 +36,7 @@ interface CellProps {
   onMouseLeave: () => void;
 }
 
-function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick, onMouseEnter, onMouseLeave }: CellProps) {
+const Cell = memo(function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, isValidPlacement, isCardTarget, isAdvanceTarget, onClick, onMouseEnter, onMouseLeave }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -96,7 +96,7 @@ function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, is
       </span>
     </div>
   );
-}
+});
 
 export function GameBoard({ selectedCardIndex, selectedUnitId, pendingAdvance, onSelectUnit, onClearCard }: GameBoardProps) {
   const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon, playCard, placeBuilding, getPlayableAdvanceCards } = useGameStore();
