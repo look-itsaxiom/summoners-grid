@@ -136,6 +136,19 @@
   transform: translateY(-1px);
 }
 
+.stats-bar {
+  display: flex;
+  gap: 16px;
+  font-size: 12px;
+  color: #666;
+  padding: 8px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+}
+
+.stat-win { color: #4f4; }
+.stat-loss { color: #f44; }
+
 .settings-row {
   display: flex;
   justify-content: center;

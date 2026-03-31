@@ -35,7 +35,15 @@ export function CombatOverlay() {
     if (type === 'damage') SFX.attackHit();
     else if (type === 'heal') SFX.heal();
     else if (type === 'miss') SFX.attackMiss();
-    else if (type === 'crit') SFX.criticalHit();
+    else if (type === 'crit') {
+      SFX.criticalHit();
+      // Screen shake
+      const app = document.querySelector('.app');
+      if (app) {
+        app.classList.add('screen-shake');
+        setTimeout(() => app.classList.remove('screen-shake'), 300);
+      }
+    }
     else if (type === 'defeat') SFX.defeat();
     else if (type === 'vp') SFX.vpGain();
     else if (type === 'elemental') SFX.criticalHit(); // Reuse crit SFX for elemental

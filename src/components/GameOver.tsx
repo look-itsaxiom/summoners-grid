@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useGameStore } from '../store/gameStore';
 import { SFX } from '../engine/sound';
+import { saveMatchResult } from '../engine/matchHistory';
 import './GameOver.css';
 
 interface GameOverProps {
@@ -11,9 +12,23 @@ interface GameOverProps {
 export function GameOver({ onNewGame, onMainMenu }: GameOverProps) {
   const { winner, players, turnNumber, log, board } = useGameStore();
 
+  const savedRef = useRef(false);
+
   useEffect(() => {
     if (winner === 'playerA') SFX.victory();
     else if (winner === 'playerB') SFX.gameDefeat();
+
+    // Save match result once
+    if (winner && !savedRef.current) {
+      savedRef.current = true;
+      saveMatchResult({
+        winner,
+        playerAVP: players.playerA.victoryPoints,
+        playerBVP: players.playerB.victoryPoints,
+        turns: turnNumber,
+        defeats: log.filter(e => e.message.includes('defeated')).length,
+      });
+    }
   }, [winner]);
 
   if (!winner) return null;

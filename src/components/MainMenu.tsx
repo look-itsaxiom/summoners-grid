@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { HowToPlay } from './HowToPlay';
+import { getStats } from '../engine/matchHistory';
 import './MainMenu.css';
 
 interface MainMenuProps {
@@ -10,6 +11,7 @@ interface MainMenuProps {
 
 export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
   const [showHowTo, setShowHowTo] = useState(false);
+  const stats = getStats();
 
   return (
     <div className="main-menu">
@@ -48,6 +50,16 @@ export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: Main
             How to Play
           </button>
         </div>
+
+        {stats.totalGames > 0 && (
+          <div className="stats-bar">
+            <span>{stats.totalGames} games</span>
+            <span className="stat-win">{stats.wins}W</span>
+            <span className="stat-loss">{stats.losses}L</span>
+            <span>WR: {stats.winRate}</span>
+            <span>Avg: {stats.avgTurns} turns</span>
+          </div>
+        )}
 
         <div className="settings-row">
           <label className="setting-toggle">
