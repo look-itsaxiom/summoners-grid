@@ -12,6 +12,8 @@ config/features=PackedStringArray("4.3")
 
 [autoload]
 
+CardDB="*res://scripts/data/cards.gd"
+
 SummonFactory="*res://scripts/engine/summon_factory.gd"
 
 RolesData="*res://scripts/data/roles.gd"

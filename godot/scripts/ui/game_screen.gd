@@ -17,52 +17,7 @@ var status_label: Label
 var selected_card_index: int = -1
 var selected_unit_id: String = ""
 
-# Simple test deck for first playable
-var _test_card_warrior := {
-	"id": "test_warrior", "name": "Gignen Warrior", "card_type": "summon",
-	"species": "gignen", "rarity": "common", "element": "neutral",
-	"base_stats": {
-		"STR": 10, "END": 8, "DEF": 10, "INT": 10, "SPI": 8,
-		"MDF": 6, "SPD": 7, "ACC": 7, "LCK": 10,
-	},
-	"growth_rates": {
-		"STR": "normal", "END": "gradual", "DEF": "normal", "INT": "steady",
-		"SPI": "normal", "MDF": "minimal", "SPD": "normal", "ACC": "steady", "LCK": "normal",
-	},
-	"equipment": {
-		"weapon": { "name": "Heirloom Sword", "base_power": 30, "damage_type": "physical_melee",
-			"range": 1, "base_accuracy": 90.0, "element": "neutral", "stat_bonuses": {} },
-		"offhand": {}, "armor": {}, "accessory": {},
-	},
-	"pile_destination": "removed",
-}
-
-var _test_card_mage := {
-	"id": "test_mage", "name": "Fae Magician", "card_type": "summon",
-	"species": "fae", "rarity": "common", "element": "fire",
-	"base_stats": {
-		"STR": 9, "END": 8, "DEF": 9, "INT": 9, "SPI": 8,
-		"MDF": 10, "SPD": 10, "ACC": 6, "LCK": 12,
-	},
-	"growth_rates": {
-		"STR": "minimal", "END": "normal", "DEF": "steady", "INT": "accelerated",
-		"SPI": "gradual", "MDF": "normal", "SPD": "steady", "ACC": "minimal", "LCK": "normal",
-	},
-	"equipment": {
-		"weapon": { "name": "Apprentice Wand", "base_power": 40, "damage_type": "magical",
-			"range": 3, "base_accuracy": 85.0, "element": "fire", "stat_bonuses": {} },
-		"offhand": {}, "armor": {}, "accessory": {},
-	},
-	"pile_destination": "removed",
-}
-
-var _test_action_card := {
-	"id": "healing_hands", "name": "Healing Hands", "card_type": "action",
-	"element": "light", "description": "Restore HP to an ally.",
-	"requirements": [], "pile_destination": "recharge",
-	"speed": "action", "target_type": "ally_summon",
-	"effects": [{ "type": "heal", "base_power": 40, "can_crit": true, "description": "Heal ally" }],
-}
+@onready var _cards = get_node("/root/CardDB")
 
 
 func _ready() -> void:
@@ -160,33 +115,8 @@ func _build_ui() -> void:
 
 
 func _start_test_game() -> void:
-	var deck_a := {
-		"summon_slots": [
-			{ "summon": _test_card_warrior.duplicate(true), "role_id": "warrior" },
-			{ "summon": _test_card_mage.duplicate(true), "role_id": "magician" },
-		],
-		"main_deck": [_test_action_card.duplicate(true)],
-		"advance_deck": [],
-	}
-	# Give player B different IDs
-	var b_warrior := _test_card_warrior.duplicate(true)
-	b_warrior["id"] = "test_warrior_b"
-	b_warrior["name"] = "Stoneheart Warrior"
-	b_warrior["species"] = "stoneheart"
-
-	var b_mage := _test_card_mage.duplicate(true)
-	b_mage["id"] = "test_mage_b"
-	b_mage["name"] = "Demar Sorcerer"
-	b_mage["species"] = "demar"
-
-	var deck_b := {
-		"summon_slots": [
-			{ "summon": b_warrior, "role_id": "warrior" },
-			{ "summon": b_mage, "role_id": "magician" },
-		],
-		"main_deck": [_test_action_card.duplicate(true)],
-		"advance_deck": [],
-	}
+	var deck_a: Dictionary = _cards.create_player_a_deck()
+	var deck_b: Dictionary = _cards.create_player_b_deck()
 
 	_gm.initialize_game(deck_a, deck_b)
 	_gm.decide_turn_order("playerA")
