@@ -9,6 +9,7 @@ import type {
   ArmorCard,
   AccessoryCard,
 } from '../types';
+import { generateDNA as dnaGenerate, reconstructCardFromDNA as dnaReconstructCard } from '../engine/dna';
 
 // ─── Weapons ──────────────────────────────────────────────────────────────────
 
@@ -1634,7 +1635,7 @@ export function createPlayerBDeck(): DeckConfig {
 
 // ─── Random Deck Generator ────────────────────────────────────────────────────
 
-import { generateSummonCard } from '../engine/cardGenerator';
+// generateSummonCard from cardGenerator replaced by DNA-based generation
 import type { RoleFamily } from '../types';
 
 const ROLE_FOR_SPECIES: Record<string, RoleFamily> = {
@@ -1642,10 +1643,11 @@ const ROLE_FOR_SPECIES: Record<string, RoleFamily> = {
   wilderling: 'scout', angar: 'magician', demar: 'magician', creptilis: 'scout',
 };
 
-export function createRandomDeck(): DeckConfig {
-  const summon1 = generateSummonCard('uncommon');
-  const summon2 = generateSummonCard('uncommon');
-  const summon3 = generateSummonCard('rare');
+export function createRandomDeckDNA(): DeckConfig {
+  // DNA-based generation — deterministic, blockchain-ready
+  const summon1 = dnaReconstructCard(dnaGenerate(undefined, 'uncommon'));
+  const summon2 = dnaReconstructCard(dnaGenerate(undefined, 'uncommon'));
+  const summon3 = dnaReconstructCard(dnaGenerate(undefined, 'rare'));
 
   const summonSlots = [summon1, summon2, summon3].map(s => ({
     summon: s,
@@ -1671,3 +1673,6 @@ export function createRandomDeck(): DeckConfig {
 
   return { summonSlots, mainDeck, advanceDeck };
 }
+
+// Alias — existing code uses this name
+export const createRandomDeck = createRandomDeckDNA;
