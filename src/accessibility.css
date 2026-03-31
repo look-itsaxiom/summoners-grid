@@ -1,0 +1,72 @@
+/* ─── Color Blind Accessible Mode ──────────────────────────── */
+/* Activated by adding class "colorblind-mode" to body */
+
+body.colorblind-mode .territory-playerA {
+  background: repeating-linear-gradient(
+    45deg,
+    #1a2a1a,
+    #1a2a1a 4px,
+    #2a3a2a 4px,
+    #2a3a2a 8px
+  );
+}
+
+body.colorblind-mode .territory-playerB {
+  background: repeating-linear-gradient(
+    -45deg,
+    #2a1a1a,
+    #2a1a1a 4px,
+    #3a2a2a 4px,
+    #3a2a2a 8px
+  );
+}
+
+body.colorblind-mode .unit-playerA .unit-name {
+  text-decoration: underline;
+}
+
+body.colorblind-mode .board-cell.valid-move {
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(0, 150, 255, 0.2),
+    rgba(0, 150, 255, 0.2) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+body.colorblind-mode .board-cell.valid-attack {
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 50, 50, 0.2),
+    rgba(255, 50, 50, 0.2) 2px,
+    transparent 2px,
+    transparent 4px
+  );
+}
+
+body.colorblind-mode .hp-bar.hp-low .hp-fill {
+  background: repeating-linear-gradient(
+    90deg,
+    #a22,
+    #a22 3px,
+    #f44 3px,
+    #f44 6px
+  );
+}
+
+/* High contrast outlines for element indicators */
+body.colorblind-mode .element-dot {
+  width: 8px;
+  height: 8px;
+  border: 2px solid #fff;
+}
+
+/* Pattern indicators for player ownership */
+body.colorblind-mode .player-panel.playerA {
+  border-left: 4px solid #4af;
+}
+
+body.colorblind-mode .player-panel.playerB {
+  border-left: 4px solid #f44;
+}

@@ -136,6 +136,28 @@
   transform: translateY(-1px);
 }
 
+.settings-row {
+  display: flex;
+  justify-content: center;
+}
+
+.setting-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #666;
+  cursor: pointer;
+}
+
+.setting-toggle input {
+  accent-color: #ffd700;
+}
+
+.setting-toggle:hover {
+  color: #aaa;
+}
+
 .version-info {
   color: #444;
   font-size: 11px;

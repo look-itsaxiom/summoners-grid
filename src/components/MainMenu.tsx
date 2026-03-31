@@ -49,6 +49,18 @@ export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: Main
           </button>
         </div>
 
+        <div className="settings-row">
+          <label className="setting-toggle">
+            <input
+              type="checkbox"
+              onChange={(e) => {
+                document.body.classList.toggle('colorblind-mode', e.target.checked);
+              }}
+            />
+            <span>Color Blind Mode</span>
+          </label>
+        </div>
+
         <div className="version-info">
           Alpha Build — Summoner's Grid
         </div>
