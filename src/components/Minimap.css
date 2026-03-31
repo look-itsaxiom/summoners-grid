@@ -1,0 +1,17 @@
+.minimap {
+  padding: 8px;
+  border-top: 1px solid #2a2a4a;
+}
+
+.minimap-label {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.minimap-svg {
+  display: block;
+  border: 1px solid #2a2a4a;
+  border-radius: 3px;
+  background: #1a1a2e;
+}

@@ -1,4 +1,5 @@
 import { useGameStore } from '../store/gameStore';
+import { Minimap } from './Minimap';
 import './GameInfo.css';
 
 export function GameInfo() {
@@ -59,6 +60,8 @@ export function GameInfo() {
           </div>
         </div>
       </div>
+
+      <Minimap />
 
       <div className="game-log">
         <h3>Game Log</h3>
