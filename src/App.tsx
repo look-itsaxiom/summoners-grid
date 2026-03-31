@@ -52,6 +52,37 @@ function App() {
     }
   }, [activePlayer, phase, screen, gameOver]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    if (screen !== 'game' || gameOver || activePlayer !== 'playerA') return;
+
+    const handler = (e: KeyboardEvent) => {
+      const { phase: currentPhase, endActionPhase, players } = useGameStore.getState();
+      const hand = players.playerA.hand;
+
+      // E = End Turn
+      if (e.key === 'e' || e.key === 'E') {
+        if (currentPhase === 'action') endActionPhase();
+      }
+      // Escape = deselect
+      if (e.key === 'Escape') {
+        setSelectedCardIndex(null);
+        setSelectedUnitId(null);
+        setPendingAdvance(null);
+      }
+      // 1-9 = select card from hand
+      const num = parseInt(e.key);
+      if (num >= 1 && num <= 9 && num <= hand.length && currentPhase === 'action') {
+        setSelectedCardIndex(num - 1);
+        setSelectedUnitId(null);
+        setPendingAdvance(null);
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [screen, gameOver, activePlayer]);
+
   if (screen === 'menu') {
     return (
       <MainMenu

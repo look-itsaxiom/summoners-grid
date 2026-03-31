@@ -79,6 +79,7 @@ export function PhaseControls({ onStartGame, gameStarted }: PhaseControlsProps) 
       {phase === 'action' && (
         <div className="phase-hint">
           Play cards, move, attack — then End Turn
+          <span className="keyboard-hint"> | Keys: [1-9] select card, [E] end turn, [Esc] deselect</span>
         </div>
       )}
     </div>
