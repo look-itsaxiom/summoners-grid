@@ -9,7 +9,7 @@ import { MainMenu } from './components/MainMenu';
 import { GameOver } from './components/GameOver';
 import { PackOpening } from './components/PackOpening';
 import { useGameStore } from './store/gameStore';
-import { createPlayerADeck, createPlayerBDeck } from './data/cards';
+import { createPlayerADeck, createPlayerBDeck, createRandomDeck } from './data/cards';
 import { executeAITurn } from './engine/ai';
 import { DeckPreview } from './components/DeckPreview';
 import { CoinFlip } from './components/CoinFlip';
@@ -35,6 +35,17 @@ function App() {
     const playerBDeck = createPlayerBDeck();
     initializeGame(playerADeck, playerBDeck);
     decideTurnOrder(goFirst ? 'playerA' : 'playerB');
+    setScreen('game');
+    setSelectedCardIndex(null);
+    setSelectedUnitId(null);
+    setPendingAdvance(null);
+  };
+
+  const handleRandomGame = () => {
+    const playerADeck = createRandomDeck();
+    const playerBDeck = createRandomDeck();
+    initializeGame(playerADeck, playerBDeck);
+    decideTurnOrder(Math.random() < 0.5 ? 'playerA' : 'playerB');
     setScreen('game');
     setSelectedCardIndex(null);
     setSelectedUnitId(null);
@@ -89,6 +100,7 @@ function App() {
     return (
       <MainMenu
         onStartGame={() => setScreen('deck-preview')}
+        onStartRandomGame={handleRandomGame}
         onOpenPacks={() => setScreen('packs')}
         collectionCount={collection.length}
       />

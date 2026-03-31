@@ -5,11 +5,12 @@ import './MainMenu.css';
 
 interface MainMenuProps {
   onStartGame: () => void;
+  onStartRandomGame?: () => void;
   onOpenPacks?: () => void;
   collectionCount?: number;
 }
 
-export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
+export function MainMenu({ onStartGame, onStartRandomGame, onOpenPacks, collectionCount = 0 }: MainMenuProps) {
   const [showHowTo, setShowHowTo] = useState(false);
   const stats = getStats();
 
@@ -41,6 +42,11 @@ export function MainMenu({ onStartGame, onOpenPacks, collectionCount = 0 }: Main
           <button className="play-button" onClick={onStartGame}>
             Play vs AI
           </button>
+          {onStartRandomGame && (
+            <button className="random-btn" onClick={onStartRandomGame}>
+              Random Deck Game
+            </button>
+          )}
           {onOpenPacks && (
             <button className="packs-button" onClick={onOpenPacks}>
               Open Packs {collectionCount > 0 && `(${collectionCount} collected)`}

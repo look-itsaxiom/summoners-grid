@@ -98,6 +98,24 @@
   align-items: center;
 }
 
+.random-btn {
+  padding: 12px 36px;
+  font-size: 15px;
+  font-weight: bold;
+  color: #fff;
+  background: linear-gradient(135deg, #4a2a8a, #2a4a8a);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 1px;
+}
+
+.random-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(100, 50, 200, 0.3);
+}
+
 .packs-button {
   padding: 12px 36px;
   font-size: 16px;

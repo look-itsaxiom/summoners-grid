@@ -1461,3 +1461,43 @@ export function createPlayerBDeck(): DeckConfig {
     ],
   };
 }
+
+// ─── Random Deck Generator ────────────────────────────────────────────────────
+
+import { generateSummonCard } from '../engine/cardGenerator';
+import type { RoleFamily } from '../types';
+
+const ROLE_FOR_SPECIES: Record<string, RoleFamily> = {
+  gignen: 'warrior', fae: 'magician', stoneheart: 'warrior',
+  wilderling: 'scout', angar: 'magician', demar: 'magician', creptilis: 'scout',
+};
+
+export function createRandomDeck(): DeckConfig {
+  const summon1 = generateSummonCard('uncommon');
+  const summon2 = generateSummonCard('uncommon');
+  const summon3 = generateSummonCard('rare');
+
+  const summonSlots = [summon1, summon2, summon3].map(s => ({
+    summon: s,
+    roleId: (ROLE_FOR_SPECIES[s.species] ?? 'warrior') as 'warrior' | 'magician' | 'scout',
+  }));
+
+  const allActions = Object.values(ACTION_CARDS);
+  const allQuests = Object.values(QUEST_CARDS);
+  const allBuildings = Object.values(BUILDING_CARDS);
+  const allCounters = Object.values(COUNTER_CARDS);
+
+  const shuffled = [...allActions].sort(() => Math.random() - 0.5);
+  const mainDeck: Card[] = [
+    ...shuffled.slice(0, 10),
+    ...Object.values(allQuests).slice(0, 2),
+    allBuildings[Math.floor(Math.random() * allBuildings.length)],
+    allCounters[Math.floor(Math.random() * allCounters.length)],
+  ];
+
+  const advanceDeck = Object.values(ADVANCE_CARDS)
+    .filter(() => Math.random() < 0.5)
+    .slice(0, 4);
+
+  return { summonSlots, mainDeck, advanceDeck };
+}
