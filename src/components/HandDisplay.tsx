@@ -1,5 +1,8 @@
-import type { Card } from '../types';
+import type { Card, SummonCard, ActionCard } from '../types';
+import { GROWTH_RATE_SYMBOLS } from '../types';
 import { useGameStore } from '../store/gameStore';
+import { SpeciesArt } from './SpeciesArt';
+import { RARITY_COLORS } from '../engine/cardGenerator';
 import './HandDisplay.css';
 
 interface HandDisplayProps {
@@ -20,6 +23,19 @@ function getCardTypeColor(cardType: string): string {
   }
 }
 
+function getTargetHint(card: Card): string {
+  if (card.cardType === 'summon') return 'Click territory to place';
+  if (card.cardType === 'building') return 'Click board to place';
+  if (card.cardType === 'action') {
+    const ac = card as ActionCard;
+    if (ac.targetType === 'enemy_summon') return 'Click enemy summon';
+    if (ac.targetType === 'ally_summon' || ac.targetType === 'self_summon') return 'Click ally summon';
+    return 'Click target';
+  }
+  if (card.cardType === 'quest') return 'Click ally summon';
+  return 'Click to play';
+}
+
 function CardInHand({
   card,
   isSelected,
@@ -31,6 +47,8 @@ function CardInHand({
   onClick: () => void;
 }) {
   const borderColor = getCardTypeColor(card.cardType);
+  const isSummon = card.cardType === 'summon';
+  const summon = isSummon ? card as SummonCard : null;
 
   return (
     <div
@@ -38,20 +56,43 @@ function CardInHand({
       style={{ borderColor }}
       onClick={onClick}
     >
-      <div className="card-type-badge" style={{ background: borderColor }}>
-        {card.cardType.toUpperCase()}
+      <div className="card-header-row">
+        <div className="card-type-badge" style={{ background: borderColor }}>
+          {card.cardType.toUpperCase()}
+        </div>
+        {summon && (
+          <span className="card-rarity" style={{ color: RARITY_COLORS[summon.rarity] }}>
+            {summon.rarity.charAt(0).toUpperCase()}
+          </span>
+        )}
       </div>
-      <div className="card-name">{card.name}</div>
+
+      {summon && (
+        <div className="card-art-row">
+          <SpeciesArt species={summon.species} size="small" />
+          <div className="card-name-col">
+            <div className="card-name">{card.name}</div>
+            <div className="card-species-label">{summon.species}</div>
+          </div>
+        </div>
+      )}
+      {!summon && <div className="card-name">{card.name}</div>}
+
       <div className="card-element">{card.element}</div>
       <div className="card-description">{card.description}</div>
-      {card.cardType === 'summon' && (
+
+      {summon && (
         <div className="card-stats-preview">
-          {'baseStats' in card && (
-            <span className="stat-line">
-              STR:{card.baseStats.STR} END:{card.baseStats.END} SPD:{card.baseStats.SPD}
-            </span>
-          )}
+          <div className="stat-grid-mini">
+            <span>S:{summon.baseStats.STR}<sub>{GROWTH_RATE_SYMBOLS[summon.growthRates.STR]}</sub></span>
+            <span>E:{summon.baseStats.END}<sub>{GROWTH_RATE_SYMBOLS[summon.growthRates.END]}</sub></span>
+            <span>D:{summon.baseStats.DEF}<sub>{GROWTH_RATE_SYMBOLS[summon.growthRates.DEF]}</sub></span>
+          </div>
         </div>
+      )}
+
+      {isSelected && (
+        <div className="card-target-hint">{getTargetHint(card)}</div>
       )}
     </div>
   );
@@ -76,7 +117,9 @@ export function HandDisplay({ selectedCardIndex, onSelectCard }: HandDisplayProp
     <div className="hand-display">
       <div className="hand-label">
         {activePlayer === 'playerA' ? 'Player A' : 'Player B'}'s Hand ({hand.length} cards)
-        {selectedCardIndex !== null && <span className="selected-hint"> — Click board to place</span>}
+        {selectedCardIndex !== null && (
+          <span className="selected-hint"> — {getTargetHint(hand[selectedCardIndex])}</span>
+        )}
       </div>
       <div className="hand-cards">
         {hand.map((card, i) => (
