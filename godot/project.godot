@@ -12,6 +12,8 @@ config/features=PackedStringArray("4.3")
 
 [autoload]
 
+SummonFactory="*res://scripts/engine/summon_factory.gd"
+
 RolesData="*res://scripts/data/roles.gd"
 
 SpeciesData="*res://scripts/data/species.gd"
