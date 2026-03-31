@@ -1,0 +1,739 @@
+import type {
+  SummonCard,
+  ActionCard,
+  BuildingCard,
+  QuestCard,
+  CounterCard,
+  AdvanceCard,
+  WeaponCard,
+} from '../types';
+
+// ─── Weapons ──────────────────────────────────────────────────────────────────
+
+export const WEAPONS: Record<string, WeaponCard> = {
+  heirloom_sword: {
+    id: 'heirloom_sword',
+    name: 'Heirloom Sword',
+    slot: 'weapon',
+    basePower: 30,
+    damageType: 'physical_melee',
+    element: 'neutral',
+    range: 1,
+    baseAccuracy: 90,
+    statBonuses: {},
+  },
+  apprentices_wand: {
+    id: 'apprentices_wand',
+    name: "Apprentice's Wand",
+    slot: 'weapon',
+    basePower: 30,
+    damageType: 'magical',
+    element: 'neutral',
+    range: 3,
+    baseAccuracy: 90,
+    statBonuses: {},
+  },
+  hunting_bow: {
+    id: 'hunting_bow',
+    name: 'Hunting Bow',
+    slot: 'weapon',
+    basePower: 30,
+    damageType: 'physical_ranged',
+    element: 'neutral',
+    range: 5,
+    baseAccuracy: 90,
+    statBonuses: {},
+  },
+};
+
+// ─── Summon Cards (from Play Example) ─────────────────────────────────────────
+
+export const SUMMON_CARDS: Record<string, SummonCard> = {
+  // Player A's summons
+  gignen_warrior_a: {
+    id: 'gignen_warrior_a',
+    name: 'Gignen Warrior',
+    cardType: 'summon',
+    species: 'gignen',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A versatile Gignen trained in the ways of the warrior.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 10, END: 8, DEF: 10, INT: 10,
+      SPI: 8, MDF: 6, SPD: 7, ACC: 7, LCK: 10,
+    },
+    growthRates: {
+      STR: 'gradual', END: 'normal', DEF: 'normal',
+      INT: 'steady', SPI: 'normal', MDF: 'steady',
+      SPD: 'minimal', ACC: 'steady', LCK: 'exceptional',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.heirloom_sword, id: '034-heirloom_sword-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-gignen-warrior-a',
+  },
+  gignen_scout_a: {
+    id: 'gignen_scout_a',
+    name: 'Gignen Scout',
+    cardType: 'summon',
+    species: 'gignen',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A keen-eyed Gignen with natural aptitude for scouting.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 8, END: 10, DEF: 8, INT: 8,
+      SPI: 9, MDF: 9, SPD: 12, ACC: 9, LCK: 12,
+    },
+    growthRates: {
+      STR: 'normal', END: 'gradual', DEF: 'normal',
+      INT: 'normal', SPI: 'normal', MDF: 'normal',
+      SPD: 'gradual', ACC: 'gradual', LCK: 'exceptional',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.hunting_bow, id: '037-hunting_bow-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-gignen-scout-a',
+  },
+  gignen_magician_a: {
+    id: 'gignen_magician_a',
+    name: 'Gignen Magician',
+    cardType: 'summon',
+    species: 'gignen',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A Gignen who has unlocked the secrets of magic.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 9, END: 8, DEF: 9, INT: 9,
+      SPI: 8, MDF: 10, SPD: 10, ACC: 6, LCK: 12,
+    },
+    growthRates: {
+      STR: 'gradual', END: 'normal', DEF: 'minimal',
+      INT: 'gradual', SPI: 'gradual', MDF: 'normal',
+      SPD: 'normal', ACC: 'minimal', LCK: 'exceptional',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.apprentices_wand, id: '036-apprentices_wand-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-gignen-magician-a',
+  },
+
+  // Player B's summons
+  fae_magician_b: {
+    id: 'fae_magician_b',
+    name: 'Fae Magician',
+    cardType: 'summon',
+    species: 'fae',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A graceful Fae with deep magical talent.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 8, END: 8, DEF: 10, INT: 12,
+      SPI: 13, MDF: 11, SPD: 10, ACC: 7, LCK: 8,
+    },
+    growthRates: {
+      STR: 'normal', END: 'normal', DEF: 'normal',
+      INT: 'gradual', SPI: 'gradual', MDF: 'normal',
+      SPD: 'normal', ACC: 'gradual', LCK: 'normal',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.apprentices_wand, id: '035-apprentices_wand-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-fae-magician-b',
+  },
+  stoneheart_warrior_b: {
+    id: 'stoneheart_warrior_b',
+    name: 'Stoneheart Warrior',
+    cardType: 'summon',
+    species: 'stoneheart',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A stalwart Stoneheart built for battle.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 9, END: 7, DEF: 6, INT: 1,
+      SPI: 6, MDF: 3, SPD: 4, ACC: 4, LCK: 6,
+    },
+    growthRates: {
+      STR: 'gradual', END: 'normal', DEF: 'normal',
+      INT: 'normal', SPI: 'gradual', MDF: 'accelerated',
+      SPD: 'normal', ACC: 'accelerated', LCK: 'steady',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.heirloom_sword, id: '038-heirloom_sword-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-stoneheart-warrior-b',
+  },
+  wilderling_scout_b: {
+    id: 'wilderling_scout_b',
+    name: 'Wilderling Scout',
+    cardType: 'summon',
+    species: 'wilderling',
+    rarity: 'common',
+    element: 'neutral',
+    description: 'A primal Wilderling with unmatched speed.',
+    requirements: [],
+    pileDestination: 'removed',
+    baseStats: {
+      STR: 12, END: 9, DEF: 7, INT: 6,
+      SPI: 8, MDF: 5, SPD: 16, ACC: 13, LCK: 9,
+    },
+    growthRates: {
+      STR: 'steady', END: 'normal', DEF: 'normal',
+      INT: 'accelerated', SPI: 'minimal', MDF: 'steady',
+      SPD: 'exceptional', ACC: 'exceptional', LCK: 'accelerated',
+    },
+    equipment: {
+      weapon: { ...WEAPONS.hunting_bow, id: '036-hunting_bow-Alpha' },
+      offhand: null,
+      armor: null,
+      accessory: null,
+    },
+    digitalSignature: 'sig-wilderling-scout-b',
+  },
+};
+
+// ─── Action Cards ─────────────────────────────────────────────────────────────
+
+export const ACTION_CARDS: Record<string, ActionCard> = {
+  sharpened_blade: {
+    id: 'sharpened_blade',
+    name: 'Sharpened Blade',
+    cardType: 'action',
+    speed: 'action',
+    element: 'neutral',
+    description: 'Target Weapon equipped to a Warrior based Summon gains +10 Base Power.',
+    requirements: [{ type: 'role', roleFamily: 'warrior', description: 'Requires a Warrior summon in play' }],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'sharpened_blade_buff',
+      type: 'buff',
+      description: '+10 Base Power to target weapon',
+      duration: 'permanent',
+    }],
+    targetType: 'ally_summon',
+  },
+  healing_hands: {
+    id: 'healing_hands',
+    name: 'Healing Hands',
+    cardType: 'action',
+    speed: 'action',
+    element: 'light',
+    description: 'Heal target summon. Requires a Magician summon as caster.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon in play' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'healing_hands_heal',
+      type: 'heal',
+      description: 'Heal based on caster SPI',
+      basePower: 40,
+      canCrit: true,
+      duration: 'instant',
+    }],
+    targetType: 'ally_summon',
+  },
+  rush: {
+    id: 'rush',
+    name: 'Rush',
+    cardType: 'action',
+    speed: 'action',
+    element: 'wind',
+    description: 'Double target movement speed this turn, halve DEF until end of opponent next turn.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [
+      {
+        id: 'rush_speed',
+        type: 'buff',
+        description: 'Double movement speed',
+        duration: 'end_of_turn',
+      },
+      {
+        id: 'rush_def_debuff',
+        type: 'debuff',
+        description: 'Halve DEF',
+        duration: 'end_of_next_turn',
+        statModifiers: { DEF: -0.5 },
+      },
+    ],
+    targetType: 'ally_summon',
+  },
+  blast_bolt: {
+    id: 'blast_bolt',
+    name: 'Blast Bolt',
+    cardType: 'action',
+    speed: 'action',
+    element: 'fire',
+    description: 'Deal magical fire damage to target enemy summon.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon in play' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'blast_bolt_damage',
+      type: 'damage',
+      description: 'Magical fire damage',
+      basePower: 60,
+      damageType: 'magical',
+      element: 'fire',
+      canCrit: true,
+      duration: 'instant',
+    }],
+    targetType: 'enemy_summon',
+  },
+  tempest_slash: {
+    id: 'tempest_slash',
+    name: 'Tempest Slash',
+    cardType: 'action',
+    speed: 'action',
+    element: 'wind',
+    description: '+1 movement, next basic attack deals additional physical wind damage.',
+    requirements: [],
+    pileDestination: 'discard',
+    effects: [
+      {
+        id: 'tempest_speed',
+        type: 'buff',
+        description: '+1 movement',
+        duration: 'end_of_turn',
+      },
+      {
+        id: 'tempest_damage',
+        type: 'damage',
+        description: 'Additional physical wind damage on next attack',
+        basePower: 30,
+        damageType: 'physical_melee',
+        element: 'wind',
+        canCrit: true,
+        duration: 'end_of_turn',
+      },
+    ],
+    targetType: 'ally_summon',
+  },
+  ensnare: {
+    id: 'ensnare',
+    name: 'Ensnare',
+    cardType: 'action',
+    speed: 'action',
+    element: 'earth',
+    description: 'Deal damage and potentially immobilize target. Requires Scout.',
+    requirements: [{ type: 'role', roleFamily: 'scout', description: 'Requires a Scout summon in play' }],
+    pileDestination: 'discard',
+    effects: [
+      {
+        id: 'ensnare_damage',
+        type: 'damage',
+        description: 'Physical earth damage',
+        basePower: 25,
+        damageType: 'physical_melee',
+        element: 'earth',
+        canCrit: true,
+        duration: 'instant',
+      },
+      {
+        id: 'ensnare_immobilize',
+        type: 'status',
+        description: 'Immobilize (30% save chance)',
+        duration: 'end_of_next_turn',
+      },
+    ],
+    targetType: 'enemy_summon',
+  },
+  drain_touch: {
+    id: 'drain_touch',
+    name: 'Drain Touch',
+    cardType: 'action',
+    speed: 'action',
+    element: 'dark',
+    description: 'Deal magical damage and heal caster for 50% of damage dealt.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon in play' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'drain_touch_damage',
+      type: 'damage',
+      description: 'Magical dark damage + 50% lifesteal',
+      basePower: 30,
+      damageType: 'magical',
+      element: 'dark',
+      canCrit: true,
+      duration: 'instant',
+    }],
+    targetType: 'enemy_summon',
+  },
+  dual_shot: {
+    id: 'dual_shot',
+    name: 'Dual Shot',
+    cardType: 'action',
+    speed: 'action',
+    element: 'neutral',
+    description: 'Target summon can make two basic attacks this turn.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'dual_shot_extra',
+      type: 'buff',
+      description: 'Grants additional basic attack',
+      duration: 'end_of_turn',
+    }],
+    targetType: 'ally_summon',
+  },
+  life_alchemy: {
+    id: 'life_alchemy',
+    name: 'Life Alchemy',
+    cardType: 'action',
+    speed: 'action',
+    element: 'dark',
+    description: 'Deal 25% of target ally max HP as damage, heal caster for same amount.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon in play' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'life_alchemy_transfer',
+      type: 'special',
+      description: '25% max HP transfer',
+      duration: 'instant',
+    }],
+    targetType: 'ally_summon',
+  },
+  spell_recall: {
+    id: 'spell_recall',
+    name: 'Spell Recall',
+    cardType: 'action',
+    speed: 'action',
+    element: 'neutral',
+    description: 'Return a card from your discard pile to your hand.',
+    requirements: [],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'spell_recall_effect',
+      type: 'special',
+      description: 'Retrieve card from discard',
+      duration: 'instant',
+    }],
+    targetType: 'self_summon',
+  },
+  adventurous_spirit: {
+    id: 'adventurous_spirit',
+    name: 'Adventurous Spirit',
+    cardType: 'action',
+    speed: 'action',
+    element: 'wind',
+    description: 'Target summon gains +2 movement speed this turn.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'adventurous_speed',
+      type: 'buff',
+      description: '+2 movement speed',
+      duration: 'end_of_turn',
+    }],
+    targetType: 'ally_summon',
+  },
+  magicians_sanctum: {
+    id: 'magicians_sanctum',
+    name: "Magician's Sanctum",
+    cardType: 'action',
+    speed: 'action',
+    element: 'light',
+    description: 'Add half DEF to MDF or half MDF to DEF when calculating damage. Ends if summon moves.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'sanctum_defense',
+      type: 'buff',
+      description: 'Defensive stat mixing',
+      duration: 'end_of_next_turn',
+    }],
+    targetType: 'ally_summon',
+  },
+  obliterate: {
+    id: 'obliterate',
+    name: 'Obliterate',
+    cardType: 'action',
+    speed: 'action',
+    element: 'dark',
+    description: 'Deal massive magical dark damage to target enemy summon.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon' }],
+    pileDestination: 'discard',
+    effects: [{
+      id: 'obliterate_damage',
+      type: 'damage',
+      description: 'Massive magical dark damage',
+      basePower: 100,
+      damageType: 'magical',
+      element: 'dark',
+      canCrit: true,
+      duration: 'instant',
+    }],
+    targetType: 'enemy_summon',
+  },
+  stonewardens_command: {
+    id: 'stonewardens_command',
+    name: "Stonewarden's Command",
+    cardType: 'action',
+    speed: 'action',
+    element: 'earth',
+    description: 'All allied Stoneheart summons gain +3 DEF until end of turn.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'stonewarden_buff',
+      type: 'buff',
+      description: '+3 DEF to Stoneheart allies',
+      duration: 'end_of_turn',
+      statModifiers: { DEF: 3 },
+    }],
+    targetType: 'ally_summon',
+  },
+};
+
+// ─── Building Cards ───────────────────────────────────────────────────────────
+
+export const BUILDING_CARDS: Record<string, BuildingCard> = {
+  gignen_country: {
+    id: 'gignen_country',
+    name: 'Gignen Country',
+    cardType: 'building',
+    element: 'neutral',
+    description: 'While occupying, all Gignen summons you control receive an additional level whenever they level up.',
+    requirements: [],
+    pileDestination: 'discard',
+    dimensions: { width: 3, height: 2 },
+    effects: [{
+      id: 'gignen_country_level',
+      type: 'buff',
+      description: 'Gignen summons gain double level-ups',
+      duration: 'permanent',
+    }],
+    isTrap: false,
+  },
+  dark_altar: {
+    id: 'dark_altar',
+    name: 'Dark Altar',
+    cardType: 'building',
+    element: 'dark',
+    description: 'Destroyed at end of turn, destroying all units on its spaces. If a summon is destroyed, target summon levels to 20.',
+    requirements: [],
+    pileDestination: 'discard',
+    dimensions: { width: 2, height: 2 },
+    effects: [{
+      id: 'dark_altar_destruction',
+      type: 'special',
+      description: 'Self-destructs at end of turn, destroying occupying units',
+      duration: 'end_of_turn',
+    }],
+    isTrap: false,
+  },
+};
+
+// ─── Quest Cards ──────────────────────────────────────────────────────────────
+
+export const QUEST_CARDS: Record<string, QuestCard> = {
+  nearwood_forest_expedition: {
+    id: 'nearwood_forest_expedition',
+    name: 'Nearwood Forest Expedition',
+    cardType: 'quest',
+    element: 'neutral',
+    description: 'Control a Warrior, Scout, or Magician summon under level 10. Reward: Target gains 2 levels.',
+    requirements: [],
+    pileDestination: 'recharge',
+    objective: 'Control target Warrior, Scout, or Magician based Summon whose current level is under 10.',
+    rewardEffects: [{
+      id: 'nearwood_reward',
+      type: 'buff',
+      description: 'Target Summon gains 2 levels',
+      duration: 'instant',
+    }],
+    vpReward: 0,
+    activatedBy: 'owner',
+  },
+};
+
+// ─── Counter Cards ────────────────────────────────────────────────────────────
+
+export const COUNTER_CARDS: Record<string, CounterCard> = {
+  dramatic_return: {
+    id: 'dramatic_return',
+    name: 'Dramatic Return!',
+    cardType: 'counter',
+    element: 'light',
+    description: 'When a summon is defeated, return it to its owner territory with 10% HP.',
+    requirements: [],
+    pileDestination: 'discard',
+    triggerCondition: 'summon_defeated',
+    effects: [{
+      id: 'dramatic_return_revive',
+      type: 'special',
+      description: 'Return defeated summon with 10% HP',
+      duration: 'instant',
+    }],
+  },
+  graverobbing: {
+    id: 'graverobbing',
+    name: 'Graverobbing',
+    cardType: 'counter',
+    element: 'dark',
+    description: 'Nullify Victory Point gain from defeating a summon. Discard a card to pay cost.',
+    requirements: [],
+    pileDestination: 'discard',
+    triggerCondition: 'victory_point_gained',
+    effects: [{
+      id: 'graverobbing_nullify',
+      type: 'special',
+      description: 'Nullify VP gain',
+      duration: 'instant',
+    }],
+  },
+};
+
+// ─── Advance Cards ────────────────────────────────────────────────────────────
+
+export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
+  berserker_rage: {
+    id: 'berserker_rage',
+    name: 'Berserker Rage',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'neutral',
+    description: 'Advance a Warrior (level 10+) to Berserker.',
+    requirements: [
+      { type: 'role', roleId: 'warrior', description: 'Target must be a Warrior' },
+      { type: 'level', minLevel: 10, description: 'Target must be level 10+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'berserker',
+  },
+  shadow_pact: {
+    id: 'shadow_pact',
+    name: 'Shadow Pact',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'dark',
+    description: 'Advance a Magician to Warlock.',
+    requirements: [
+      { type: 'role', roleId: 'magician', description: 'Target must be a Magician' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'warlock',
+  },
+  alrecht_barkstep: {
+    id: 'alrecht_barkstep',
+    name: 'Alrecht Barkstep, Scoutmaster',
+    cardType: 'advance',
+    advanceType: 'named_summon',
+    element: 'neutral',
+    description: 'Transform a level 10+ Scout into Alrecht Barkstep, Scoutmaster. Gains unique action "Follow Me!"',
+    requirements: [
+      { type: 'role', roleFamily: 'scout', description: 'Target must be Scout-based' },
+      { type: 'level', minLevel: 10, description: 'Target must be level 10+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'rogue',
+    namedSummonName: 'Alrecht Barkstep, Scoutmaster',
+    namedSummonStatOverrides: {},
+    namedSummonGrowthOverrides: {
+      STR: 'gradual', END: 'normal', DEF: 'steady',
+      INT: 'minimal', SPI: 'minimal', MDF: 'steady',
+      SPD: 'accelerated', ACC: 'exceptional', LCK: 'accelerated',
+    },
+    uniqueActionCards: [{
+      id: 'follow_me',
+      name: 'Follow Me!',
+      cardType: 'action',
+      speed: 'action',
+      element: 'neutral',
+      description: 'Move target ally summon to a space adjacent to the caster, ignoring immobilize.',
+      requirements: [],
+      pileDestination: 'recharge',
+      effects: [{
+        id: 'follow_me_move',
+        type: 'movement',
+        description: 'Teleport target adjacent to caster',
+        duration: 'instant',
+      }],
+      targetType: 'ally_summon',
+    }],
+  },
+};
+
+// ─── Demo Deck Builder ────────────────────────────────────────────────────────
+
+import type { DeckConfig } from '../store/gameStore';
+import type { Card } from '../types';
+
+export function createPlayerADeck(): DeckConfig {
+  const mainDeck: Card[] = [
+    ACTION_CARDS.sharpened_blade,
+    ACTION_CARDS.healing_hands,
+    ACTION_CARDS.rush,
+    ACTION_CARDS.rush, // 2 copies
+    ACTION_CARDS.tempest_slash,
+    ACTION_CARDS.adventurous_spirit,
+    BUILDING_CARDS.gignen_country,
+    QUEST_CARDS.nearwood_forest_expedition,
+    QUEST_CARDS.nearwood_forest_expedition, // 2 copies
+  ];
+
+  return {
+    summonSlots: [
+      { summon: SUMMON_CARDS.gignen_warrior_a, roleId: 'warrior' },
+      { summon: SUMMON_CARDS.gignen_scout_a, roleId: 'scout' },
+      { summon: SUMMON_CARDS.gignen_magician_a, roleId: 'magician' },
+    ],
+    mainDeck,
+    advanceDeck: [
+      ADVANCE_CARDS.berserker_rage,
+      ADVANCE_CARDS.alrecht_barkstep,
+    ],
+  };
+}
+
+export function createPlayerBDeck(): DeckConfig {
+  const mainDeck: Card[] = [
+    ACTION_CARDS.blast_bolt,
+    ACTION_CARDS.blast_bolt, // 2 copies
+    ACTION_CARDS.drain_touch,
+    ACTION_CARDS.ensnare,
+    ACTION_CARDS.dual_shot,
+    ACTION_CARDS.life_alchemy,
+    ACTION_CARDS.spell_recall,
+    ACTION_CARDS.magicians_sanctum,
+    ACTION_CARDS.obliterate,
+    ACTION_CARDS.stonewardens_command,
+    BUILDING_CARDS.dark_altar,
+    COUNTER_CARDS.dramatic_return,
+    COUNTER_CARDS.graverobbing,
+  ];
+
+  return {
+    summonSlots: [
+      { summon: SUMMON_CARDS.fae_magician_b, roleId: 'magician' },
+      { summon: SUMMON_CARDS.stoneheart_warrior_b, roleId: 'warrior' },
+      { summon: SUMMON_CARDS.wilderling_scout_b, roleId: 'scout' },
+    ],
+    mainDeck,
+    advanceDeck: [
+      ADVANCE_CARDS.shadow_pact,
+    ],
+  };
+}

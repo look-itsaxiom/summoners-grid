@@ -86,6 +86,11 @@
   border-color: #ff3232;
 }
 
+.board-cell.valid-placement {
+  background: rgba(0, 255, 100, 0.15);
+  border-color: #0f6;
+}
+
 /* Unit display */
 .unit-display {
   display: flex;

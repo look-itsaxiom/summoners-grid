@@ -1,12 +1,20 @@
 import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
 import type { Position, TerritoryOwner, SummonUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
+import { calculateMovementSpeed } from '../engine/stats';
 import './GameBoard.css';
 
 function getTerritoryOwner(y: number): TerritoryOwner {
   if (y < TERRITORY_DEPTH) return 'playerA';
   if (y >= BOARD_HEIGHT - TERRITORY_DEPTH) return 'playerB';
   return 'unclaimed';
+}
+
+interface GameBoardProps {
+  selectedCardIndex: number | null;
+  selectedUnitId: string | null;
+  onSelectUnit: (id: string | null) => void;
+  onClearCard: () => void;
 }
 
 interface CellProps {
@@ -16,10 +24,11 @@ interface CellProps {
   isSelected: boolean;
   isValidMove: boolean;
   isValidAttack: boolean;
+  isValidPlacement: boolean;
   onClick: () => void;
 }
 
-function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, onClick }: CellProps) {
+function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, isValidPlacement, onClick }: CellProps) {
   const territory = getTerritoryOwner(y);
 
   const classes = [
@@ -28,6 +37,7 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, onClick }: C
     isSelected ? 'selected' : '',
     isValidMove ? 'valid-move' : '',
     isValidAttack ? 'valid-attack' : '',
+    isValidPlacement ? 'valid-placement' : '',
     unit ? `unit-${unit.owner}` : '',
   ]
     .filter(Boolean)
@@ -37,11 +47,11 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, onClick }: C
     <div className={classes} onClick={onClick} title={`(${x},${y})`}>
       {unit && (
         <div className="unit-display">
-          <div className="unit-name">{unit.card.name.slice(0, 8)}</div>
+          <div className="unit-name">{unit.card.name.slice(0, 10)}</div>
           <div className="unit-hp">
             {unit.currentHP}/{unit.maxHP}
           </div>
-          <div className="unit-level">Lv{unit.level}</div>
+          <div className="unit-level">Lv{unit.level} {unit.currentRole}</div>
           <div className="hp-bar">
             <div
               className="hp-fill"
@@ -57,11 +67,90 @@ function Cell({ x, y, unit, isSelected, isValidMove, isValidAttack, onClick }: C
   );
 }
 
-export function GameBoard() {
-  const board = useGameStore(s => s.board);
+export function GameBoard({ selectedCardIndex, selectedUnitId, onSelectUnit, onClearCard }: GameBoardProps) {
+  const { board, activePlayer, players, phase, playSummon, moveSummon, attackWithSummon } = useGameStore();
+
+  const selectedUnit = selectedUnitId
+    ? board.summons.find(s => s.instanceId === selectedUnitId)
+    : undefined;
 
   const getUnitAt = (x: number, y: number): SummonUnit | undefined => {
     return board.summons.find(s => s.position.x === x && s.position.y === y);
+  };
+
+  const isInTerritory = (x: number, y: number): boolean => {
+    if (activePlayer === 'playerA') return y < TERRITORY_DEPTH;
+    return y >= BOARD_HEIGHT - TERRITORY_DEPTH;
+  };
+
+  const isValidPlacement = (x: number, y: number): boolean => {
+    if (selectedCardIndex === null) return false;
+    if (phase !== 'action') return false;
+    const card = players[activePlayer].hand[selectedCardIndex];
+    if (!card || card.cardType !== 'summon') return false;
+    if (!isInTerritory(x, y)) return false;
+    if (getUnitAt(x, y)) return false;
+    return true;
+  };
+
+  const isValidMove = (x: number, y: number): boolean => {
+    if (!selectedUnit) return false;
+    if (selectedUnit.owner !== activePlayer) return false;
+    if (phase !== 'action') return false;
+    const dx = Math.abs(x - selectedUnit.position.x);
+    const dy = Math.abs(y - selectedUnit.position.y);
+    const distance = Math.max(dx, dy);
+    if (distance === 0 || distance > selectedUnit.movementRemaining) return false;
+    if (getUnitAt(x, y)) return false;
+    return true;
+  };
+
+  const isValidAttackTarget = (x: number, y: number): boolean => {
+    if (!selectedUnit) return false;
+    if (selectedUnit.owner !== activePlayer) return false;
+    if (selectedUnit.hasAttacked) return false;
+    if (phase !== 'action') return false;
+    const targetUnit = getUnitAt(x, y);
+    if (!targetUnit || targetUnit.owner === activePlayer) return false;
+    const weapon = selectedUnit.card.equipment.weapon;
+    if (!weapon) return false;
+    const dx = Math.abs(x - selectedUnit.position.x);
+    const dy = Math.abs(y - selectedUnit.position.y);
+    const distance = Math.max(dx, dy);
+    return distance <= weapon.range;
+  };
+
+  const handleCellClick = (x: number, y: number) => {
+    const unitAtCell = getUnitAt(x, y);
+
+    // If we have a card selected, try to place it
+    if (selectedCardIndex !== null && isValidPlacement(x, y)) {
+      playSummon(selectedCardIndex, { x, y });
+      onClearCard();
+      return;
+    }
+
+    // If we have a unit selected and click a valid move
+    if (selectedUnit && isValidMove(x, y)) {
+      moveSummon(selectedUnit.instanceId, { x, y });
+      return;
+    }
+
+    // If we have a unit selected and click an enemy in range
+    if (selectedUnit && isValidAttackTarget(x, y)) {
+      attackWithSummon(selectedUnit.instanceId, unitAtCell!.instanceId);
+      return;
+    }
+
+    // Click a unit to select it
+    if (unitAtCell && unitAtCell.owner === activePlayer && phase === 'action') {
+      onSelectUnit(selectedUnitId === unitAtCell.instanceId ? null : unitAtCell.instanceId);
+      onClearCard();
+      return;
+    }
+
+    // Deselect
+    onSelectUnit(null);
   };
 
   // Render rows from top (y=13) to bottom (y=0) so Player B's territory is at top
@@ -76,10 +165,11 @@ export function GameBoard() {
           x={x}
           y={y}
           unit={unit}
-          isSelected={false}
-          isValidMove={false}
-          isValidAttack={false}
-          onClick={() => {}}
+          isSelected={unit?.instanceId === selectedUnitId}
+          isValidMove={isValidMove(x, y)}
+          isValidAttack={isValidAttackTarget(x, y)}
+          isValidPlacement={isValidPlacement(x, y)}
+          onClick={() => handleCellClick(x, y)}
         />
       );
     }

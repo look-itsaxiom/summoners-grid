@@ -1,0 +1,90 @@
+.phase-controls {
+  background: #16162a;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.phase-status {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.turn-label {
+  color: #888;
+  font-size: 14px;
+}
+
+.player-label {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.player-label.player-playerA {
+  color: #4af;
+}
+
+.player-label.player-playerB {
+  color: #f44;
+}
+
+.phase-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.phase-btn,
+.start-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.phase-btn:hover,
+.start-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.start-btn {
+  background: linear-gradient(135deg, #ffd700, #ff8c00);
+  color: #000;
+  font-size: 16px;
+  padding: 12px 24px;
+}
+
+.draw-btn {
+  background: #2a5a8a;
+  color: #fff;
+}
+
+.level-btn {
+  background: #5a2a8a;
+  color: #fff;
+}
+
+.end-btn {
+  background: #8a2a2a;
+  color: #fff;
+}
+
+.phase-hint {
+  color: #666;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.game-over-msg {
+  font-size: 20px;
+  font-weight: bold;
+  color: #ffd700;
+}

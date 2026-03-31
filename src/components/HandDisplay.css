@@ -1,0 +1,104 @@
+.hand-display {
+  background: #16162a;
+  border: 1px solid #2a2a4a;
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+}
+
+.hand-label {
+  font-size: 14px;
+  color: #aaa;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.selected-hint {
+  color: #ffd700;
+  font-weight: normal;
+}
+
+.hand-hint {
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+}
+
+.hand-cards {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.hand-card {
+  min-width: 140px;
+  max-width: 140px;
+  background: #1a1a30;
+  border: 2px solid #3a3a5a;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+  flex-shrink: 0;
+}
+
+.hand-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.hand-card.selected {
+  transform: translateY(-8px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.3);
+  border-color: #ffd700;
+}
+
+.card-type-badge {
+  font-size: 8px;
+  font-weight: bold;
+  color: #000;
+  padding: 1px 6px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-bottom: 4px;
+}
+
+.card-name {
+  font-size: 11px;
+  font-weight: bold;
+  color: #eee;
+  margin-bottom: 4px;
+}
+
+.card-element {
+  font-size: 9px;
+  color: #666;
+  text-transform: capitalize;
+  margin-bottom: 4px;
+}
+
+.card-description {
+  font-size: 9px;
+  color: #888;
+  line-height: 1.3;
+}
+
+.card-stats-preview {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid #2a2a4a;
+}
+
+.stat-line {
+  font-size: 8px;
+  color: #aaf;
+  font-family: monospace;
+}
+
+.hand-empty {
+  color: #555;
+  font-size: 12px;
+  font-style: italic;
+  padding: 16px;
+}

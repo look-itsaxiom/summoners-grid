@@ -10,9 +10,22 @@ import type {
   PlayerState,
   GameLogEntry,
   AdvanceCard,
+  RoleId,
 } from '../types';
-import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT } from '../types';
-import { createSummonUnit, applyLevelUp, calculateMovementSpeed } from '../engine/stats';
+import { VP_TO_WIN, HAND_LIMIT, SUMMON_DRAW_COUNT, TERRITORY_DEPTH, BOARD_HEIGHT } from '../types';
+import {
+  createSummonUnit,
+  applyLevelUp,
+  calculateMovementSpeed,
+  calculateToHit,
+  calculateCritChance,
+  calculatePhysicalMeleeDamage,
+  calculatePhysicalRangedDamage,
+  calculateMagicalDamage,
+  rollHit,
+  rollCrit,
+} from '../engine/stats';
+import { getRoleDefinition } from '../data/roles';
 
 function createEmptyPlayer(id: PlayerId): PlayerState {
   return {
@@ -87,6 +100,9 @@ export interface DeckConfig {
   advanceDeck: AdvanceCard[];
 }
 
+// Map summon card IDs to their starting roles
+let summonRoleMap: Record<string, RoleId> = {};
+
 export type GameStore = GameState & GameActions;
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -94,6 +110,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   initializeGame: (playerADeck, playerBDeck) => {
     const state = createInitialState();
+
+    // Build role map
+    summonRoleMap = {};
+    for (const slot of [...playerADeck.summonSlots, ...playerBDeck.summonSlots]) {
+      summonRoleMap[slot.summon.id] = slot.roleId;
+    }
 
     // Set up Player A
     state.players.playerA.summonSlots = playerADeck.summonSlots.map(s => s.summon);
@@ -248,11 +270,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return;
     }
 
-    const summonCard = card as SummonCard;
+    // Validate territory placement
+    if (!isInTerritory(position, activePlayer)) {
+      get().addLog('Must place summon in your own territory!');
+      return;
+    }
 
-    // Determine starting role from the summon's equipment/slot configuration
-    // For now, infer from the first role requirement or default
-    const roleId = 'warrior' as const; // This will be improved when deck config includes role
+    // Check space is not occupied
+    if (board.summons.some(s => s.position.x === position.x && s.position.y === position.y)) {
+      get().addLog('Space is already occupied!');
+      return;
+    }
+
+    const summonCard = card as SummonCard;
+    const roleId = summonRoleMap[summonCard.id] ?? 'warrior';
 
     const unit = createSummonUnit(summonCard, activePlayer, position, roleId);
 
@@ -269,7 +300,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     });
 
     get().addLog(
-      `Played ${summonCard.name} at (${position.x},${position.y}). Drew ${drawn.length} cards.`
+      `Played ${summonCard.name} (${getRoleDefinition(roleId).name}) at (${position.x},${position.y}). Drew ${drawn.length} cards.`
     );
   },
 
@@ -299,9 +330,135 @@ export const useGameStore = create<GameStore>((set, get) => ({
     get().addLog(`Moved ${unit.card.name} to (${to.x},${to.y}).`);
   },
 
-  attackWithSummon: (_attackerId, _targetId) => {
-    // Will be implemented in Phase 2
-    get().addLog('Attack system not yet implemented.');
+  attackWithSummon: (attackerId, targetId) => {
+    const { activePlayer, players, board } = get();
+    const attacker = board.summons.find(s => s.instanceId === attackerId);
+    const target = board.summons.find(s => s.instanceId === targetId);
+
+    if (!attacker || !target) {
+      get().addLog('Invalid attacker or target.');
+      return;
+    }
+
+    if (attacker.owner !== activePlayer) {
+      get().addLog('Not your summon!');
+      return;
+    }
+
+    if (attacker.hasAttacked) {
+      get().addLog(`${attacker.card.name} has already attacked this turn!`);
+      return;
+    }
+
+    if (target.owner === activePlayer) {
+      get().addLog('Cannot attack your own summon!');
+      return;
+    }
+
+    const weapon = attacker.card.equipment.weapon;
+    if (!weapon) {
+      get().addLog(`${attacker.card.name} has no weapon equipped!`);
+      return;
+    }
+
+    // Range check
+    const dx = Math.abs(attacker.position.x - target.position.x);
+    const dy = Math.abs(attacker.position.y - target.position.y);
+    const distance = Math.max(dx, dy); // Chebyshev distance
+
+    if (distance > weapon.range) {
+      get().addLog(`Target out of range! (distance: ${distance}, weapon range: ${weapon.range})`);
+      return;
+    }
+
+    // Hit calculation
+    const toHitPct = calculateToHit(weapon.baseAccuracy, attacker.calculatedStats.ACC);
+    const hitResult = rollHit(toHitPct);
+
+    get().addLog(
+      `${attacker.card.name} attacks ${target.card.name}! To-hit: ${toHitPct.toFixed(1)}%, rolled ${hitResult.roll}`
+    );
+
+    if (!hitResult.hit) {
+      get().addLog('Attack missed!');
+      const updatedSummons = board.summons.map(s =>
+        s.instanceId === attackerId ? { ...s, hasAttacked: true } : s
+      );
+      set({ board: { ...board, summons: updatedSummons } });
+      return;
+    }
+
+    // Crit calculation
+    const critPct = calculateCritChance(attacker.calculatedStats.LCK);
+    const critResult = rollCrit(critPct);
+    const isCrit = critResult.crit;
+
+    if (isCrit) {
+      get().addLog(`CRITICAL HIT! (${critPct}% chance, rolled ${critResult.roll})`);
+    }
+
+    // Damage calculation
+    let damage: number;
+    const stats = attacker.calculatedStats;
+
+    if (weapon.damageType === 'physical_melee') {
+      damage = calculatePhysicalMeleeDamage(
+        stats.STR, weapon.basePower, target.calculatedStats.DEF, isCrit
+      );
+    } else if (weapon.damageType === 'physical_ranged') {
+      damage = calculatePhysicalRangedDamage(
+        stats.STR, stats.ACC, weapon.basePower, target.calculatedStats.DEF, isCrit
+      );
+    } else {
+      damage = calculateMagicalDamage(
+        stats.INT, weapon.basePower, target.calculatedStats.MDF, isCrit
+      );
+    }
+
+    get().addLog(`Deals ${damage} damage!`);
+
+    const newHP = target.currentHP - damage;
+    const defeated = newHP <= 0;
+
+    let updatedSummons = board.summons.map(s => {
+      if (s.instanceId === attackerId) return { ...s, hasAttacked: true };
+      if (s.instanceId === targetId) return { ...s, currentHP: Math.max(0, newHP) };
+      return s;
+    });
+
+    if (defeated) {
+      get().addLog(`${target.card.name} is defeated!`);
+      updatedSummons = updatedSummons.filter(s => s.instanceId !== targetId);
+
+      // Award VP
+      const role = getRoleDefinition(target.currentRole);
+      const vpGain = role.tier >= 2 ? 2 : 1;
+      const updatedPlayers = { ...players };
+      updatedPlayers[activePlayer] = {
+        ...updatedPlayers[activePlayer],
+        victoryPoints: updatedPlayers[activePlayer].victoryPoints + vpGain,
+      };
+
+      // Move card to removed from play
+      const targetOwner = target.owner;
+      updatedPlayers[targetOwner] = {
+        ...updatedPlayers[targetOwner],
+        removedFromPlay: [...updatedPlayers[targetOwner].removedFromPlay, target.card],
+      };
+
+      get().addLog(`${activePlayer} gains ${vpGain} VP! (${updatedPlayers[activePlayer].victoryPoints} total)`);
+
+      set({
+        board: { ...board, summons: updatedSummons },
+        players: updatedPlayers,
+      });
+
+      // Check victory
+      get().checkVictory();
+    } else {
+      get().addLog(`${target.card.name} HP: ${newHP}/${target.maxHP}`);
+      set({ board: { ...board, summons: updatedSummons } });
+    }
   },
 
   playCard: (_cardIndex, _targets) => {
@@ -343,6 +500,14 @@ function shuffleArray<T>(array: T[]): void {
   for (let i = array.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [array[i], array[j]] = [array[j], array[i]];
+  }
+}
+
+function isInTerritory(pos: Position, player: PlayerId): boolean {
+  if (player === 'playerA') {
+    return pos.y < TERRITORY_DEPTH;
+  } else {
+    return pos.y >= BOARD_HEIGHT - TERRITORY_DEPTH;
   }
 }
 
