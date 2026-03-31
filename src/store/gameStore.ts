@@ -32,6 +32,7 @@ import {
   calculateHealing,
 } from '../engine/stats';
 import { getRoleDefinition } from '../data/roles';
+import { getElementalMultiplier } from '../engine/elements';
 import { canPlayCard } from '../engine/cardEffects';
 
 function createEmptyPlayer(id: PlayerId): PlayerState {
@@ -450,6 +451,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       );
     }
 
+    // Apply elemental advantage
+    const elemMult = getElementalMultiplier(weapon.element, target.card.element);
+    if (elemMult > 1.0) {
+      damage = Math.floor(damage * elemMult);
+      get().addLog(`Elemental advantage! (${weapon.element} > ${target.card.element}) x1.25`);
+    }
+
     get().addLog(`Deals ${damage} damage!`);
 
     const newHP = target.currentHP - damage;
@@ -592,6 +600,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
               damage = calculateMagicalDamage(caster.calculatedStats.INT, bp, currentTarget.calculatedStats.MDF, isCrit);
             } else {
               damage = calculatePhysicalMeleeDamage(caster.calculatedStats.STR, bp, currentTarget.calculatedStats.DEF, isCrit);
+            }
+
+            // Elemental advantage for spell effects
+            const spellElement = effect.element ?? card.element;
+            const spellElemMult = getElementalMultiplier(spellElement, currentTarget.card.element);
+            if (spellElemMult > 1.0) {
+              damage = Math.floor(damage * spellElemMult);
+              get().addLog(`Elemental advantage! x1.25`);
             }
             get().addLog(`Deals ${damage} damage!`);
 
