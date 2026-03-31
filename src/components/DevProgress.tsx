@@ -109,6 +109,23 @@ const PROGRESS: ProgressItem[] = [
   { category: 'Content', label: 'SEO meta tags', status: 'done' },
   { category: 'Content', label: 'Persistent settings', status: 'done' },
   { category: 'Content', label: 'Weapon range visualization', status: 'done' },
+
+  // ─── VISUAL POLISH (tech demo → real game look) ───
+  { category: 'Polish', label: 'Card art (CSS/SVG generated)', status: 'todo', detail: 'Unique visual identity per species, rarity glow, equipment icons' },
+  { category: 'Polish', label: 'Grid tile textures', status: 'todo', detail: 'Territory grass/stone/dark themes instead of flat colors' },
+  { category: 'Polish', label: 'Summon sprites on board', status: 'todo', detail: 'Animated idle sprites replacing text labels' },
+  { category: 'Polish', label: 'Card play animations', status: 'todo', detail: 'Cards fly from hand to board, dissolve effects' },
+  { category: 'Polish', label: 'Attack animations', status: 'todo', detail: 'Slash/projectile/spell VFX on hit' },
+  { category: 'Polish', label: 'Movement trail', status: 'todo', detail: 'Path visualization when summons move' },
+  { category: 'Polish', label: 'Level-up VFX', status: 'todo', detail: 'Glow/particle burst on level gain' },
+  { category: 'Polish', label: 'Elemental VFX', status: 'todo', detail: 'Fire/water/wind/earth/light/dark visual themes on abilities' },
+  { category: 'Polish', label: 'HP bar styling', status: 'todo', detail: 'Gradient bars, damage flash, smooth drain animation' },
+  { category: 'Polish', label: 'Card hover preview', status: 'todo', detail: 'Enlarged card tooltip on hover with full stats' },
+  { category: 'Polish', label: 'Board zoom + pan', status: 'todo', detail: 'Mouse wheel zoom, click-drag pan for large grid' },
+  { category: 'Polish', label: 'Background music', status: 'todo', detail: 'Menu theme, battle theme, victory/defeat stingers' },
+  { category: 'Polish', label: 'UI skin / theme', status: 'todo', detail: 'Consistent fantasy card-game aesthetic across all screens' },
+  { category: 'Polish', label: 'Responsive layout', status: 'todo', detail: 'Mobile-friendly board + hand layout' },
+  { category: 'Polish', label: 'Turn timer visual', status: 'todo', detail: 'Animated turn phase indicator, progress bar' },
 ];
 
 export function DevProgress() {
