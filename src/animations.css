@@ -1,0 +1,89 @@
+/* ─── Game Juice Animations ──────────────────────────────────── */
+
+/* Summon appears on board */
+@keyframes summonAppear {
+  0% { transform: scale(0) rotate(180deg); opacity: 0; }
+  50% { transform: scale(1.2) rotate(0deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+
+/* Level up flash */
+@keyframes levelUpFlash {
+  0% { box-shadow: inset 0 0 0 rgba(170, 136, 255, 0); }
+  30% { box-shadow: inset 0 0 20px rgba(170, 136, 255, 0.6); }
+  100% { box-shadow: inset 0 0 0 rgba(170, 136, 255, 0); }
+}
+
+/* VP gain pulse */
+@keyframes vpPulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* Card played from hand */
+@keyframes cardPlayed {
+  0% { transform: translateY(0) scale(1); opacity: 1; }
+  100% { transform: translateY(-20px) scale(0.8); opacity: 0; }
+}
+
+/* Defeat fade */
+@keyframes defeatFade {
+  0% { transform: scale(1); opacity: 1; filter: saturate(1); }
+  50% { transform: scale(1.1); filter: saturate(0); }
+  100% { transform: scale(0); opacity: 0; filter: saturate(0); }
+}
+
+/* Board cell pulse for valid targets */
+@keyframes cellPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Turn transition */
+@keyframes turnSlide {
+  0% { transform: translateX(-20px); opacity: 0; }
+  100% { transform: translateX(0); opacity: 1; }
+}
+
+/* Apply to components */
+.board-cell.valid-move,
+.board-cell.valid-attack,
+.board-cell.valid-placement,
+.board-cell.card-target,
+.board-cell.advance-target {
+  animation: cellPulse 1.5s ease-in-out infinite;
+}
+
+.phase-status {
+  animation: turnSlide 0.3s ease-out;
+}
+
+.vp.changed {
+  animation: vpPulse 0.5s ease-out;
+}
+
+/* Smooth board transitions */
+.unit-display {
+  transition: all 0.2s ease;
+}
+
+/* Hand card entrance */
+.hand-card {
+  animation: cardEntrance 0.3s ease-out;
+}
+
+@keyframes cardEntrance {
+  from { transform: translateY(20px) scale(0.9); opacity: 0; }
+  to { transform: translateY(0) scale(1); opacity: 1; }
+}
+
+/* Phase badge pulse */
+.phase-indicator {
+  animation: phasePulse 2s ease-in-out infinite;
+}
+
+@keyframes phasePulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
