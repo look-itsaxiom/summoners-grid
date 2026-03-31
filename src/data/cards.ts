@@ -1323,6 +1323,34 @@ export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
     pileDestination: 'discard',
     targetRole: 'assassin',
   },
+  explorers_path: {
+    id: 'explorers_path',
+    name: "Explorer's Path",
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'wind',
+    description: 'Advance a Scout (level 7+) to Explorer. Balanced SPD and END.',
+    requirements: [
+      { type: 'role', roleId: 'scout', description: 'Target must be a Scout' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'explorer',
+  },
+  red_mage_oath: {
+    id: 'red_mage_oath',
+    name: 'Red Mage Oath',
+    cardType: 'advance',
+    advanceType: 'role_change',
+    element: 'fire',
+    description: 'Advance a Magician (level 7+) to Red Mage. Balanced INT and STR.',
+    requirements: [
+      { type: 'role', roleId: 'magician', description: 'Target must be a Magician' },
+      { type: 'level', minLevel: 7, description: 'Target must be level 7+' },
+    ],
+    pileDestination: 'discard',
+    targetRole: 'red_mage',
+  },
   lumina_starweaver: {
     id: 'lumina_starweaver',
     name: 'Lumina Starweaver, Archmagus',
@@ -1444,6 +1472,7 @@ export function createPlayerADeck(): DeckConfig {
       ADVANCE_CARDS.knights_oath,
       ADVANCE_CARDS.alrecht_barkstep,
       ADVANCE_CARDS.ironhide_sentinel,
+      ADVANCE_CARDS.explorers_path,
     ],
   };
 }
@@ -1490,6 +1519,7 @@ export function createPlayerBDeck(): DeckConfig {
       ADVANCE_CARDS.elemental_focus,
       ADVANCE_CARDS.assassins_creed,
       ADVANCE_CARDS.lumina_starweaver,
+      ADVANCE_CARDS.red_mage_oath,
     ],
   };
 }
