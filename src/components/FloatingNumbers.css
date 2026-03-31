@@ -1,0 +1,55 @@
+.floating-numbers {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 120;
+}
+
+.float-num {
+  position: absolute;
+  font-weight: bold;
+  font-size: 18px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  animation: floatUp 1.2s ease-out forwards;
+  white-space: nowrap;
+}
+
+.float-damage {
+  color: #ff4444;
+  font-size: 20px;
+}
+
+.float-heal {
+  color: #44ff44;
+}
+
+.float-crit {
+  color: #ffd700;
+  font-size: 24px;
+  text-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
+.float-miss {
+  color: #888;
+  font-size: 16px;
+  font-style: italic;
+}
+
+.float-levelup {
+  color: #aa88ff;
+  font-size: 16px;
+}
+
+@keyframes floatUp {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(-10px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.8);
+  }
+}

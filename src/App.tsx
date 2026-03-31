@@ -16,6 +16,7 @@ import { CoinFlip } from './components/CoinFlip';
 import { EffectStack } from './components/EffectStack';
 import { CardInspector } from './components/CardInspector';
 import { TurnBanner } from './components/TurnBanner';
+import { FloatingNumbers } from './components/FloatingNumbers';
 import type { SummonCard, Card } from './types';
 import './App.css';
 
@@ -161,6 +162,7 @@ function App() {
       <CombatOverlay />
       <EffectStack />
       <TurnBanner />
+      <FloatingNumbers />
       {inspectedCard && (
         <CardInspector card={inspectedCard} onClose={() => setInspectedCard(null)} />
       )}
