@@ -923,6 +923,59 @@ export const COUNTER_CARDS: Record<string, CounterCard> = {
   },
 };
 
+// ─── Reaction Cards ──────────────────────────────────────────────────────────
+
+export const REACTION_CARDS: Record<string, import('../types').ReactionCard> = {
+  quick_dodge: {
+    id: 'quick_dodge',
+    name: 'Quick Dodge',
+    cardType: 'reaction',
+    element: 'wind',
+    description: 'Reduce incoming attack damage by 50%. Can be played from hand.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'dodge_reduce',
+      type: 'buff',
+      description: 'Reduce incoming damage by 50%',
+      duration: 'instant',
+    }],
+  },
+  arcane_barrier: {
+    id: 'arcane_barrier',
+    name: 'Arcane Barrier',
+    cardType: 'reaction',
+    element: 'light',
+    description: 'Absorb up to 30 magical damage this turn.',
+    requirements: [{ type: 'role', roleFamily: 'magician', description: 'Requires a Magician summon' }],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'barrier_absorb',
+      type: 'buff',
+      description: 'Absorb 30 magical damage',
+      duration: 'end_of_turn',
+    }],
+  },
+  vengeance_strike: {
+    id: 'vengeance_strike',
+    name: 'Vengeance Strike',
+    cardType: 'reaction',
+    element: 'fire',
+    description: 'When your summon takes damage, deal 20 fire damage back to the attacker.',
+    requirements: [],
+    pileDestination: 'recharge',
+    effects: [{
+      id: 'vengeance_damage',
+      type: 'damage',
+      description: '20 fire damage to attacker',
+      basePower: 20,
+      damageType: 'magical',
+      element: 'fire',
+      duration: 'instant',
+    }],
+  },
+};
+
 // ─── Advance Cards ────────────────────────────────────────────────────────────
 
 export const ADVANCE_CARDS: Record<string, AdvanceCard> = {
@@ -1015,6 +1068,7 @@ export function createPlayerADeck(): DeckConfig {
     QUEST_CARDS.trial_of_strength,
     COUNTER_CARDS.iron_will,
     COUNTER_CARDS.dramatic_return,
+    REACTION_CARDS.quick_dodge,
   ];
 
   return {
@@ -1051,6 +1105,8 @@ export function createPlayerBDeck(): DeckConfig {
     COUNTER_CARDS.dramatic_return,
     COUNTER_CARDS.graverobbing,
     COUNTER_CARDS.mirror_shield,
+    REACTION_CARDS.arcane_barrier,
+    REACTION_CARDS.vengeance_strike,
   ];
 
   return {

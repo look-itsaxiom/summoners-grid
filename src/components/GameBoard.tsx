@@ -3,6 +3,7 @@ import { BOARD_WIDTH, BOARD_HEIGHT, TERRITORY_DEPTH } from '../types';
 import type { TerritoryOwner, SummonUnit, BuildingUnit } from '../types';
 import { useGameStore } from '../store/gameStore';
 import { UnitTooltip } from './UnitTooltip';
+import { ELEMENT_COLORS } from '../engine/elements';
 import './GameBoard.css';
 
 function getTerritoryOwner(y: number): TerritoryOwner {
@@ -65,6 +66,13 @@ function Cell({ x, y, unit, building, isSelected, isValidMove, isValidAttack, is
       {unit && (
         <div className="unit-display">
           {unit.isNamedSummon && <span className="named-tag">NAMED</span>}
+          {unit.card.element !== 'neutral' && (
+            <span
+              className="element-dot"
+              style={{ background: ELEMENT_COLORS[unit.card.element] }}
+              title={unit.card.element}
+            />
+          )}
           <div className="unit-name">{displayName}</div>
           <div className="unit-hp">
             {unit.currentHP}/{unit.maxHP}

@@ -179,6 +179,16 @@
   font-weight: bold;
 }
 
+.element-dot {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
 /* Damage shake animation */
 @keyframes damageShake {
   0%, 100% { transform: translateX(0); }
