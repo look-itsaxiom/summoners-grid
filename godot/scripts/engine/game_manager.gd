@@ -543,6 +543,17 @@ func _handle_defeat(unit: Dictionary) -> void:
 	if idx >= 0:
 		board_summons.remove_at(idx)
 
+	# Check Iron Will / Dramatic Return triggers BEFORE VP award
+	check_triggers("summon_defeated", {
+		"defeated_unit": unit, "target_owner": unit["owner"],
+	})
+
+	# If Iron Will/Dramatic Return revived the unit, skip VP
+	if _find_summon_index(unit["instance_id"]) >= 0:
+		add_log("%s was saved by a counter!" % unit["card"].get("name", "?"))
+		summon_defeated.emit(unit)
+		return
+
 	# Award VP
 	var role_def: Dictionary = RolesData.get_definition(unit["current_role"])
 	var vp_gain: int = 2 if role_def.get("tier", 1) >= 2 else 1
@@ -554,6 +565,11 @@ func _handle_defeat(unit: Dictionary) -> void:
 	add_log("%s gains %d VP! (%d total)" % [
 		active_player, vp_gain, players[active_player]["victory_points"]
 	])
+
+	# Check VP triggers (Graverobbing)
+	check_triggers("victory_point_gained", {
+		"gainer": active_player, "target_owner": unit["owner"],
+	})
 
 	summon_defeated.emit(unit)
 	check_victory()
@@ -652,6 +668,87 @@ func set_face_down(card_index: int) -> void:
 	p["hand"].remove_at(card_index)
 	face_down_cards[active_player].append(card)
 	add_log("Set %s face-down." % card.get("name", "?"))
+
+
+## Check both players' face-down cards for matching triggers.
+func check_triggers(event: String, context: Dictionary = {}) -> void:
+	for player_id in ["playerA", "playerB"]:
+		var fd: Array = face_down_cards.get(player_id, [])
+		if fd.size() == 0:
+			continue
+
+		for i in range(fd.size() - 1, -1, -1):
+			var card: Dictionary = fd[i]
+			if card.get("card_type", "") != "counter":
+				continue
+			if card.get("trigger_condition", "") != event:
+				continue
+
+			# Trigger!
+			add_log("%s activates counter: %s!" % [player_id, card.get("name", "?")])
+			fd.remove_at(i)
+
+			var dest: String = card.get("pile_destination", "discard")
+			if dest == "discard":
+				players[player_id]["discard_pile"].append(card)
+
+			# Resolve by card ID
+			match card.get("id", ""):
+				"dramatic_return":
+					_trigger_dramatic_return(player_id, context)
+				"graverobbing":
+					_trigger_graverobbing(context)
+				"iron_will":
+					_trigger_iron_will(context)
+				_:
+					add_log("Counter effect: %s" % card.get("description", ""))
+			return  # Only one trigger per event
+
+
+func _trigger_dramatic_return(player_id: String, context: Dictionary) -> void:
+	var defeated_unit: Dictionary = context.get("defeated_unit", {})
+	if defeated_unit.is_empty():
+		return
+
+	var revive_hp: int = maxi(1, floori(defeated_unit.get("max_hp", 100) * 0.1))
+	var owner: String = defeated_unit.get("owner", player_id)
+
+	# Find territory position
+	var y_start: int = 0 if owner == "playerA" else BOARD_HEIGHT - TERRITORY_DEPTH
+	var y_end: int = TERRITORY_DEPTH if owner == "playerA" else BOARD_HEIGHT
+
+	for y in range(y_start, y_end):
+		for x in range(BOARD_WIDTH):
+			var pos := Vector2i(x, y)
+			if not _is_space_occupied(pos):
+				defeated_unit["current_hp"] = revive_hp
+				defeated_unit["position"] = pos
+				board_summons.append(defeated_unit)
+				add_log("%s returns at (%d,%d) with %d HP!" % [
+					defeated_unit["card"].get("name", "?"), x, y, revive_hp
+				])
+				return
+
+
+func _trigger_graverobbing(context: Dictionary) -> void:
+	var gainer: String = context.get("gainer", "")
+	if gainer == "" or not players.has(gainer):
+		return
+	if players[gainer]["victory_points"] > 0:
+		players[gainer]["victory_points"] -= 1
+		add_log("Graverobbing nullifies VP! %s back to %d VP." % [
+			gainer, players[gainer]["victory_points"]
+		])
+
+
+func _trigger_iron_will(context: Dictionary) -> void:
+	var unit: Dictionary = context.get("defeated_unit", {})
+	if unit.is_empty():
+		return
+	# Revive with 1 HP in place
+	unit["current_hp"] = 1
+	board_summons.append(unit)
+	add_log("%s survives with Iron Will! (1 HP)" % unit["card"].get("name", "?"))
 
 
 # ─── Attack Resolution ───
