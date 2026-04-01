@@ -472,6 +472,79 @@ func create_player_b_deck() -> Dictionary:
 	}
 
 
+func create_random_deck() -> Dictionary:
+	## Generate a random deck with procedural summons.
+	var species_list: Array = SpeciesData.get_all_ids()
+	var role_map := { "warrior": "warrior", "magician": "magician", "scout": "scout",
+		"gignen": "warrior", "fae": "magician", "stoneheart": "warrior",
+		"wilderling": "scout", "angar": "magician", "demar": "magician", "creptilis": "scout" }
+
+	var summon_slots: Array = []
+	for i in range(3):
+		var sp: String = species_list[randi() % species_list.size()]
+		var template: Dictionary = SpeciesData.get_template(sp)
+		var summon := _generate_random_summon(sp, template, i)
+		var role_id: String = role_map.get(sp, "warrior")
+		summon_slots.append({ "summon": summon, "role_id": role_id })
+
+	# Random selection of action cards
+	var all_action_keys: Array = ACTIONS.keys()
+	all_action_keys.shuffle()
+	var main_deck: Array = []
+	for j in range(mini(10, all_action_keys.size())):
+		main_deck.append(ACTIONS[all_action_keys[j]].duplicate(true))
+	# Add a quest and building
+	main_deck.append(QUESTS["nearwood_forest"].duplicate(true))
+	main_deck.append(BUILDINGS["healing_spring"].duplicate(true))
+
+	# Random advances
+	var all_advance_keys: Array = ADVANCES.keys()
+	all_advance_keys.shuffle()
+	var advance_deck: Array = []
+	for k in range(mini(3, all_advance_keys.size())):
+		advance_deck.append(ADVANCES[all_advance_keys[k]].duplicate(true))
+
+	return { "summon_slots": summon_slots, "main_deck": main_deck, "advance_deck": advance_deck }
+
+
+func _generate_random_summon(species_id: String, template: Dictionary, index: int) -> Dictionary:
+	var stat_ranges: Dictionary = template.get("stat_ranges", {})
+	var base_stats := {}
+	var growth_types: Array[String] = ["minimal", "steady", "normal", "gradual", "accelerated", "exceptional"]
+
+	for key in Stats.STAT_KEYS:
+		var range_val: Array = stat_ranges.get(key, [8, 12])
+		base_stats[key] = randi_range(range_val[0], range_val[1])
+
+	var growth_rates := {}
+	for key in Stats.STAT_KEYS:
+		growth_rates[key] = growth_types[randi() % growth_types.size()]
+
+	# Pick a random weapon
+	var weapon_keys: Array = WEAPONS.keys()
+	var weapon: Dictionary = WEAPONS[weapon_keys[randi() % weapon_keys.size()]].duplicate(true)
+
+	return {
+		"id": "random_%s_%d" % [species_id, index],
+		"name": "%s %s" % [template.get("name", species_id).capitalize(), ["Warrior", "Scout", "Mage"][index % 3]],
+		"card_type": "summon",
+		"species": species_id,
+		"rarity": ["common", "uncommon", "rare"][randi() % 3],
+		"element": ["neutral", "fire", "water", "earth", "wind"][randi() % 5],
+		"description": template.get("description", ""),
+		"requirements": [],
+		"pile_destination": "removed",
+		"base_stats": base_stats,
+		"growth_rates": growth_rates,
+		"equipment": {
+			"weapon": weapon,
+			"offhand": {},
+			"armor": {},
+			"accessory": {},
+		},
+	}
+
+
 func _dup_all(cards: Array) -> Array:
 	var result: Array = []
 	for c in cards:

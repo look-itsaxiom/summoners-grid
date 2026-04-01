@@ -128,8 +128,14 @@ func _build_ui() -> void:
 
 
 func _start_test_game() -> void:
-	var deck_a: Dictionary = _cards.create_player_a_deck()
-	var deck_b: Dictionary = _cards.create_player_b_deck()
+	var deck_a: Dictionary
+	var deck_b: Dictionary
+	if _gm.use_random_decks:
+		deck_a = _cards.create_random_deck()
+		deck_b = _cards.create_random_deck()
+	else:
+		deck_a = _cards.create_player_a_deck()
+		deck_b = _cards.create_player_b_deck()
 
 	_gm.initialize_game(deck_a, deck_b)
 	_gm.decide_turn_order("playerA")
