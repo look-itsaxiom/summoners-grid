@@ -402,6 +402,80 @@ var ADVANCES := {
 	},
 }
 
+# ─── Counter Cards ───
+
+var COUNTERS := {
+	"dramatic_return": {
+		"id": "dramatic_return", "name": "Dramatic Return", "card_type": "counter",
+		"element": "light", "pile_destination": "discard",
+		"description": "When a summon is defeated, return it with 10% HP.",
+		"trigger_condition": "summon_defeated",
+		"requirements": [],
+		"effects": [{ "type": "special", "description": "Return defeated summon with 10% HP" }],
+	},
+	"graverobbing": {
+		"id": "graverobbing", "name": "Graverobbing", "card_type": "counter",
+		"element": "dark", "pile_destination": "discard",
+		"description": "Nullify VP gain from defeating a summon.",
+		"trigger_condition": "victory_point_gained",
+		"requirements": [],
+		"effects": [{ "type": "special", "description": "Nullify VP gain" }],
+	},
+	"iron_will": {
+		"id": "iron_will", "name": "Iron Will", "card_type": "counter",
+		"element": "earth", "pile_destination": "discard",
+		"description": "Summon survives defeat with 1 HP instead.",
+		"trigger_condition": "summon_defeated",
+		"requirements": [],
+		"effects": [{ "type": "special", "description": "Survive defeat with 1 HP" }],
+	},
+	"mirror_shield": {
+		"id": "mirror_shield", "name": "Mirror Shield", "card_type": "counter",
+		"element": "light", "pile_destination": "discard",
+		"description": "Reflect 50% spell damage back at attacker.",
+		"trigger_condition": "summon_targeted_spell",
+		"requirements": [],
+		"effects": [{ "type": "damage", "description": "Reflect 50% spell damage" }],
+	},
+	"ambush": {
+		"id": "ambush", "name": "Ambush", "card_type": "counter",
+		"element": "neutral", "pile_destination": "discard",
+		"description": "When enemy enters your territory, deal damage.",
+		"trigger_condition": "enemy_enters_territory",
+		"requirements": [],
+		"effects": [{ "type": "damage", "base_power": 40, "damage_type": "physical_melee", "description": "Ambush damage" }],
+	},
+}
+
+# ─── Reaction Cards ───
+
+var REACTIONS := {
+	"tactical_retreat": {
+		"id": "tactical_retreat", "name": "Tactical Retreat", "card_type": "reaction",
+		"element": "wind", "pile_destination": "recharge",
+		"description": "Move a summon up to 3 spaces after being attacked.",
+		"trigger_condition": "after_attacked",
+		"requirements": [],
+		"effects": [{ "type": "movement", "description": "Move 3 spaces after attack" }],
+	},
+	"battle_meditation": {
+		"id": "battle_meditation", "name": "Battle Meditation", "card_type": "reaction",
+		"element": "neutral", "pile_destination": "recharge",
+		"description": "After dealing damage, heal caster for 25% of damage dealt.",
+		"trigger_condition": "after_dealing_damage",
+		"requirements": [],
+		"effects": [{ "type": "heal", "description": "Heal 25% of damage dealt" }],
+	},
+	"vengeful_strike": {
+		"id": "vengeful_strike", "name": "Vengeful Strike", "card_type": "reaction",
+		"element": "fire", "pile_destination": "discard",
+		"description": "When ally is defeated, nearest summon gains +50% STR this turn.",
+		"trigger_condition": "ally_defeated",
+		"requirements": [],
+		"effects": [{ "type": "buff", "description": "+50% STR after ally defeated" }],
+	},
+}
+
 
 # ─── Deck Builders ───
 
@@ -430,6 +504,9 @@ func create_player_a_deck() -> Dictionary:
 			QUESTS["nearwood_forest"],
 			QUESTS["nearwood_forest"],
 			QUESTS["trial_of_strength"],
+			COUNTERS["dramatic_return"],
+			COUNTERS["iron_will"],
+			REACTIONS["tactical_retreat"],
 		]),
 		"advance_deck": _dup_all([
 			ADVANCES["berserker_rage"],
@@ -463,6 +540,10 @@ func create_player_b_deck() -> Dictionary:
 			ACTIONS["dark_bargain"],
 			ACTIONS["healing_hands"],
 			ACTIONS["mend_wounds"],
+			COUNTERS["graverobbing"],
+			COUNTERS["ambush"],
+			REACTIONS["vengeful_strike"],
+			REACTIONS["battle_meditation"],
 		]),
 		"advance_deck": _dup_all([
 			ADVANCES["shadow_pact"],

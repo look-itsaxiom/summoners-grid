@@ -15,11 +15,11 @@ Check this file every Ralph Loop iteration.
 | 7 | Role system (27 roles, convergence) | done | done | roles.gd |
 | 8 | Species stat ranges (7 species) | done | done | species.gd |
 | 9 | VP awards (Tier 1=1VP, Tier 2+=2VP) | done | done | game_manager.gd |
-| 10 | Territory control VP | done | TODO | not yet checking territory |
+| 10 | Territory control VP | done | done | end_action_phase checks territory |
 | 11 | Turn structure (draw skip T1, hand limit) | done | done | verified in playtest |
-| 12 | Card play: Sharpened Blade +10 WP | done | TODO | effect not wired |
+| 12 | Card play: Sharpened Blade +10 WP | done | done | _resolve_buff_effect checks id |
 | 13 | Counter/reaction trigger system | done | TODO | set_face_down exists, triggers not wired |
-| 14 | Quest completion + level rewards | done | PARTIAL | quest cards exist, reward logic TBD |
+| 14 | Quest completion + level rewards | done | done | +2 levels + VP award implemented |
 | 15 | Role advancement stat recalc | done | done | headless test |
 | 16 | AI vs AI games complete without crashes | done | done | spectator mode works |
 | 17 | Effect stack (LIFO) | done | TODO | not implemented |
@@ -31,7 +31,7 @@ Check this file every Ralph Loop iteration.
 | 19 | 30 action cards | done | 23/30 | 7 missing |
 | 20 | 5 building cards | done | 2/5 | 3 missing |
 | 21 | 6 quest cards | done | 2/6 | 4 missing |
-| 22 | 5 counter + 3 reaction cards | done | TODO | data exists in web, not ported |
+| 22 | 5 counter + 3 reaction cards | done | done | 5 counters + 3 reactions in cards.gd |
 | 23 | 14 advance cards (3 named summons) | done | 7/14 | no named summons |
 | 24 | 14 equipment items | done | 3/14 | only weapons in data |
 | 25 | Procedural SFX | done | done | 12 sounds (sfx.gd) |
