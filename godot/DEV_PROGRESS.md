@@ -28,7 +28,7 @@ Check this file every Ralph Loop iteration.
 ## Content & Polish (22 items) — GAME FEATURES
 | # | Item | Web | Godot | Notes |
 |---|------|-----|-------|-------|
-| 19 | 30 action cards | done | 23/30 | 7 missing |
+| 19 | 30 action cards | done | done | 32 actions (30 base + 2 named summon) |
 | 20 | 5 building cards | done | 2/5 | 3 missing |
 | 21 | 6 quest cards | done | 2/6 | 4 missing |
 | 22 | 5 counter + 3 reaction cards | done | done | 5 counters + 3 reactions in cards.gd |
@@ -40,7 +40,7 @@ Check this file every Ralph Loop iteration.
 | 28 | Card inspector (right-click) | done | TODO | |
 | 29 | Match history | done | TODO | |
 | 30 | Save/load game | done | TODO | |
-| 31 | Screen shake on crits | done | TODO | |
+| 31 | Screen shake on crits | done | done | intensity 12 crit, 4 normal |
 | 32 | Floating damage numbers | done | done | floating_number.gd |
 | 33 | SVG minimap | done | N/A | not needed in Godot |
 | 34 | Turn transition banners | done | done | turn_banner.gd |
