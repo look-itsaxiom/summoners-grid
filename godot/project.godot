@@ -35,3 +35,8 @@ window/stretch/mode="canvas_items"
 window/size/viewport_height=720
 
 window/size/viewport_width=1280
+
+
+[rendering]
+
+environment/defaults/default_clear_color=Color(0.05, 0.05, 0.1, 1)
