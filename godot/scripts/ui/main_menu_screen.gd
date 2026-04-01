@@ -17,15 +17,16 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Center container
+	# Center wrapper — ensures VBox is truly centered
+	var wrapper := CenterContainer.new()
+	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(wrapper)
+
 	var center := VBoxContainer.new()
-	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	center.grow_vertical = Control.GROW_DIRECTION_BOTH
-	center.custom_minimum_size = Vector2(400, 500)
-	center.position = Vector2(440, 60)
+	center.custom_minimum_size = Vector2(400, 0)
 	center.add_theme_constant_override("separation", 12)
-	add_child(center)
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	wrapper.add_child(center)
 
 	# Title
 	var title := Label.new()

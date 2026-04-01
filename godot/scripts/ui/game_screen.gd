@@ -215,7 +215,9 @@ func _refresh_hand() -> void:
 			label_text += "\n[%s]" % ct.to_upper()
 
 		btn.text = label_text
-		btn.custom_minimum_size = Vector2(110, 55)
+		btn.custom_minimum_size = Vector2(120, 55)
+		btn.add_theme_font_size_override("font_size", 11)
+		btn.clip_text = false
 		btn.tooltip_text = card.get("description", card.get("name", ""))
 
 		# Color by type

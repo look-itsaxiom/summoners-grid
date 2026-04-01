@@ -54,7 +54,7 @@ func _draw() -> void:
 			elif pos in valid_moves:
 				color = color.lerp(COLOR_VALID_MOVE, 0.4)
 			elif pos in valid_placements:
-				color = color.lerp(COLOR_VALID_PLACE, 0.4)
+				color = Color(0.2, 0.7, 0.3, 1.0)  # Bright distinct green
 			elif pos == hovered_cell:
 				color = color.lerp(Color.WHITE, 0.05)
 
@@ -92,29 +92,29 @@ func _draw() -> void:
 func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var card: Dictionary = unit.get("card", {})
 	var name_str: String = card.get("name", "?")
-	if name_str.length() > 8:
-		name_str = name_str.substr(0, 8)
+	if name_str.length() > 10:
+		name_str = name_str.substr(0, 10)
 
-	var owner: String = unit["owner"]
-	var team_color := COLOR_UNIT_A if owner == "playerA" else COLOR_UNIT_B
+	var unit_owner: String = unit["owner"]
+	var team_color := COLOR_UNIT_A if unit_owner == "playerA" else COLOR_UNIT_B
 
 	# Unit background glow
 	var bg_rect := Rect2(screen_pos + Vector2(1, 1), Vector2(CELL_SIZE - 2, CELL_SIZE - 2))
-	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.12))
+	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.15))
 
-	# Name
-	var name_pos := screen_pos + Vector2(CELL_SIZE * 0.5 - name_str.length() * 2.5, 12)
+	# Name — centered in cell
+	var name_pos := screen_pos + Vector2(2, 12)
 	draw_string(ThemeDB.fallback_font, name_pos, name_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, team_color)
 
-	# HP text
+	# HP text — centered
 	var hp_str := "%d/%d" % [unit["current_hp"], unit["max_hp"]]
-	var hp_pos := screen_pos + Vector2(CELL_SIZE * 0.5 - hp_str.length() * 2.5, 24)
+	var hp_pos := screen_pos + Vector2(2, 23)
 	draw_string(ThemeDB.fallback_font, hp_pos, hp_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 9, Color(0.5, 1.0, 0.5))
 
-	# Level + role
-	var level_str := "Lv%d %s" % [unit["level"], unit["current_role"].substr(0, 6)]
-	var level_pos := screen_pos + Vector2(2, 34)
-	draw_string(ThemeDB.fallback_font, level_pos, level_str, HORIZONTAL_ALIGNMENT_LEFT, CELL_SIZE - 4, 7, Color(0.6, 0.6, 0.8))
+	# Level + role — centered
+	var level_str := "Lv%d %s" % [unit["level"], unit["current_role"].substr(0, 7)]
+	var level_pos := screen_pos + Vector2(2, 33)
+	draw_string(ThemeDB.fallback_font, level_pos, level_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 7, Color(0.6, 0.6, 0.8))
 
 	# HP bar
 	var bar_y := screen_pos.y + CELL_SIZE - 7
