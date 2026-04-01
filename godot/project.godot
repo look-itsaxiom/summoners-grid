@@ -5,7 +5,7 @@ config_version=5
 
 [application]
 
-run/main_scene="res://scenes/game.tscn"
+run/main_scene="res://scenes/menu.tscn"
 
 config/name="Summoner's Grid"
 config/features=PackedStringArray("4.3")
@@ -26,3 +26,10 @@ Stats="*res://scripts/engine/stats.gd"
 Constants="*res://scripts/engine/constants.gd"
 
 GameManager="*res://scripts/engine/game_manager.gd"
+
+
+[display]
+window/stretch/mode="canvas_items"
+window/size/viewport_height=720
+
+window/size/viewport_width=1280

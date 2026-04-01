@@ -1,0 +1,139 @@
+extends Control
+## Main menu — title screen with game mode buttons.
+
+const TITLE_COLOR := Color(1.0, 0.85, 0.0)
+const SUBTITLE_COLOR := Color(0.6, 0.6, 0.7)
+const BG_COLOR := Color(0.05, 0.05, 0.1)
+
+
+func _ready() -> void:
+	_build_ui()
+
+
+func _build_ui() -> void:
+	# Background
+	var bg := ColorRect.new()
+	bg.color = BG_COLOR
+	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(bg)
+
+	# Center container
+	var center := VBoxContainer.new()
+	center.set_anchors_preset(Control.PRESET_CENTER)
+	center.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	center.grow_vertical = Control.GROW_DIRECTION_BOTH
+	center.custom_minimum_size = Vector2(400, 500)
+	center.position = Vector2(440, 60)
+	center.add_theme_constant_override("separation", 12)
+	add_child(center)
+
+	# Title
+	var title := Label.new()
+	title.text = "Summoner's Grid"
+	title.add_theme_font_size_override("font_size", 42)
+	title.add_theme_color_override("font_color", TITLE_COLOR)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(title)
+
+	# Subtitle
+	var subtitle := Label.new()
+	subtitle.text = "TACTICAL GRID-BASED RPG CARD GAME"
+	subtitle.add_theme_font_size_override("font_size", 12)
+	subtitle.add_theme_color_override("font_color", SUBTITLE_COLOR)
+	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(subtitle)
+
+	# Spacer
+	var spacer := Control.new()
+	spacer.custom_minimum_size.y = 20
+	center.add_child(spacer)
+
+	# Feature cards
+	var features := HBoxContainer.new()
+	features.add_theme_constant_override("separation", 16)
+	features.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(features)
+	_add_feature_card(features, "3v3 Tactical Combat", "Field 3 summons on\na 12x14 grid")
+	_add_feature_card(features, "Deep Strategy", "Role advancement +\nstack-based effects")
+	_add_feature_card(features, "First to 3 VP", "Defeat summons and\ncontrol territory")
+
+	# Spacer
+	var spacer2 := Control.new()
+	spacer2.custom_minimum_size.y = 16
+	center.add_child(spacer2)
+
+	# Buttons
+	_add_button(center, "PLAY VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai)
+	_add_button(center, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai)
+
+	# Spacer
+	var spacer3 := Control.new()
+	spacer3.custom_minimum_size.y = 8
+	center.add_child(spacer3)
+
+	# Version
+	var version := Label.new()
+	version.text = "Alpha Build — Summoner's Grid (Godot)"
+	version.add_theme_font_size_override("font_size", 10)
+	version.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
+	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(version)
+
+
+func _add_feature_card(parent: HBoxContainer, title_text: String, desc_text: String) -> void:
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(170, 70)
+	parent.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	panel.add_child(vbox)
+
+	var t := Label.new()
+	t.text = title_text
+	t.add_theme_font_size_override("font_size", 13)
+	t.add_theme_color_override("font_color", TITLE_COLOR)
+	t.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(t)
+
+	var d := Label.new()
+	d.text = desc_text
+	d.add_theme_font_size_override("font_size", 10)
+	d.add_theme_color_override("font_color", SUBTITLE_COLOR)
+	d.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(d)
+
+
+func _add_button(parent: VBoxContainer, text: String, color: Color, callback: Callable) -> void:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(300, 48)
+	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	btn.add_theme_font_size_override("font_size", 18)
+	btn.pressed.connect(callback)
+
+	# Style
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_left = 8
+	style.corner_radius_bottom_right = 8
+	style.content_margin_top = 10
+	style.content_margin_bottom = 10
+	btn.add_theme_stylebox_override("normal", style)
+
+	var hover_style := style.duplicate()
+	hover_style.bg_color = color.lightened(0.15)
+	btn.add_theme_stylebox_override("hover", hover_style)
+
+	parent.add_child(btn)
+
+
+func _on_play_vs_ai() -> void:
+	get_tree().change_scene_to_file("res://scenes/game.tscn")
+
+
+func _on_watch_ai() -> void:
+	# TODO: pass spectator flag via autoload
+	get_tree().change_scene_to_file("res://scenes/game.tscn")
