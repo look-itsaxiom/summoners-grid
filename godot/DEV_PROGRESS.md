@@ -33,13 +33,13 @@ Check this file every Ralph Loop iteration.
 | 21 | 6 quest cards | done | done | 6 quests with VP + buff rewards |
 | 22 | 5 counter + 3 reaction cards | done | done | 5 counters + 3 reactions in cards.gd |
 | 23 | 14 advance cards (3 named summons) | done | done | 14 advances incl 3 named summons |
-| 24 | 14 equipment items | done | 3/14 | only weapons in data |
+| 24 | 14 equipment items | done | done | 6 wpn + 4 armor + 4 acc |
 | 25 | Procedural SFX | done | done | 12 sounds (sfx.gd) |
 | 26 | Keyboard shortcuts | done | done | 1-9, E, Esc |
 | 27 | Color blind mode | done | TODO | |
 | 28 | Card inspector (right-click) | done | TODO | |
 | 29 | Match history | done | TODO | |
-| 30 | Save/load game | done | TODO | |
+| 30 | Save/load game | done | done | JSON to user://savegame.json |
 | 31 | Screen shake on crits | done | done | intensity 12 crit, 4 normal |
 | 32 | Floating damage numbers | done | done | floating_number.gd |
 | 33 | SVG minimap | done | N/A | not needed in Godot |
