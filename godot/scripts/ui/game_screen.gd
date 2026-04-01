@@ -20,6 +20,9 @@ var selected_unit_id: String = ""
 @onready var _cards = get_node("/root/CardDB")
 
 
+var FloatingNumber = preload("res://scripts/ui/floating_number.gd")
+
+
 func _ready() -> void:
 	_build_ui()
 	_start_test_game()
@@ -27,6 +30,8 @@ func _ready() -> void:
 	_gm.log_added.connect(_on_log_added)
 	_gm.phase_changed.connect(_on_phase_changed)
 	_gm.game_over_signal.connect(_on_game_over)
+	_gm.attack_resolved.connect(_on_attack_resolved)
+	_gm.summon_defeated.connect(_on_summon_defeated)
 
 
 func _build_ui() -> void:
@@ -632,3 +637,84 @@ func _find_unit(instance_id: String) -> Dictionary:
 		if s["instance_id"] == instance_id:
 			return s
 	return {}
+
+
+# ─── Keyboard Shortcuts ───
+
+func _unhandled_input(event: InputEvent) -> void:
+	if _gm.is_game_over or _gm.phase != "action":
+		return
+	if _gm.active_player != "playerA":
+		return
+
+	if event is InputEventKey and event.pressed:
+		var key: Key = event.keycode
+
+		# E = End Turn
+		if key == KEY_E:
+			_on_end_turn()
+			get_viewport().set_input_as_handled()
+
+		# Escape = Deselect
+		elif key == KEY_ESCAPE:
+			selected_card_index = -1
+			selected_unit_id = ""
+			board.clear_highlights()
+			status_label.text = "Select a card or unit."
+			_refresh_hand()
+			get_viewport().set_input_as_handled()
+
+		# 1-9 = Select hand card
+		elif key >= KEY_1 and key <= KEY_9:
+			var idx: int = key - KEY_1
+			var hand: Array = _gm.players["playerA"]["hand"]
+			if idx < hand.size():
+				_on_card_selected(idx)
+				get_viewport().set_input_as_handled()
+
+
+# ─── Floating Numbers ───
+
+func _on_attack_resolved(result: Dictionary) -> void:
+	if not result.get("hit", false):
+		# Show "MISS" at target position
+		var target_id: String = result.get("target", "")
+		var target_unit = _find_unit(target_id)
+		if not target_unit.is_empty():
+			var screen_pos := _unit_screen_pos(target_unit)
+			FloatingNumber.spawn(self, "MISS", screen_pos, Color(0.6, 0.6, 0.6))
+		return
+
+	var damage: int = result.get("damage", 0)
+	var is_crit: bool = result.get("crit", false)
+	var target_id: String = result.get("target", "")
+	var target_unit = _find_unit(target_id)
+
+	if damage > 0:
+		var screen_pos: Vector2
+		if not target_unit.is_empty():
+			screen_pos = _unit_screen_pos(target_unit)
+		else:
+			# Unit might have been defeated — use last known position from log
+			screen_pos = Vector2(640, 360)
+
+		var color := Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0)
+		FloatingNumber.spawn(self, str(damage), screen_pos, color, is_crit)
+
+	board.queue_redraw()
+
+
+func _on_summon_defeated(unit: Dictionary) -> void:
+	var screen_pos := _unit_screen_pos(unit)
+	FloatingNumber.spawn(self, "DEFEATED", screen_pos + Vector2(0, -15), Color(1.0, 0.3, 0.3), true)
+
+
+func _unit_screen_pos(unit: Dictionary) -> Vector2:
+	# Convert grid position to approximate screen position on the board
+	var pos: Vector2i = unit.get("position", Vector2i(6, 7))
+	var offset := Vector2(28, 12)  # Must match board.gd offset
+	var cell_size := 48  # Must match board.gd CELL_SIZE
+	return board.global_position + offset + Vector2(
+		pos.x * cell_size + cell_size * 0.5,
+		(13 - pos.y) * cell_size + cell_size * 0.5
+	)
