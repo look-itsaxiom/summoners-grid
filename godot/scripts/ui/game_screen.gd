@@ -760,6 +760,11 @@ func _on_game_over(winner_id: String) -> void:
 		_sfx.game_defeat()
 	status_label.text = "%s WINS!" % winner_id.to_upper()
 	end_turn_btn.visible = false
+
+	# Record match
+	var mode := "spectator" if _gm.spectator_mode else ("random" if _gm.use_random_decks else "standard")
+	get_node("/root/Settings").record_match(winner_id, _gm.turn_number, mode)
+
 	_refresh_ui()
 	_show_game_over_overlay(winner_id)
 

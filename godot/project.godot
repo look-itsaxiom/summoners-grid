@@ -37,6 +37,8 @@ Constants="*res://scripts/engine/constants.gd"
 
 GameManager="*res://scripts/engine/game_manager.gd"
 
+Settings="*res://scripts/engine/settings.gd"
+
 
 [display]
 window/stretch/mode="canvas_items"
