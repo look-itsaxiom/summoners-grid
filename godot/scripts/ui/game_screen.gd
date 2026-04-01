@@ -134,14 +134,19 @@ func _start_test_game() -> void:
 	_gm.initialize_game(deck_a, deck_b)
 	_gm.decide_turn_order("playerA")
 
-	# Show opening banner
-	turn_banner.show_banner("YOUR TURN", Color(0.4, 0.8, 1.0))
-
-	# Auto-advance draw + level for first turn
-	_gm.execute_draw_phase()
-	_gm.execute_level_phase()
-
-	_refresh_ui()
+	if _gm.spectator_mode:
+		turn_banner.show_banner("AI vs AI", Color(0.8, 0.6, 1.0))
+		_gm.execute_draw_phase()
+		_gm.execute_level_phase()
+		_refresh_ui()
+		# Start spectator loop after banner
+		await get_tree().create_timer(1.5).timeout
+		_run_spectator_loop()
+	else:
+		turn_banner.show_banner("YOUR TURN", Color(0.4, 0.8, 1.0))
+		_gm.execute_draw_phase()
+		_gm.execute_level_phase()
+		_refresh_ui()
 
 
 func _refresh_ui() -> void:
@@ -157,7 +162,7 @@ func _refresh_ui() -> void:
 		pb["victory_points"], _count_summons("playerB"), pb["hand"].size()
 	]
 
-	end_turn_btn.visible = _gm.phase == "action" and _gm.active_player == "playerA"
+	end_turn_btn.visible = not _gm.spectator_mode and _gm.phase == "action" and _gm.active_player == "playerA"
 
 	_refresh_hand()
 	board.queue_redraw()
@@ -589,6 +594,103 @@ func _ai_play_action_cards(ai_player: String) -> void:
 			if card.get("card_type", "") == "quest":
 				_gm.play_card(i, [my_summons[0]["instance_id"]])
 				return
+
+
+## Spectator mode — both players are AI, auto-play with delays.
+func _run_spectator_loop() -> void:
+	while not _gm.is_game_over:
+		var player_label := "Player A" if _gm.active_player == "playerA" else "Player B"
+		var color := Color(0.4, 0.8, 1.0) if _gm.active_player == "playerA" else Color(1.0, 0.4, 0.4)
+		turn_banner.show_banner("%s — Turn %d" % [player_label, _gm.turn_number], color)
+		await get_tree().create_timer(0.8).timeout
+
+		_run_ai_turn_for_spectator()
+		board.queue_redraw()
+		_refresh_ui()
+
+		if _gm.is_game_over:
+			break
+
+		await get_tree().create_timer(0.5).timeout
+
+
+func _run_ai_turn_for_spectator() -> void:
+	## Execute one full AI turn (draw → level → action → end) for spectator mode.
+	_gm.execute_draw_phase()
+	_gm.execute_level_phase()
+
+	var ai_player: String = _gm.active_player
+
+	# Play summon
+	var ai_hand: Array = _gm.players[ai_player]["hand"]
+	for i in range(ai_hand.size() - 1, -1, -1):
+		if ai_hand[i].get("card_type", "") == "summon":
+			var placements = _gm.get_valid_placements()
+			if placements.size() > 0:
+				placements.sort_custom(func(a, b):
+					var a_front: int = a.y if ai_player == "playerA" else (13 - a.y)
+					var b_front: int = b.y if ai_player == "playerA" else (13 - b.y)
+					if a_front != b_front: return a_front > b_front
+					return absi(a.x - 6) < absi(b.x - 6)
+				)
+				_gm.play_summon(i, placements[0])
+			break
+
+	if _gm.is_game_over: return
+
+	# Advance cards
+	var playable_advances = _gm.get_playable_advance_cards()
+	for entry in playable_advances:
+		if entry["valid_targets"].size() > 0:
+			_gm.play_advance_card(entry["index"], entry["valid_targets"][0]["instance_id"])
+			break
+
+	if _gm.is_game_over: return
+
+	# Action cards
+	_ai_play_action_cards(ai_player)
+
+	if _gm.is_game_over: return
+
+	# Move + attack
+	var ids: Array[String] = []
+	for s in _gm.board_summons:
+		if s["owner"] == ai_player:
+			ids.append(s["instance_id"])
+
+	for unit_id in ids:
+		if _gm.is_game_over: return
+		var unit = _find_unit(unit_id)
+		if unit.is_empty(): continue
+
+		var enemies: Array = []
+		for e in _gm.board_summons:
+			if e["owner"] != ai_player:
+				enemies.append(e)
+		if enemies.size() == 0: continue
+
+		var nearest = enemies[0]
+		for e in enemies:
+			if _dist(unit["position"], e["position"]) < _dist(unit["position"], nearest["position"]):
+				nearest = e
+
+		var attacks = _gm.get_valid_attacks(unit_id)
+		if nearest["instance_id"] in attacks:
+			_gm.attack_with_summon(unit_id, nearest["instance_id"])
+		else:
+			var moves = _gm.get_valid_moves(unit_id)
+			if moves.size() > 0:
+				var best: Vector2i = moves[0]
+				for m in moves:
+					if _dist(m, nearest["position"]) < _dist(best, nearest["position"]):
+						best = m
+				_gm.move_summon(unit_id, best)
+				attacks = _gm.get_valid_attacks(unit_id)
+				if nearest["instance_id"] in attacks:
+					_gm.attack_with_summon(unit_id, nearest["instance_id"])
+
+	if _gm.is_game_over: return
+	_gm.end_action_phase()
 
 
 func _dist(a: Vector2i, b: Vector2i) -> int:

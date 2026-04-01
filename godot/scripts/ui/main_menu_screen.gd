@@ -131,9 +131,10 @@ func _add_button(parent: VBoxContainer, text: String, color: Color, callback: Ca
 
 
 func _on_play_vs_ai() -> void:
+	get_node("/root/GameManager").spectator_mode = false
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
 
 
 func _on_watch_ai() -> void:
-	# TODO: pass spectator flag via autoload
+	get_node("/root/GameManager").spectator_mode = true
 	get_tree().change_scene_to_file("res://scenes/game.tscn")

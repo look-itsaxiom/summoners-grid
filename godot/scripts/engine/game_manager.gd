@@ -21,6 +21,7 @@ const PHASES: Array[String] = ["draw", "level", "action", "end"]
 var active_player: String = "playerA"
 var phase: String = "draw"
 var turn_number: int = 1
+var spectator_mode: bool = false
 var coin_flip_winner: String = ""
 var turn_order_decided: bool = false
 var is_game_over: bool = false
