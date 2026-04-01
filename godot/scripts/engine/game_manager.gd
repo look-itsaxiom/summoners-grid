@@ -1052,9 +1052,17 @@ func load_game() -> bool:
 
 	# Restore Vector2i positions (JSON loses type info)
 	for s in board_summons:
-		var pos = s.get("position", {})
+		var pos = s.get("position", null)
 		if pos is Dictionary:
 			s["position"] = Vector2i(int(pos.get("x", 0)), int(pos.get("y", 0)))
+		elif pos is String:
+			# Godot serializes Vector2i as "(x, y)"
+			var cleaned: String = pos.replace("(", "").replace(")", "").strip_edges()
+			var parts: PackedStringArray = cleaned.split(",")
+			if parts.size() >= 2:
+				s["position"] = Vector2i(int(parts[0].strip_edges()), int(parts[1].strip_edges()))
+		elif pos is Array and pos.size() >= 2:
+			s["position"] = Vector2i(int(pos[0]), int(pos[1]))
 
 	add_log("Game loaded (Turn %d)." % turn_number)
 	return true

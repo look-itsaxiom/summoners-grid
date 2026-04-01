@@ -24,6 +24,10 @@ func _run_all_tests() -> void:
 	_test_game_flow()
 	_test_placement_validation()
 	_test_attack_resolution()
+	_test_counter_triggers()
+	_test_save_load()
+	_test_territory_vp()
+	_test_quest_completion()
 
 	print("\n=== Results: %d passed, %d failed ===" % [_pass, _fail])
 
@@ -241,3 +245,133 @@ func _test_attack_resolution() -> void:
 	for s in gm.board_summons:
 		owners.append(s["owner"])
 	_check("Different owners", true, "playerA" in owners and "playerB" in owners)
+
+
+func _test_counter_triggers() -> void:
+	print("--- Counter Triggers ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	gm.initialize_game(c.create_player_a_deck(), c.create_player_b_deck())
+	gm.decide_turn_order("playerA")
+
+	# Set face-down requires counter/reaction in hand
+	var iron_will: Dictionary = c.COUNTERS["iron_will"].duplicate(true)
+	gm.players["playerA"]["hand"].append(iron_will)
+	var hand_size_before: int = gm.players["playerA"]["hand"].size()
+
+	# Set face-down
+	gm.set_face_down(hand_size_before - 1)
+	_check("Card removed from hand", hand_size_before - 1, gm.players["playerA"]["hand"].size())
+	_check("Face-down card exists", 1, gm.face_down_cards["playerA"].size())
+	_check("Face-down is Iron Will", "iron_will", gm.face_down_cards["playerA"][0].get("id", ""))
+
+	# check_triggers with matching event
+	gm.check_triggers("summon_defeated", { "defeated_unit": {} })
+	_check("Trigger consumed", 0, gm.face_down_cards["playerA"].size())
+
+	# Non-matching event should not consume
+	var graverobbing: Dictionary = c.COUNTERS["graverobbing"].duplicate(true)
+	gm.face_down_cards["playerB"].append(graverobbing)
+	gm.check_triggers("summon_defeated", {})  # Graverobbing triggers on VP, not defeat
+	_check("Wrong event no trigger", 1, gm.face_down_cards["playerB"].size())
+
+
+func _test_save_load() -> void:
+	print("--- Save / Load ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	gm.initialize_game(c.create_player_a_deck(), c.create_player_b_deck())
+	gm.decide_turn_order("playerA")
+	gm.execute_draw_phase()
+	gm.execute_level_phase()
+
+	# Place a summon
+	var hand: Array = gm.players["playerA"]["hand"]
+	for i in range(hand.size() - 1, -1, -1):
+		if hand[i].get("card_type", "") == "summon":
+			gm.play_summon(i, Vector2i(3, 1))
+			break
+
+	var summons_before: int = gm.board_summons.size()
+	var turn_before: int = gm.turn_number
+
+	# Save
+	var saved: bool = gm.save_game()
+	_check("Save succeeded", true, saved)
+
+	# Modify state
+	gm.turn_number = 99
+
+	# Load
+	var loaded: bool = gm.load_game()
+	_check("Load succeeded", true, loaded)
+	_check("Turn restored", turn_before, gm.turn_number)
+	_check("Summons restored", summons_before, gm.board_summons.size())
+
+	# Check Vector2i restoration
+	if gm.board_summons.size() > 0:
+		var pos = gm.board_summons[0]["position"]
+		_check("Position is Vector2i", true, pos is Vector2i)
+
+
+func _test_territory_vp() -> void:
+	print("--- Territory VP ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	gm.initialize_game(c.create_player_a_deck(), c.create_player_b_deck())
+	gm.decide_turn_order("playerA")
+	gm.execute_draw_phase()
+	gm.execute_level_phase()
+
+	# Territory VP requires summon in opponent territory + no defenders
+	# Player A territory: y=0-2, Player B territory: y=11-13
+	var vp_before: int = gm.players["playerA"]["victory_points"]
+
+	# Manually place Player A summon in Player B territory
+	var sf = root.get_node("SummonFactory")
+	var card: Dictionary = c.SUMMONS["gignen_warrior_a"].duplicate(true)
+	var unit: Dictionary = sf.create_summon_unit(card, "playerA", Vector2i(5, 12), "warrior")
+	gm.board_summons.append(unit)
+
+	# End turn should check territory
+	gm.end_action_phase()
+
+	_check("Territory VP gained", vp_before + 1, gm.players["playerA"]["victory_points"])
+
+
+func _test_quest_completion() -> void:
+	print("--- Quest Completion ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	gm.initialize_game(c.create_player_a_deck(), c.create_player_b_deck())
+	gm.decide_turn_order("playerA")
+	gm.execute_draw_phase()
+	gm.execute_level_phase()
+
+	# Place a summon
+	var hand: Array = gm.players["playerA"]["hand"]
+	for i in range(hand.size() - 1, -1, -1):
+		if hand[i].get("card_type", "") == "summon":
+			gm.play_summon(i, Vector2i(4, 1))
+			break
+
+	if gm.board_summons.size() == 0:
+		_check("Need summon for quest", true, false)
+		return
+
+	var unit: Dictionary = gm.board_summons[0]
+	var level_before: int = unit["level"]
+
+	# Add Nearwood Forest quest to hand and play it
+	var quest: Dictionary = c.QUESTS["nearwood_forest"].duplicate(true)
+	gm.players["playerA"]["hand"].append(quest)
+	var quest_idx: int = gm.players["playerA"]["hand"].size() - 1
+	gm.play_card(quest_idx, [unit["instance_id"]])
+
+	# Should gain 2 levels
+	var unit_after: Dictionary = gm.board_summons[0]
+	_check("Quest +2 levels", level_before + 2, unit_after["level"])
