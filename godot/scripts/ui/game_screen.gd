@@ -622,10 +622,16 @@ func _ai_play_action_cards(ai_player: String) -> void:
 ## Spectator mode — both players are AI, auto-play with delays.
 func _run_spectator_loop() -> void:
 	while not _gm.is_game_over:
+		if not is_inside_tree():
+			return  # Scene was freed (user clicked Main Menu)
+
 		var player_label := "Player A" if _gm.active_player == "playerA" else "Player B"
 		var color := Color(0.4, 0.8, 1.0) if _gm.active_player == "playerA" else Color(1.0, 0.4, 0.4)
 		turn_banner.show_banner("%s — Turn %d" % [player_label, _gm.turn_number], color)
 		await get_tree().create_timer(0.8).timeout
+
+		if not is_inside_tree():
+			return
 
 		_run_ai_turn_for_spectator()
 		board.queue_redraw()
@@ -633,6 +639,10 @@ func _run_spectator_loop() -> void:
 
 		if _gm.is_game_over:
 			break
+
+		await get_tree().create_timer(0.5).timeout
+		if not is_inside_tree():
+			return
 
 		await get_tree().create_timer(0.5).timeout
 
