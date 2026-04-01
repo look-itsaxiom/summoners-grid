@@ -30,6 +30,11 @@ var WEAPONS := {
 		"base_power": 50, "damage_type": "magical", "element": "water",
 		"range": 3, "base_accuracy": 85.0, "stat_bonuses": { "INT": 3 },
 	},
+	"gale_bow": {
+		"id": "gale_bow", "name": "Gale Bow", "slot": "weapon",
+		"base_power": 40, "damage_type": "physical_ranged", "element": "wind",
+		"range": 6, "base_accuracy": 92.0, "stat_bonuses": { "ACC": 3 },
+	},
 }
 
 var ARMOR := {

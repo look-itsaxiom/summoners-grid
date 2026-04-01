@@ -888,3 +888,80 @@ func get_valid_moves(instance_id: String) -> Array[Vector2i]:
 			if not _is_space_occupied(target):
 				result.append(target)
 	return result
+
+
+# ─── Save / Load ───
+
+const SAVE_PATH := "user://savegame.json"
+
+func save_game() -> bool:
+	var data := {
+		"version": 1,
+		"active_player": active_player,
+		"phase": phase,
+		"turn_number": turn_number,
+		"is_game_over": is_game_over,
+		"winner": winner,
+		"spectator_mode": spectator_mode,
+		"players": players,
+		"board_summons": board_summons,
+		"board_buildings": board_buildings,
+		"face_down_cards": face_down_cards,
+		"summon_role_map": summon_role_map,
+	}
+
+	var json := JSON.stringify(data, "\t")
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		push_error("Failed to save: %s" % FileAccess.get_open_error())
+		return false
+	file.store_string(json)
+	file.close()
+	add_log("Game saved.")
+	return true
+
+
+func load_game() -> bool:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return false
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		return false
+	var json_text := file.get_as_text()
+	file.close()
+
+	var parsed = JSON.parse_string(json_text)
+	if parsed == null or not parsed is Dictionary:
+		push_error("Failed to parse save file.")
+		return false
+
+	var data: Dictionary = parsed
+	if data.get("version", 0) != 1:
+		push_error("Incompatible save version.")
+		return false
+
+	active_player = data.get("active_player", "playerA")
+	phase = data.get("phase", "draw")
+	turn_number = data.get("turn_number", 1)
+	is_game_over = data.get("is_game_over", false)
+	winner = data.get("winner", "")
+	spectator_mode = data.get("spectator_mode", false)
+	players = data.get("players", {})
+	board_summons = data.get("board_summons", [])
+	board_buildings = data.get("board_buildings", [])
+	face_down_cards = data.get("face_down_cards", { "playerA": [], "playerB": [] })
+	summon_role_map = data.get("summon_role_map", {})
+
+	# Restore Vector2i positions (JSON loses type info)
+	for s in board_summons:
+		var pos = s.get("position", {})
+		if pos is Dictionary:
+			s["position"] = Vector2i(int(pos.get("x", 0)), int(pos.get("y", 0)))
+
+	add_log("Game loaded (Turn %d)." % turn_number)
+	return true
+
+
+static func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
