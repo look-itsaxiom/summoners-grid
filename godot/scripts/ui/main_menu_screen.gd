@@ -17,16 +17,12 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Center wrapper — ensures VBox is truly centered
-	var wrapper := CenterContainer.new()
-	wrapper.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(wrapper)
-
+	# Center container — absolute position, centered on screen
 	var center := VBoxContainer.new()
-	center.custom_minimum_size = Vector2(400, 0)
+	center.position = Vector2(390, 140)
+	center.custom_minimum_size = Vector2(500, 0)
 	center.add_theme_constant_override("separation", 12)
-	center.alignment = BoxContainer.ALIGNMENT_CENTER
-	wrapper.add_child(center)
+	add_child(center)
 
 	# Title
 	var title := Label.new()
@@ -46,22 +42,8 @@ func _build_ui() -> void:
 
 	# Spacer
 	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 20
+	spacer.custom_minimum_size.y = 30
 	center.add_child(spacer)
-
-	# Feature cards
-	var features := HBoxContainer.new()
-	features.add_theme_constant_override("separation", 16)
-	features.alignment = BoxContainer.ALIGNMENT_CENTER
-	center.add_child(features)
-	_add_feature_card(features, "3v3 Tactical Combat", "Field 3 summons on\na 12x14 grid")
-	_add_feature_card(features, "Deep Strategy", "Role advancement +\nstack-based effects")
-	_add_feature_card(features, "First to 3 VP", "Defeat summons and\ncontrol territory")
-
-	# Spacer
-	var spacer2 := Control.new()
-	spacer2.custom_minimum_size.y = 16
-	center.add_child(spacer2)
 
 	# Buttons
 	_add_button(center, "PLAY VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai)
