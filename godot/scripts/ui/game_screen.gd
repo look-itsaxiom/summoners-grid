@@ -155,13 +155,61 @@ func _refresh_hand() -> void:
 	var hand: Array = _gm.players[_gm.active_player]["hand"]
 	for i in range(hand.size()):
 		var card: Dictionary = hand[i]
+		var ct: String = card.get("card_type", "")
 		var btn := Button.new()
-		btn.text = "%s\n(%s)" % [card.get("name", "?"), card.get("card_type", "?")]
-		btn.custom_minimum_size = Vector2(100, 50)
+
+		# Card display text
+		var label_text: String = card.get("name", "?")
+		if ct == "summon":
+			label_text += "\n[SUMMON]"
+		elif ct == "action":
+			var target: String = card.get("target_type", "").replace("_", " ")
+			label_text += "\n[%s]" % target.to_upper()
+		elif ct == "quest":
+			label_text += "\n[QUEST]"
+		else:
+			label_text += "\n[%s]" % ct.to_upper()
+
+		btn.text = label_text
+		btn.custom_minimum_size = Vector2(110, 55)
 		btn.tooltip_text = card.get("description", card.get("name", ""))
 
+		# Color by type
+		var style := StyleBoxFlat.new()
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_left = 4
+		style.corner_radius_bottom_right = 4
+		style.content_margin_left = 4
+		style.content_margin_right = 4
+
+		if ct == "summon":
+			style.bg_color = Color(0.15, 0.2, 0.35)
+			style.border_color = Color(0.3, 0.4, 0.7)
+		elif ct == "action":
+			style.bg_color = Color(0.25, 0.15, 0.1)
+			style.border_color = Color(0.6, 0.4, 0.2)
+		elif ct == "quest":
+			style.bg_color = Color(0.15, 0.25, 0.15)
+			style.border_color = Color(0.3, 0.6, 0.3)
+		else:
+			style.bg_color = Color(0.2, 0.15, 0.25)
+			style.border_color = Color(0.5, 0.3, 0.6)
+
+		style.border_width_bottom = 2
+		style.border_width_top = 2
+		style.border_width_left = 2
+		style.border_width_right = 2
+
 		if i == selected_card_index:
-			btn.modulate = Color.GOLD
+			style.border_color = Color.GOLD
+			style.bg_color = style.bg_color.lightened(0.15)
+
+		btn.add_theme_stylebox_override("normal", style)
+
+		var hover_style: StyleBoxFlat = style.duplicate()
+		hover_style.bg_color = style.bg_color.lightened(0.1)
+		btn.add_theme_stylebox_override("hover", hover_style)
 
 		var idx := i
 		btn.pressed.connect(func(): _on_card_selected(idx))
@@ -177,11 +225,44 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 		var hand: Array = _gm.players[_gm.active_player]["hand"]
 		if selected_card_index < hand.size():
 			var card: Dictionary = hand[selected_card_index]
-			if card.get("card_type", "") == "summon":
+			var ct: String = card.get("card_type", "")
+
+			if ct == "summon":
 				_gm.play_summon(selected_card_index, pos)
 				selected_card_index = -1
 				board.clear_highlights()
 				_refresh_ui()
+				return
+
+			# Action/quest cards — find target summon at clicked position
+			if ct == "action" or ct == "quest":
+				var target_type: String = card.get("target_type", "")
+				for s in _gm.board_summons:
+					if s["position"] != pos:
+						continue
+					# Validate target type
+					var is_ally: bool = s["owner"] == _gm.active_player
+					var valid_target := false
+					if target_type == "ally_summon" and is_ally:
+						valid_target = true
+					elif target_type == "enemy_summon" and not is_ally:
+						valid_target = true
+					elif target_type == "any_summon":
+						valid_target = true
+					elif ct == "quest" and is_ally:
+						valid_target = true
+
+					if valid_target:
+						_gm.play_card(selected_card_index, [s["instance_id"]])
+						selected_card_index = -1
+						board.clear_highlights()
+						_refresh_ui()
+						return
+				# Clicked empty space with action card — deselect
+				selected_card_index = -1
+				board.clear_highlights()
+				status_label.text = "No valid target there. Select again."
+				_refresh_hand()
 				return
 
 	# If a unit is selected, try to move or attack
@@ -237,9 +318,27 @@ func _on_card_selected(index: int) -> void:
 	var hand: Array = _gm.players[_gm.active_player]["hand"]
 	if index < hand.size():
 		var card: Dictionary = hand[index]
-		status_label.text = "Selected: %s — click board to play" % card.get("name", "?")
-		if card.get("card_type", "") == "summon":
+		var ct: String = card.get("card_type", "")
+		var desc: String = card.get("description", card.get("name", "?"))
+		status_label.text = "Selected: %s — %s" % [card.get("name", "?"), desc]
+
+		if ct == "summon":
 			board.show_placements(_gm.get_valid_placements())
+		elif ct == "action" or ct == "quest":
+			# Highlight valid targets
+			var target_type: String = card.get("target_type", "")
+			var target_ids: Array[String] = []
+			for s in _gm.board_summons:
+				var is_ally: bool = s["owner"] == _gm.active_player
+				if target_type == "ally_summon" and is_ally:
+					target_ids.append(s["instance_id"])
+				elif target_type == "enemy_summon" and not is_ally:
+					target_ids.append(s["instance_id"])
+				elif target_type == "any_summon":
+					target_ids.append(s["instance_id"])
+				elif ct == "quest" and is_ally:
+					target_ids.append(s["instance_id"])
+			board.show_attacks(target_ids)  # Reuse attack highlight for targets
 
 	_refresh_hand()
 
