@@ -29,10 +29,10 @@ Check this file every Ralph Loop iteration.
 | # | Item | Web | Godot | Notes |
 |---|------|-----|-------|-------|
 | 19 | 30 action cards | done | done | 32 actions (30 base + 2 named summon) |
-| 20 | 5 building cards | done | 2/5 | 3 missing |
-| 21 | 6 quest cards | done | 2/6 | 4 missing |
+| 20 | 5 building cards | done | done | 5 buildings including traps |
+| 21 | 6 quest cards | done | done | 6 quests with VP + buff rewards |
 | 22 | 5 counter + 3 reaction cards | done | done | 5 counters + 3 reactions in cards.gd |
-| 23 | 14 advance cards (3 named summons) | done | 7/14 | no named summons |
+| 23 | 14 advance cards (3 named summons) | done | done | 14 advances incl 3 named summons |
 | 24 | 14 equipment items | done | 3/14 | only weapons in data |
 | 25 | Procedural SFX | done | done | 12 sounds (sfx.gd) |
 | 26 | Keyboard shortcuts | done | done | 1-9, E, Esc |
