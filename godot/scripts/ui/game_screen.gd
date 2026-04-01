@@ -4,7 +4,7 @@ extends Control
 @onready var _gm = get_node("/root/GameManager")
 @onready var _sf = get_node("/root/SummonFactory")
 
-var board: Control  # Board node (scripts/ui/board.gd)
+var board: Control
 var phase_label: Label
 var turn_label: Label
 var player_a_info: Label
@@ -13,6 +13,7 @@ var hand_container: HBoxContainer
 var log_label: RichTextLabel
 var end_turn_btn: Button
 var status_label: Label
+var turn_banner: ColorRect
 
 var selected_card_index: int = -1
 var selected_unit_id: String = ""
@@ -119,6 +120,12 @@ func _build_ui() -> void:
 	log_label.scroll_following = true
 	sidebar.add_child(log_label)
 
+	# Turn banner (overlays everything)
+	var banner_script = load("res://scripts/ui/turn_banner.gd")
+	turn_banner = ColorRect.new()
+	turn_banner.set_script(banner_script)
+	add_child(turn_banner)
+
 
 func _start_test_game() -> void:
 	var deck_a: Dictionary = _cards.create_player_a_deck()
@@ -126,6 +133,9 @@ func _start_test_game() -> void:
 
 	_gm.initialize_game(deck_a, deck_b)
 	_gm.decide_turn_order("playerA")
+
+	# Show opening banner
+	turn_banner.show_banner("YOUR TURN", Color(0.4, 0.8, 1.0))
 
 	# Auto-advance draw + level for first turn
 	_gm.execute_draw_phase()
@@ -361,8 +371,14 @@ func _on_end_turn() -> void:
 	if _gm.is_game_over:
 		return
 
-	# AI turn (simple: auto-advance phases, then we play for AI)
+	# Show AI turn banner briefly, then execute AI
+	turn_banner.show_banner("AI TURN", Color(1.0, 0.4, 0.4))
 	_run_ai_turn()
+
+	if not _gm.is_game_over:
+		# Show player turn banner
+		turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
+
 	_refresh_ui()
 
 
