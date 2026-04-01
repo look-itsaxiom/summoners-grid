@@ -869,6 +869,9 @@ func _process(delta: float) -> void:
 
 
 func _screen_shake(intensity: float = 8.0) -> void:
+	var settings = get_node_or_null("/root/Settings")
+	if settings != null and not settings.screen_shake_enabled:
+		return
 	_shake_intensity = intensity
 
 

@@ -2,9 +2,11 @@ extends Node
 ## Procedural sound effects — ported from src/engine/sound.ts
 ## Generates tones via AudioStreamGenerator. No external files needed.
 
-var enabled := true
 var _players: Array[AudioStreamPlayer] = []
 const MAX_PLAYERS := 8
+
+var enabled: bool:
+	get: return get_node_or_null("/root/Settings") == null or get_node("/root/Settings").sound_enabled
 
 
 func _ready() -> void:
