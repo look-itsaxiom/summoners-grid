@@ -373,6 +373,34 @@ var QUESTS := {
 		"description": "Target warrior gains VP on completion.", "requirements": [],
 		"vp_reward": 1, "reward_effects": [{ "type": "special", "description": "+1 VP" }],
 	},
+	"arcane_research": {
+		"id": "arcane_research", "name": "Arcane Research", "card_type": "quest",
+		"element": "light", "pile_destination": "recharge",
+		"description": "Draw 2 cards (requires Magician).",
+		"requirements": [{ "type": "role", "role_family": "magician", "description": "Requires Magician" }],
+		"vp_reward": 0, "reward_effects": [{ "type": "special", "description": "Draw 2 cards" }],
+	},
+	"scouting_mission": {
+		"id": "scouting_mission", "name": "Scouting Mission", "card_type": "quest",
+		"element": "wind", "pile_destination": "discard",
+		"description": "+5 SPD and +5 ACC permanently (requires Scout Lv7+).",
+		"requirements": [{ "type": "role", "role_family": "scout", "description": "Requires Scout" }],
+		"vp_reward": 0, "reward_effects": [{ "type": "buff", "description": "+5 SPD, +5 ACC permanently" }],
+	},
+	"arena_champion": {
+		"id": "arena_champion", "name": "Arena Champion", "card_type": "quest",
+		"element": "fire", "pile_destination": "discard",
+		"description": "1 VP + STR boost (requires Lv12+ summon).",
+		"requirements": [],
+		"vp_reward": 1, "reward_effects": [{ "type": "buff", "description": "+5 STR permanently" }],
+	},
+	"territorial_claim": {
+		"id": "territorial_claim", "name": "Territorial Claim", "card_type": "quest",
+		"element": "earth", "pile_destination": "discard",
+		"description": "1 VP for controlling 3 summons.",
+		"requirements": [],
+		"vp_reward": 1, "reward_effects": [],
+	},
 }
 
 # ─── Building Cards ───
@@ -391,6 +419,27 @@ var BUILDINGS := {
 		"description": "Summons on this tile heal at end of turn.",
 		"dimensions": { "width": 1, "height": 1 }, "is_trap": false,
 		"requirements": [], "effects": [{ "type": "heal", "base_power": 15, "description": "Heal at end of turn" }],
+	},
+	"dark_altar": {
+		"id": "dark_altar", "name": "Dark Altar", "card_type": "building",
+		"element": "dark", "pile_destination": "discard",
+		"description": "Self-destructs end of turn, destroying occupants. If summon dies, target levels to 20.",
+		"dimensions": { "width": 2, "height": 2 }, "is_trap": false,
+		"requirements": [], "effects": [{ "type": "special", "description": "Self-destruct + level target to 20" }],
+	},
+	"training_grounds": {
+		"id": "training_grounds", "name": "Training Grounds", "card_type": "building",
+		"element": "neutral", "pile_destination": "discard",
+		"description": "+3 STR and +3 DEF while occupying.",
+		"dimensions": { "width": 2, "height": 2 }, "is_trap": false,
+		"requirements": [], "effects": [{ "type": "buff", "description": "+3 STR, +3 DEF while occupying" }],
+	},
+	"spike_trap": {
+		"id": "spike_trap", "name": "Spike Trap", "card_type": "building",
+		"element": "earth", "pile_destination": "discard",
+		"description": "Face-down trap. Deals 30 damage when enemy moves onto space.",
+		"dimensions": { "width": 1, "height": 1 }, "is_trap": true,
+		"requirements": [], "effects": [{ "type": "damage", "base_power": 30, "description": "30 damage on trigger" }],
 	},
 }
 
@@ -461,6 +510,76 @@ var ADVANCES := {
 		"target_role": "light_mage",
 		"requirements": [
 			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+		],
+	},
+	"berserker_fury": {
+		"id": "berserker_fury", "name": "Berserker Fury", "card_type": "advance",
+		"advance_type": "role_change", "element": "fire", "pile_destination": "discard",
+		"description": "Advance Warrior (Lv10+) to Berserker. Massive STR.",
+		"target_role": "berserker",
+		"requirements": [
+			{ "type": "role", "role_id": "warrior", "description": "Must be Warrior" },
+			{ "type": "level", "min_level": 10, "description": "Level 10+" },
+		],
+	},
+	"dark_mage_pact": {
+		"id": "dark_mage_pact", "name": "Dark Mage Pact", "card_type": "advance",
+		"advance_type": "role_change", "element": "dark", "pile_destination": "discard",
+		"description": "Advance Magician (Lv7+) to Dark Mage. High INT + LCK.",
+		"target_role": "dark_mage",
+		"requirements": [
+			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+			{ "type": "level", "min_level": 7, "description": "Level 7+" },
+		],
+	},
+	"red_mage_oath": {
+		"id": "red_mage_oath", "name": "Red Mage Oath", "card_type": "advance",
+		"advance_type": "role_change", "element": "fire", "pile_destination": "discard",
+		"description": "Advance Magician (Lv7+) to Red Mage. Balanced INT + STR.",
+		"target_role": "red_mage",
+		"requirements": [
+			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+			{ "type": "level", "min_level": 7, "description": "Level 7+" },
+		],
+	},
+	"assassins_creed": {
+		"id": "assassins_creed", "name": "Assassin's Creed", "card_type": "advance",
+		"advance_type": "role_change", "element": "dark", "pile_destination": "discard",
+		"description": "Advance Rogue (Lv12+) to Assassin. Tier 3 — devastating crits.",
+		"target_role": "assassin",
+		"requirements": [
+			{ "type": "role", "role_id": "rogue", "description": "Must be Rogue" },
+			{ "type": "level", "min_level": 12, "description": "Level 12+" },
+		],
+	},
+	"ironhide_sentinel": {
+		"id": "ironhide_sentinel", "name": "Ironhide, the Unbreakable", "card_type": "advance",
+		"advance_type": "named_summon", "element": "earth", "pile_destination": "discard",
+		"description": "Transform Knight (Lv12+) to Ironhide. Gains Fortress Stance.",
+		"target_role": "sentinel",
+		"requirements": [
+			{ "type": "role", "role_id": "knight", "description": "Must be Knight" },
+			{ "type": "level", "min_level": 12, "description": "Level 12+" },
+		],
+	},
+	"alrecht_barkstep": {
+		"id": "alrecht_barkstep", "name": "Alrecht Barkstep, Scoutmaster", "card_type": "advance",
+		"advance_type": "named_summon", "element": "neutral", "pile_destination": "discard",
+		"description": "Transform Scout (Lv10+) to Alrecht Barkstep. Gains Follow Me!",
+		"target_role": "rogue",
+		"requirements": [
+			{ "type": "role", "role_family": "scout", "description": "Must be Scout-family" },
+			{ "type": "level", "min_level": 10, "description": "Level 10+" },
+		],
+	},
+	"lumina_starweaver": {
+		"id": "lumina_starweaver", "name": "Lumina, Starweaver", "card_type": "advance",
+		"advance_type": "named_summon", "element": "light", "pile_destination": "discard",
+		"description": "Transform Light Mage (Lv12+) to Lumina. Gains Starfall.",
+		"target_role": "light_mage",
+		"requirements": [
+			{ "type": "role", "role_id": "light_mage", "description": "Must be Light Mage" },
+			{ "type": "level", "min_level": 12, "description": "Level 12+" },
 		],
 	},
 }

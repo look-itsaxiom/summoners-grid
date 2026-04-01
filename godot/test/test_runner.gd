@@ -96,7 +96,9 @@ func _test_data_integrity() -> void:
 	_check("32 actions", 32, c.ACTIONS.size())
 	_check("5 counters", 5, c.COUNTERS.size())
 	_check("3 reactions", 3, c.REACTIONS.size())
-	_check("7 advances", 7, c.ADVANCES.size())
+	_check("14 advances", 14, c.ADVANCES.size())
+	_check("6 quests", 6, c.QUESTS.size())
+	_check("5 buildings", 5, c.BUILDINGS.size())
 	# Deck builders work
 	var da: Dictionary = c.create_player_a_deck()
 	_check("Deck A summons", 3, da["summon_slots"].size())
