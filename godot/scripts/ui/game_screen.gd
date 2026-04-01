@@ -264,56 +264,75 @@ func _run_ai_turn() -> void:
 	_gm.execute_draw_phase()
 	_gm.execute_level_phase()
 
-	# Simple AI: play a summon if possible
-	var ai_hand: Array = _gm.players[_gm.active_player]["hand"]
+	var ai_player: String = _gm.active_player
+
+	# 1. Play a summon if possible
+	var ai_hand: Array = _gm.players[ai_player]["hand"]
 	for i in range(ai_hand.size() - 1, -1, -1):
 		if ai_hand[i].get("card_type", "") == "summon":
 			var placements = _gm.get_valid_placements()
 			if placements.size() > 0:
+				# Prefer front-center positions
+				placements.sort_custom(func(a, b):
+					var a_front: int = a.y if ai_player == "playerA" else (13 - a.y)
+					var b_front: int = b.y if ai_player == "playerA" else (13 - b.y)
+					if a_front != b_front: return a_front > b_front
+					return absi(a.x - 6) < absi(b.x - 6)
+				)
 				_gm.play_summon(i, placements[0])
 			break
 
-	# Move and attack with each summon
-	for s in _gm.board_summons.duplicate():
-		if s["owner"] != _gm.active_player:
-			continue
+	if _gm.is_game_over: return
 
-		# Find nearest enemy
+	# 2. Play action cards (5-priority system ported from web AI)
+	_ai_play_action_cards(ai_player)
+
+	if _gm.is_game_over: return
+
+	# 3. Move and attack with each summon
+	var my_summon_ids: Array[String] = []
+	for s in _gm.board_summons:
+		if s["owner"] == ai_player:
+			my_summon_ids.append(s["instance_id"])
+
+	for unit_id in my_summon_ids:
+		if _gm.is_game_over: return
+
+		var unit = _find_unit(unit_id)
+		if unit.is_empty(): continue
+
 		var enemies: Array = []
 		for e in _gm.board_summons:
-			if e["owner"] != _gm.active_player:
+			if e["owner"] != ai_player:
 				enemies.append(e)
+		if enemies.size() == 0: continue
 
-		if enemies.size() == 0:
-			continue
-
+		# Find nearest enemy
 		var nearest = enemies[0]
 		for e in enemies:
-			if _dist(s["position"], e["position"]) < _dist(s["position"], nearest["position"]):
+			if _dist(unit["position"], e["position"]) < _dist(unit["position"], nearest["position"]):
 				nearest = e
 
 		# Attack if in range
-		var attacks = _gm.get_valid_attacks(s["instance_id"])
+		var attacks = _gm.get_valid_attacks(unit_id)
 		if nearest["instance_id"] in attacks:
-			_gm.attack_with_summon(s["instance_id"], nearest["instance_id"])
-			if _gm.is_game_over:
-				return
+			_gm.attack_with_summon(unit_id, nearest["instance_id"])
 		else:
 			# Move toward nearest enemy
-			var moves = _gm.get_valid_moves(s["instance_id"])
+			var moves = _gm.get_valid_moves(unit_id)
 			if moves.size() > 0:
 				var best_move: Vector2i = moves[0]
 				for m in moves:
 					if _dist(m, nearest["position"]) < _dist(best_move, nearest["position"]):
 						best_move = m
-				_gm.move_summon(s["instance_id"], best_move)
+				_gm.move_summon(unit_id, best_move)
 
 				# Attack after move
-				attacks = _gm.get_valid_attacks(s["instance_id"])
+				attacks = _gm.get_valid_attacks(unit_id)
 				if nearest["instance_id"] in attacks:
-					_gm.attack_with_summon(s["instance_id"], nearest["instance_id"])
-					if _gm.is_game_over:
-						return
+					_gm.attack_with_summon(unit_id, nearest["instance_id"])
+
+	if _gm.is_game_over: return
 
 	# End AI turn
 	_gm.end_action_phase()
@@ -322,6 +341,84 @@ func _run_ai_turn() -> void:
 		# Auto-advance draw + level for player
 		_gm.execute_draw_phase()
 		_gm.execute_level_phase()
+
+
+## AI card play — 5 priority system (ported from src/engine/ai.ts)
+func _ai_play_action_cards(ai_player: String) -> void:
+	var hand: Array = _gm.players[ai_player]["hand"]
+	var my_summons: Array = []
+	var enemies: Array = []
+	for s in _gm.board_summons:
+		if s["owner"] == ai_player:
+			my_summons.append(s)
+		else:
+			enemies.append(s)
+
+	# P1: Emergency heal (< 30% HP)
+	var critical: Array = my_summons.filter(func(s): return float(s["current_hp"]) / float(s["max_hp"]) < 0.3)
+	if critical.size() > 0:
+		for i in range(hand.size() - 1, -1, -1):
+			if _gm.is_game_over: return
+			var card: Dictionary = hand[i]
+			if card.get("card_type", "") != "action": continue
+			if card.get("target_type", "") == "ally_summon":
+				for eff in card.get("effects", []):
+					if eff.get("type", "") == "heal":
+						critical.sort_custom(func(a, b): return a["current_hp"] < b["current_hp"])
+						_gm.play_card(i, [critical[0]["instance_id"]])
+						return
+
+	# P2: Buff cards on strongest summon
+	if my_summons.size() > 0:
+		for i in range(hand.size() - 1, -1, -1):
+			if _gm.is_game_over: return
+			var card: Dictionary = hand[i]
+			if card.get("card_type", "") != "action": continue
+			if card.get("target_type", "") == "ally_summon":
+				for eff in card.get("effects", []):
+					if eff.get("type", "") == "buff":
+						var strongest = my_summons[0]
+						for s in my_summons:
+							if s["calculated_stats"].get("STR", 0) > strongest["calculated_stats"].get("STR", 0):
+								strongest = s
+						_gm.play_card(i, [strongest["instance_id"]])
+						return
+
+	# P3: Damage cards on lowest HP enemy
+	if enemies.size() > 0:
+		for i in range(hand.size() - 1, -1, -1):
+			if _gm.is_game_over: return
+			var card: Dictionary = hand[i]
+			if card.get("card_type", "") != "action": continue
+			if card.get("target_type", "") == "enemy_summon":
+				for eff in card.get("effects", []):
+					if eff.get("type", "") == "damage":
+						enemies.sort_custom(func(a, b): return a["current_hp"] < b["current_hp"])
+						_gm.play_card(i, [enemies[0]["instance_id"]])
+						return
+
+	# P4: Heal damaged allies
+	var damaged: Array = my_summons.filter(func(s): return s["current_hp"] < s["max_hp"])
+	if damaged.size() > 0:
+		for i in range(hand.size() - 1, -1, -1):
+			if _gm.is_game_over: return
+			var card: Dictionary = hand[i]
+			if card.get("card_type", "") != "action": continue
+			if card.get("target_type", "") == "ally_summon":
+				for eff in card.get("effects", []):
+					if eff.get("type", "") == "heal":
+						damaged.sort_custom(func(a, b): return float(a["current_hp"])/float(a["max_hp"]) < float(b["current_hp"])/float(b["max_hp"]))
+						_gm.play_card(i, [damaged[0]["instance_id"]])
+						return
+
+	# P5: Quest cards
+	if my_summons.size() > 0:
+		for i in range(hand.size() - 1, -1, -1):
+			if _gm.is_game_over: return
+			var card: Dictionary = hand[i]
+			if card.get("card_type", "") == "quest":
+				_gm.play_card(i, [my_summons[0]["instance_id"]])
+				return
 
 
 func _dist(a: Vector2i, b: Vector2i) -> int:
@@ -348,6 +445,91 @@ func _on_phase_changed(_new_phase: String) -> void:
 
 func _on_game_over(winner_id: String) -> void:
 	status_label.text = "%s WINS!" % winner_id.to_upper()
-	status_label.add_theme_color_override("font_color", Color.GOLD)
 	end_turn_btn.visible = false
 	_refresh_ui()
+	_show_game_over_overlay(winner_id)
+
+
+func _show_game_over_overlay(winner_id: String) -> void:
+	# Dim background
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := VBoxContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(350, 320)
+	panel.position = Vector2(465, 150)
+	panel.add_theme_constant_override("separation", 10)
+	overlay.add_child(panel)
+
+	var is_player_win: bool = winner_id == "playerA"
+
+	# Banner
+	var banner := Label.new()
+	banner.text = "VICTORY" if is_player_win else "DEFEAT"
+	banner.add_theme_font_size_override("font_size", 36)
+	banner.add_theme_color_override("font_color", Color.GOLD if is_player_win else Color.RED)
+	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(banner)
+
+	var winner_label := Label.new()
+	winner_label.text = "%s Wins!" % ("Player A" if winner_id == "playerA" else "Player B")
+	winner_label.add_theme_font_size_override("font_size", 18)
+	winner_label.add_theme_color_override("font_color", Color.WHITE)
+	winner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(winner_label)
+
+	# Stats
+	var pa: Dictionary = _gm.players["playerA"]
+	var pb: Dictionary = _gm.players["playerB"]
+	var defeats := 0
+	var cards_played := 0
+	for entry in _gm.game_log:
+		var msg: String = entry.get("message", "")
+		if "defeated" in msg: defeats += 1
+		if msg.begins_with("Played "): cards_played += 1
+
+	var stats_text := "Turns: %d\nPlayer A VP: %d | Player B VP: %d\nSummons defeated: %d\nCards played: %d" % [
+		_gm.turn_number, pa["victory_points"], pb["victory_points"], defeats, cards_played
+	]
+	var stats_label := Label.new()
+	stats_label.text = stats_text
+	stats_label.add_theme_font_size_override("font_size", 13)
+	stats_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
+	stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	panel.add_child(stats_label)
+
+	# Spacer
+	var spacer := Control.new()
+	spacer.custom_minimum_size.y = 10
+	panel.add_child(spacer)
+
+	# Buttons
+	var btn_container := HBoxContainer.new()
+	btn_container.add_theme_constant_override("separation", 16)
+	btn_container.alignment = BoxContainer.ALIGNMENT_CENTER
+	panel.add_child(btn_container)
+
+	var new_game_btn := Button.new()
+	new_game_btn.text = "New Game"
+	new_game_btn.custom_minimum_size = Vector2(120, 40)
+	new_game_btn.pressed.connect(func(): get_tree().reload_current_scene())
+	btn_container.add_child(new_game_btn)
+
+	var menu_btn := Button.new()
+	menu_btn.text = "Main Menu"
+	menu_btn.custom_minimum_size = Vector2(120, 40)
+	menu_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	btn_container.add_child(menu_btn)
+
+
+func _find_unit(instance_id: String) -> Dictionary:
+	for s in _gm.board_summons:
+		if s["instance_id"] == instance_id:
+			return s
+	return {}
