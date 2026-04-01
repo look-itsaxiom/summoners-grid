@@ -18,6 +18,7 @@ var selected_card_index: int = -1
 var selected_unit_id: String = ""
 
 @onready var _cards = get_node("/root/CardDB")
+@onready var _sfx = get_node("/root/SFX")
 
 
 var FloatingNumber = preload("res://scripts/ui/floating_number.gd")
@@ -234,6 +235,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 
 			if ct == "summon":
 				_gm.play_summon(selected_card_index, pos)
+				_sfx.summon_place()
 				selected_card_index = -1
 				board.clear_highlights()
 				_refresh_ui()
@@ -259,6 +261,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 
 					if valid_target:
 						_gm.play_card(selected_card_index, [s["instance_id"]])
+						_sfx.card_play()
 						selected_card_index = -1
 						board.clear_highlights()
 						_refresh_ui()
@@ -548,6 +551,10 @@ func _on_phase_changed(_new_phase: String) -> void:
 
 
 func _on_game_over(winner_id: String) -> void:
+	if winner_id == "playerA":
+		_sfx.victory()
+	else:
+		_sfx.game_defeat()
 	status_label.text = "%s WINS!" % winner_id.to_upper()
 	end_turn_btn.visible = false
 	_refresh_ui()
@@ -677,7 +684,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _on_attack_resolved(result: Dictionary) -> void:
 	if not result.get("hit", false):
-		# Show "MISS" at target position
+		_sfx.attack_miss()
 		var target_id: String = result.get("target", "")
 		var target_unit = _find_unit(target_id)
 		if not target_unit.is_empty():
@@ -690,12 +697,16 @@ func _on_attack_resolved(result: Dictionary) -> void:
 	var target_id: String = result.get("target", "")
 	var target_unit = _find_unit(target_id)
 
+	if is_crit:
+		_sfx.critical_hit()
+	else:
+		_sfx.attack_hit()
+
 	if damage > 0:
 		var screen_pos: Vector2
 		if not target_unit.is_empty():
 			screen_pos = _unit_screen_pos(target_unit)
 		else:
-			# Unit might have been defeated — use last known position from log
 			screen_pos = Vector2(640, 360)
 
 		var color := Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0)
@@ -705,6 +716,7 @@ func _on_attack_resolved(result: Dictionary) -> void:
 
 
 func _on_summon_defeated(unit: Dictionary) -> void:
+	_sfx.defeat()
 	var screen_pos := _unit_screen_pos(unit)
 	FloatingNumber.spawn(self, "DEFEATED", screen_pos + Vector2(0, -15), Color(1.0, 0.3, 0.3), true)
 
