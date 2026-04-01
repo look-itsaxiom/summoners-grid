@@ -17,12 +17,19 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Center container — absolute position, centered on screen
+	# MarginContainer centers content with padding
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_top", 100)
+	margin.add_theme_constant_override("margin_bottom", 80)
+	margin.add_theme_constant_override("margin_left", 340)
+	margin.add_theme_constant_override("margin_right", 340)
+	add_child(margin)
+
 	var center := VBoxContainer.new()
-	center.position = Vector2(390, 140)
-	center.custom_minimum_size = Vector2(500, 0)
 	center.add_theme_constant_override("separation", 12)
-	add_child(center)
+	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	margin.add_child(center)
 
 	# Title
 	var title := Label.new()
