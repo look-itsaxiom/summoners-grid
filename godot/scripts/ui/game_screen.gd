@@ -365,20 +365,26 @@ func _on_end_turn() -> void:
 	selected_card_index = -1
 	selected_unit_id = ""
 	board.clear_highlights()
+	end_turn_btn.visible = false  # Hide during AI turn
 
 	_gm.end_action_phase()
 
 	if _gm.is_game_over:
 		return
 
-	# Show AI turn banner briefly, then execute AI
+	# Show AI turn banner, wait, execute AI, then show player banner
 	turn_banner.show_banner("AI TURN", Color(1.0, 0.4, 0.4))
+	await get_tree().create_timer(1.0).timeout
+
 	_run_ai_turn()
+	board.queue_redraw()
+	_refresh_ui()
 
-	if not _gm.is_game_over:
-		# Show player turn banner
-		turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
+	if _gm.is_game_over:
+		return
 
+	await get_tree().create_timer(0.5).timeout
+	turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
 	_refresh_ui()
 
 
