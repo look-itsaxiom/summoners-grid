@@ -93,7 +93,7 @@ func _test_data_integrity() -> void:
 	_check("27 roles", 27, r.ROLES.size())
 	_check("3 tier-1 roles", 3, r.get_tier1_roles().size())
 	_check("6 summons", 6, c.SUMMONS.size())
-	_check("23 actions", 23, c.ACTIONS.size())
+	_check("32 actions", 32, c.ACTIONS.size())
 	_check("5 counters", 5, c.COUNTERS.size())
 	_check("3 reactions", 3, c.REACTIONS.size())
 	_check("7 advances", 7, c.ADVANCES.size())

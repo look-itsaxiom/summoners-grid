@@ -1,6 +1,9 @@
 extends Control
 ## Main game screen — connects board, HUD, hand display, and game log.
 
+var _shake_intensity := 0.0
+var _shake_decay := 5.0
+
 @onready var _gm = get_node("/root/GameManager")
 @onready var _sf = get_node("/root/SummonFactory")
 
@@ -846,6 +849,24 @@ func _find_unit(instance_id: String) -> Dictionary:
 	return {}
 
 
+# ─── Screen Shake ───
+
+func _process(delta: float) -> void:
+	if _shake_intensity > 0:
+		_shake_intensity = maxf(0.0, _shake_intensity - _shake_decay * delta)
+		var offset := Vector2(
+			randf_range(-_shake_intensity, _shake_intensity),
+			randf_range(-_shake_intensity, _shake_intensity)
+		)
+		board.position = board.position.lerp(board.global_position + offset, 0.5) if false else Vector2(28, 0) + offset
+	elif board.position != Vector2(28, 0):
+		board.position = Vector2(28, 0)
+
+
+func _screen_shake(intensity: float = 8.0) -> void:
+	_shake_intensity = intensity
+
+
 # ─── Keyboard Shortcuts ───
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -899,8 +920,10 @@ func _on_attack_resolved(result: Dictionary) -> void:
 
 	if is_crit:
 		_sfx.critical_hit()
+		_screen_shake(12.0)
 	else:
 		_sfx.attack_hit()
+		_screen_shake(4.0)
 
 	if damage > 0:
 		var screen_pos: Vector2
