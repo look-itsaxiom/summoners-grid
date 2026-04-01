@@ -331,6 +331,77 @@ var BUILDINGS := {
 	},
 }
 
+# ─── Advance Cards ───
+
+var ADVANCES := {
+	"berserker_rage": {
+		"id": "berserker_rage", "name": "Berserker Rage", "card_type": "advance",
+		"advance_type": "role_change", "element": "neutral", "pile_destination": "discard",
+		"description": "Advance Warrior (Lv10+) to Berserker. High STR, low DEF.",
+		"target_role": "berserker",
+		"requirements": [
+			{ "type": "role", "role_id": "warrior", "description": "Must be Warrior" },
+			{ "type": "level", "min_level": 10, "description": "Level 10+" },
+		],
+	},
+	"knights_oath": {
+		"id": "knights_oath", "name": "Knight's Oath", "card_type": "advance",
+		"advance_type": "role_change", "element": "neutral", "pile_destination": "discard",
+		"description": "Advance Warrior (Lv7+) to Knight. High DEF and END.",
+		"target_role": "knight",
+		"requirements": [
+			{ "type": "role", "role_id": "warrior", "description": "Must be Warrior" },
+			{ "type": "level", "min_level": 7, "description": "Level 7+" },
+		],
+	},
+	"shadow_pact": {
+		"id": "shadow_pact", "name": "Shadow Pact", "card_type": "advance",
+		"advance_type": "role_change", "element": "dark", "pile_destination": "discard",
+		"description": "Advance Magician to Warlock. High INT + LCK, low SPI.",
+		"target_role": "warlock",
+		"requirements": [
+			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+		],
+	},
+	"explorers_path": {
+		"id": "explorers_path", "name": "Explorer's Path", "card_type": "advance",
+		"advance_type": "role_change", "element": "neutral", "pile_destination": "discard",
+		"description": "Advance Scout (Lv7+) to Explorer. Balanced SPD and END.",
+		"target_role": "explorer",
+		"requirements": [
+			{ "type": "role", "role_id": "scout", "description": "Must be Scout" },
+			{ "type": "level", "min_level": 7, "description": "Level 7+" },
+		],
+	},
+	"rogues_shadow": {
+		"id": "rogues_shadow", "name": "Rogue's Shadow", "card_type": "advance",
+		"advance_type": "role_change", "element": "dark", "pile_destination": "discard",
+		"description": "Advance Scout to Rogue. High SPD + ACC + LCK.",
+		"target_role": "rogue",
+		"requirements": [
+			{ "type": "role", "role_id": "scout", "description": "Must be Scout" },
+		],
+	},
+	"elemental_focus": {
+		"id": "elemental_focus", "name": "Elemental Focus", "card_type": "advance",
+		"advance_type": "role_change", "element": "fire", "pile_destination": "discard",
+		"description": "Advance Magician to Elemental Mage. High INT + MDF.",
+		"target_role": "elemental_mage",
+		"requirements": [
+			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+		],
+	},
+	"light_mage_prayer": {
+		"id": "light_mage_prayer", "name": "Light Mage's Prayer", "card_type": "advance",
+		"advance_type": "role_change", "element": "light", "pile_destination": "discard",
+		"description": "Advance Magician to Light Mage. High SPI + healing.",
+		"target_role": "light_mage",
+		"requirements": [
+			{ "type": "role", "role_id": "magician", "description": "Must be Magician" },
+		],
+	},
+}
+
 
 # ─── Deck Builders ───
 
@@ -360,7 +431,12 @@ func create_player_a_deck() -> Dictionary:
 			QUESTS["nearwood_forest"],
 			QUESTS["trial_of_strength"],
 		]),
-		"advance_deck": [],
+		"advance_deck": _dup_all([
+			ADVANCES["berserker_rage"],
+			ADVANCES["knights_oath"],
+			ADVANCES["explorers_path"],
+			ADVANCES["light_mage_prayer"],
+		]),
 	}
 
 
@@ -388,7 +464,11 @@ func create_player_b_deck() -> Dictionary:
 			ACTIONS["healing_hands"],
 			ACTIONS["mend_wounds"],
 		]),
-		"advance_deck": [],
+		"advance_deck": _dup_all([
+			ADVANCES["shadow_pact"],
+			ADVANCES["rogues_shadow"],
+			ADVANCES["elemental_focus"],
+		]),
 	}
 
 

@@ -557,6 +557,84 @@ func _handle_defeat(unit: Dictionary) -> void:
 	check_victory()
 
 
+# ─── Advance Cards (Role Advancement) ───
+
+func get_playable_advance_cards() -> Array:
+	## Returns array of { "index": int, "card": Dict, "valid_targets": Array[Dict] }
+	var p: Dictionary = players[active_player]
+	var advance_deck: Array = p.get("advance_deck", [])
+	var my_summons := _get_summons_for(active_player)
+	var results: Array = []
+
+	for i in range(advance_deck.size()):
+		var card: Dictionary = advance_deck[i]
+		var valid_targets: Array = []
+
+		for unit in my_summons:
+			var meets_reqs := true
+			for req in card.get("requirements", []):
+				var req_type: String = req.get("type", "")
+				if req_type == "role":
+					var req_role_id: String = req.get("role_id", "")
+					if req_role_id != "" and unit["current_role"] != req_role_id:
+						meets_reqs = false
+					var req_family: String = req.get("role_family", "")
+					if req_family != "":
+						var role_def: Dictionary = RolesData.get_definition(unit["current_role"])
+						if role_def.get("family", "") != req_family:
+							meets_reqs = false
+				if req_type == "level":
+					var min_level: int = req.get("min_level", 0)
+					if unit["level"] < min_level:
+						meets_reqs = false
+			if meets_reqs:
+				valid_targets.append(unit)
+
+		if valid_targets.size() > 0:
+			results.append({ "index": i, "card": card, "valid_targets": valid_targets })
+
+	return results
+
+
+func play_advance_card(advance_index: int, target_unit_id: String) -> void:
+	var p: Dictionary = players[active_player]
+	var advance_deck: Array = p.get("advance_deck", [])
+
+	if advance_index < 0 or advance_index >= advance_deck.size():
+		add_log("Invalid advance card.")
+		return
+
+	var card: Dictionary = advance_deck[advance_index]
+	var tgt_idx := _find_summon_index(target_unit_id)
+	if tgt_idx == -1:
+		add_log("Invalid target for advance card.")
+		return
+
+	var unit: Dictionary = board_summons[tgt_idx]
+	if unit["owner"] != active_player:
+		add_log("Not your summon!")
+		return
+
+	# Remove from advance deck, send to discard
+	advance_deck.remove_at(advance_index)
+	p["discard_pile"].append(card)
+
+	var advance_type: String = card.get("advance_type", "role_change")
+	var target_role: String = card.get("target_role", "")
+
+	if advance_type == "role_change" and target_role != "":
+		var advanced: Dictionary = SummonFactory.apply_role_advance(unit, target_role)
+		board_summons[tgt_idx] = advanced
+
+		var role_name: String = RolesData.get_definition(target_role).get("name", target_role)
+		add_log("%s advances to %s! (HP: %d/%d)" % [
+			unit["card"].get("name", "?"), role_name,
+			advanced["current_hp"], advanced["max_hp"]
+		])
+
+	card_played.emit(card)
+
+
 ## Set a counter/reaction card face-down.
 func set_face_down(card_index: int) -> void:
 	var p: Dictionary = players[active_player]

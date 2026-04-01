@@ -231,6 +231,38 @@ func _refresh_hand() -> void:
 		btn.pressed.connect(func(): _on_card_selected(idx))
 		hand_container.add_child(btn)
 
+	# Add playable advance cards
+	var playable = _gm.get_playable_advance_cards()
+	for entry in playable:
+		var card: Dictionary = entry["card"]
+		var adv_btn := Button.new()
+		adv_btn.text = "%s\n[ADVANCE]" % card.get("name", "?")
+		adv_btn.custom_minimum_size = Vector2(110, 55)
+		adv_btn.tooltip_text = card.get("description", "")
+
+		var adv_style := StyleBoxFlat.new()
+		adv_style.bg_color = Color(0.3, 0.15, 0.35)
+		adv_style.border_color = Color(0.7, 0.3, 0.8)
+		adv_style.border_width_bottom = 2
+		adv_style.border_width_top = 2
+		adv_style.border_width_left = 2
+		adv_style.border_width_right = 2
+		adv_style.corner_radius_top_left = 4
+		adv_style.corner_radius_top_right = 4
+		adv_style.corner_radius_bottom_left = 4
+		adv_style.corner_radius_bottom_right = 4
+		adv_btn.add_theme_stylebox_override("normal", adv_style)
+
+		var adv_index: int = entry["index"]
+		var targets: Array = entry["valid_targets"]
+		adv_btn.pressed.connect(func():
+			if targets.size() > 0:
+				_gm.play_advance_card(adv_index, targets[0]["instance_id"])
+				_sfx.level_up()
+				_refresh_ui()
+		)
+		hand_container.add_child(adv_btn)
+
 
 func _on_cell_clicked(pos: Vector2i) -> void:
 	if _gm.is_game_over or _gm.phase != "action":
@@ -411,6 +443,15 @@ func _run_ai_turn() -> void:
 				_gm.play_summon(i, placements[0])
 			break
 
+	if _gm.is_game_over: return
+
+	# 1b. Play advance cards if eligible
+	var playable_advances = _gm.get_playable_advance_cards()
+	for entry in playable_advances:
+		if entry["valid_targets"].size() > 0:
+			_gm.play_advance_card(entry["index"], entry["valid_targets"][0]["instance_id"])
+			_sfx.level_up()
+			break
 	if _gm.is_game_over: return
 
 	# 2. Play action cards (5-priority system ported from web AI)
