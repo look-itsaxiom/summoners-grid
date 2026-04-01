@@ -138,18 +138,35 @@ func _start_test_game() -> void:
 		deck_b = _cards.create_player_b_deck()
 
 	_gm.initialize_game(deck_a, deck_b)
-	_gm.decide_turn_order("playerA")
+
+	# Coin flip for turn order
+	var goes_first: String
+	if _gm.spectator_mode:
+		goes_first = "playerA"
+	else:
+		goes_first = "playerA" if randi() % 2 == 0 else "playerB"
+	_gm.decide_turn_order(goes_first)
 
 	if _gm.spectator_mode:
 		turn_banner.show_banner("AI vs AI", Color(0.8, 0.6, 1.0))
 		_gm.execute_draw_phase()
 		_gm.execute_level_phase()
 		_refresh_ui()
-		# Start spectator loop after banner
 		await get_tree().create_timer(1.5).timeout
 		_run_spectator_loop()
+	elif goes_first == "playerB":
+		# AI goes first
+		turn_banner.show_banner("AI goes first!", Color(1.0, 0.4, 0.4))
+		_gm.execute_draw_phase()
+		_gm.execute_level_phase()
+		_refresh_ui()
+		await get_tree().create_timer(1.0).timeout
+		_run_ai_turn()
+		if not _gm.is_game_over:
+			turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
+		_refresh_ui()
 	else:
-		turn_banner.show_banner("YOUR TURN", Color(0.4, 0.8, 1.0))
+		turn_banner.show_banner("YOU go first!", Color(0.4, 0.8, 1.0))
 		_gm.execute_draw_phase()
 		_gm.execute_level_phase()
 		_refresh_ui()
