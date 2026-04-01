@@ -18,7 +18,7 @@ Check this file every Ralph Loop iteration.
 | 10 | Territory control VP | done | done | end_action_phase checks territory |
 | 11 | Turn structure (draw skip T1, hand limit) | done | done | verified in playtest |
 | 12 | Card play: Sharpened Blade +10 WP | done | done | _resolve_buff_effect checks id |
-| 13 | Counter/reaction trigger system | done | TODO | set_face_down exists, triggers not wired |
+| 13 | Counter/reaction trigger system | done | done | check_triggers + Dramatic Return/Graverobbing/Iron Will |
 | 14 | Quest completion + level rewards | done | done | +2 levels + VP award implemented |
 | 15 | Role advancement stat recalc | done | done | headless test |
 | 16 | AI vs AI games complete without crashes | done | done | spectator mode works |
