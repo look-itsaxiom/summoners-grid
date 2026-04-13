@@ -945,7 +945,7 @@ func attack_with_summon(attacker_id: String, target_id: String) -> void:
 
 	if not hit_result["hit"]:
 		add_log("Attack missed!")
-		attack_resolved.emit({ "hit": false, "damage": 0 })
+		attack_resolved.emit({ "hit": false, "damage": 0, "attacker": attacker_id, "target": target_id })
 		return
 
 	# Crit calculation

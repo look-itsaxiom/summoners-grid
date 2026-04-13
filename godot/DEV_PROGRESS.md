@@ -57,9 +57,9 @@ Check this file every Ralph Loop iteration.
 | 41 | Card art (per species/rarity) | todo | TODO | |
 | 42 | Grid tile textures | done | done | checkerboard pattern + territory borders, code-drawn |
 | 43 | Summon sprites on board | todo | PARTIAL | dark card bg with team-colored border, text labels |
-| 44 | Card play animations | todo | TODO | |
-| 45 | Attack animations | todo | TODO | |
-| 46 | Movement trail | todo | TODO | |
+| 44 | Card play animations | todo | PARTIAL | Summon appear (scale-in), card play SFX wired |
+| 45 | Attack animations | todo | done | Lunge toward target + hit flash + screen shake |
+| 46 | Movement trail | todo | done | Smooth slide tween between cells (0.2s) |
 | 47 | Level-up VFX | todo | TODO | |
 | 48 | Elemental VFX | todo | TODO | |
 | 49 | HP bar styling | done | PARTIAL | basic bar, no glow/gradient |
@@ -106,9 +106,13 @@ All TODO — pack store, marketplace, trading, royalties, rewards.
 ~~8. Save/load game~~ — DONE
 
 ### Current priorities (revenue-focused):
-1. **Card play + attack animations** (tween-based juice)
-2. **Background music** (procedural or asset-based battle BGM)
-3. **Deck preview screen** (pre-game card browser)
-4. **Tutorial overlay** (first-time player guidance)
-5. **Export builds** (desktop: Windows/Linux/Mac)
-6. **Summon sprites** (pixel art per species, replace text labels)
+1. ~~**Card play + attack animations**~~ — DONE (lunge, hit flash, movement slide, summon appear)
+2. ~~**Background music**~~ — DONE
+3. ~~**Deck preview screen**~~ — DONE
+4. ~~**Tutorial overlay**~~ — DONE
+5. ~~**Export builds**~~ — DONE
+6. ~~**Summon sprites**~~ — DONE
+7. **HP bar glow/gradient** (polish)
+8. **Level-up VFX** (particles/flash on level)
+9. **Spectator speed control** (1x/2x/4x)
+10. **Color blind mode**

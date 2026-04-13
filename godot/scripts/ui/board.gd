@@ -37,6 +37,10 @@ var hovered_cell: Vector2i = Vector2i(-1, -1)
 # Cell flash animations: { Vector2i: { color: Color, alpha: float } }
 var _cell_flashes: Dictionary = {}
 
+# Per-unit animation state: { instance_id: { offset: Vector2, scale: float, flash: float } }
+var _unit_anims: Dictionary = {}
+var _animating := false
+
 # Species sprite textures (loaded once)
 var _species_sprites: Dictionary = {}
 
@@ -59,16 +63,31 @@ func _load_sprites() -> void:
 
 
 func _process(delta: float) -> void:
-	if _cell_flashes.is_empty():
-		return
-	var to_remove: Array[Vector2i] = []
-	for pos in _cell_flashes:
-		_cell_flashes[pos]["alpha"] -= delta * 2.5  # Fade over ~0.4s
-		if _cell_flashes[pos]["alpha"] <= 0:
-			to_remove.append(pos)
-	for pos in to_remove:
-		_cell_flashes.erase(pos)
-	queue_redraw()
+	var needs_redraw := false
+
+	# Cell flash decay
+	if not _cell_flashes.is_empty():
+		var to_remove: Array[Vector2i] = []
+		for pos in _cell_flashes:
+			_cell_flashes[pos]["alpha"] -= delta * 2.5
+			if _cell_flashes[pos]["alpha"] <= 0:
+				to_remove.append(pos)
+		for pos in to_remove:
+			_cell_flashes.erase(pos)
+		needs_redraw = true
+
+	# Unit hit flash decay
+	for uid in _unit_anims:
+		var anim: Dictionary = _unit_anims[uid]
+		if anim.get("flash", 0.0) > 0:
+			anim["flash"] = maxf(0.0, anim["flash"] - delta * 4.0)
+			needs_redraw = true
+
+	if _animating:
+		needs_redraw = true
+
+	if needs_redraw:
+		queue_redraw()
 
 
 func _draw() -> void:
@@ -120,6 +139,10 @@ func _draw() -> void:
 	for s in _gm.board_summons:
 		var pos: Vector2i = s["position"]
 		var screen_pos := offset + Vector2(pos.x * CELL_SIZE, (BOARD_H - 1 - pos.y) * CELL_SIZE)
+		var uid: String = s["instance_id"]
+		# Apply animation offset
+		if uid in _unit_anims:
+			screen_pos += _unit_anims[uid].get("offset", Vector2.ZERO)
 		_draw_unit(screen_pos, s)
 
 	# Draw attack target indicators
@@ -146,10 +169,32 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var species: String = card.get("species", "")
 	var unit_owner: String = unit["owner"]
 	var team_color := COLOR_UNIT_A if unit_owner == "playerA" else COLOR_UNIT_B
+	var uid: String = unit["instance_id"]
+
+	# Animation: scale (for summon appear)
+	var unit_scale: float = 1.0
+	if uid in _unit_anims:
+		unit_scale = _unit_anims[uid].get("scale", 1.0)
+	if unit_scale <= 0.01:
+		return  # Not visible yet
+
+	# Apply scale transform around cell center
+	var center := screen_pos + Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5)
+	var scaled_pos := center - Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5) * unit_scale
 
 	# Unit background — solid dark card with team-colored border
-	var bg_rect := Rect2(screen_pos + Vector2(2, 2), Vector2(CELL_SIZE - 4, CELL_SIZE - 4))
-	draw_rect(bg_rect, Color(0.05, 0.05, 0.1, 0.9))
+	var bg_rect := Rect2(scaled_pos + Vector2(2, 2) * unit_scale, (Vector2(CELL_SIZE - 4, CELL_SIZE - 4)) * unit_scale)
+
+	# Hit flash: lerp toward white
+	var flash_amt: float = 0.0
+	if uid in _unit_anims:
+		flash_amt = _unit_anims[uid].get("flash", 0.0)
+
+	var bg_color := Color(0.05, 0.05, 0.1, 0.9)
+	if flash_amt > 0:
+		bg_color = bg_color.lerp(Color(1, 0.9, 0.8, 0.95), flash_amt)
+
+	draw_rect(bg_rect, bg_color)
 	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.5), false, 1.5)
 
 	# Species sprite (if available)
@@ -266,3 +311,69 @@ func show_attacks(instance_ids: Array[String]) -> void:
 func flash_cell(pos: Vector2i, color: Color) -> void:
 	_cell_flashes[pos] = { "color": color, "alpha": 1.0 }
 	queue_redraw()
+
+
+## Animate a summon appearing on the board (scale from 0 → 1 with overshoot).
+func animate_summon_appear(instance_id: String) -> void:
+	_ensure_anim(instance_id)
+	_unit_anims[instance_id]["scale"] = 0.0
+	_animating = true
+	var tw := create_tween()
+	tw.tween_method(func(v: float):
+		if instance_id in _unit_anims:
+			_unit_anims[instance_id]["scale"] = v
+			queue_redraw()
+	, 0.0, 1.0, 0.25).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_BACK)
+	tw.tween_callback(func(): _animating = false)
+
+
+## Animate a unit sliding from old_pos to new_pos on the grid.
+func animate_move(instance_id: String, from_pos: Vector2i, to_pos: Vector2i) -> void:
+	_ensure_anim(instance_id)
+	# Calculate pixel offset: unit is already at to_pos in data, so offset starts at (from - to) and goes to zero
+	var diff := Vector2((from_pos.x - to_pos.x) * CELL_SIZE, (to_pos.y - from_pos.y) * CELL_SIZE)
+	_unit_anims[instance_id]["offset"] = diff
+	_animating = true
+	var tw := create_tween()
+	tw.tween_method(func(v: Vector2):
+		if instance_id in _unit_anims:
+			_unit_anims[instance_id]["offset"] = v
+			queue_redraw()
+	, diff, Vector2.ZERO, 0.2).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	tw.tween_callback(func(): _animating = false)
+
+
+## Animate an attack lunge: attacker moves partway toward target, then snaps back.
+func animate_attack(attacker_id: String, attacker_pos: Vector2i, target_pos: Vector2i) -> void:
+	_ensure_anim(attacker_id)
+	# Lunge direction in screen coords
+	var dx: float = (target_pos.x - attacker_pos.x) * CELL_SIZE * 0.35
+	var dy: float = (attacker_pos.y - target_pos.y) * CELL_SIZE * 0.35  # Y flipped on screen
+	var lunge := Vector2(dx, dy)
+	_animating = true
+	var tw := create_tween()
+	# Lunge forward
+	tw.tween_method(func(v: Vector2):
+		if attacker_id in _unit_anims:
+			_unit_anims[attacker_id]["offset"] = v
+			queue_redraw()
+	, Vector2.ZERO, lunge, 0.1).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+	# Snap back
+	tw.tween_method(func(v: Vector2):
+		if attacker_id in _unit_anims:
+			_unit_anims[attacker_id]["offset"] = v
+			queue_redraw()
+	, lunge, Vector2.ZERO, 0.15).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+	tw.tween_callback(func(): _animating = false)
+
+
+## Flash a unit white (hit feedback).
+func animate_hit_flash(instance_id: String) -> void:
+	_ensure_anim(instance_id)
+	_unit_anims[instance_id]["flash"] = 1.0
+	queue_redraw()
+
+
+func _ensure_anim(instance_id: String) -> void:
+	if instance_id not in _unit_anims:
+		_unit_anims[instance_id] = { "offset": Vector2.ZERO, "scale": 1.0, "flash": 0.0 }

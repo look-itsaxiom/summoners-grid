@@ -361,7 +361,11 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 			if ct == "summon":
 				_gm.play_summon(selected_card_index, pos)
 				_sfx.summon_place()
-				board.flash_cell(pos, Color(0.3, 0.6, 1.0))  # Blue flash on summon
+				board.flash_cell(pos, Color(0.3, 0.6, 1.0))
+				# Animate the newly placed summon
+				var placed = _find_unit_at(pos)
+				if not placed.is_empty():
+					board.animate_summon_appear(placed["instance_id"])
 				selected_card_index = -1
 				board.clear_highlights()
 				_refresh_ui()
@@ -412,8 +416,10 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 
 		# Try to move
 		if pos in board.valid_moves:
+			var old_pos: Vector2i = _find_unit(selected_unit_id).get("position", pos)
 			_gm.move_summon(selected_unit_id, pos)
-			board.flash_cell(pos, Color(0.5, 0.8, 1.0))  # Light blue flash on move
+			board.animate_move(selected_unit_id, old_pos, pos)
+			board.flash_cell(pos, Color(0.5, 0.8, 1.0))
 			# Keep unit selected for attack after move
 			board.clear_highlights()
 			var attacks = _gm.get_valid_attacks(selected_unit_id)
@@ -527,6 +533,10 @@ func _run_ai_turn() -> void:
 					return absi(a.x - 6) < absi(b.x - 6)
 				)
 				_gm.play_summon(i, placements[0])
+				var placed = _find_unit_at(placements[0])
+				if not placed.is_empty():
+					board.animate_summon_appear(placed["instance_id"])
+				_sfx.summon_place()
 				board.queue_redraw()
 				_refresh_ui()
 				await get_tree().create_timer(0.4).timeout
@@ -603,9 +613,11 @@ func _run_ai_turn() -> void:
 				for m in moves:
 					if _dist(m, nearest["position"]) < _dist(best_move, nearest["position"]):
 						best_move = m
+				var old_pos: Vector2i = unit["position"]
 				_gm.move_summon(unit_id, best_move)
+				board.animate_move(unit_id, old_pos, best_move)
 				board.queue_redraw()
-				await get_tree().create_timer(0.25).timeout
+				await get_tree().create_timer(0.3).timeout
 
 				# Attack after move
 				attacks = _gm.get_valid_attacks(unit_id)
@@ -733,6 +745,7 @@ func _run_spectator_loop() -> void:
 
 func _run_ai_turn_for_spectator() -> void:
 	## Execute one full AI turn (draw → level → action → end) for spectator mode.
+	## Uses awaits for animations so spectator can see smooth movement.
 	_gm.execute_draw_phase()
 	_gm.execute_level_phase()
 
@@ -751,6 +764,12 @@ func _run_ai_turn_for_spectator() -> void:
 					return absi(a.x - 6) < absi(b.x - 6)
 				)
 				_gm.play_summon(i, placements[0])
+				var placed = _find_unit_at(placements[0])
+				if not placed.is_empty():
+					board.animate_summon_appear(placed["instance_id"])
+				_sfx.summon_place()
+				board.queue_redraw()
+				await get_tree().create_timer(0.3).timeout
 			break
 
 	if _gm.is_game_over: return
@@ -760,6 +779,8 @@ func _run_ai_turn_for_spectator() -> void:
 	for entry in playable_advances:
 		if entry["valid_targets"].size() > 0:
 			_gm.play_advance_card(entry["index"], entry["valid_targets"][0]["instance_id"])
+			_sfx.level_up()
+			await get_tree().create_timer(0.2).timeout
 			break
 
 	if _gm.is_game_over: return
@@ -777,6 +798,7 @@ func _run_ai_turn_for_spectator() -> void:
 
 	for unit_id in ids:
 		if _gm.is_game_over: return
+		if not is_inside_tree(): return
 		var unit = _find_unit(unit_id)
 		if unit.is_empty(): continue
 
@@ -794,6 +816,8 @@ func _run_ai_turn_for_spectator() -> void:
 		var attacks = _gm.get_valid_attacks(unit_id)
 		if nearest["instance_id"] in attacks:
 			_gm.attack_with_summon(unit_id, nearest["instance_id"])
+			board.queue_redraw()
+			await get_tree().create_timer(0.35).timeout
 		else:
 			var moves = _gm.get_valid_moves(unit_id)
 			if moves.size() > 0:
@@ -801,10 +825,16 @@ func _run_ai_turn_for_spectator() -> void:
 				for m in moves:
 					if _dist(m, nearest["position"]) < _dist(best, nearest["position"]):
 						best = m
+				var old_pos: Vector2i = unit["position"]
 				_gm.move_summon(unit_id, best)
+				board.animate_move(unit_id, old_pos, best)
+				board.queue_redraw()
+				await get_tree().create_timer(0.25).timeout
 				attacks = _gm.get_valid_attacks(unit_id)
 				if nearest["instance_id"] in attacks:
 					_gm.attack_with_summon(unit_id, nearest["instance_id"])
+					board.queue_redraw()
+					await get_tree().create_timer(0.35).timeout
 
 	if _gm.is_game_over: return
 	_gm.end_action_phase()
@@ -1128,6 +1158,13 @@ func _find_unit(instance_id: String) -> Dictionary:
 	return {}
 
 
+func _find_unit_at(pos: Vector2i) -> Dictionary:
+	for s in _gm.board_summons:
+		if s["position"] == pos:
+			return s
+	return {}
+
+
 # ─── Screen Shake ───
 
 func _process(delta: float) -> void:
@@ -1186,10 +1223,17 @@ func _unhandled_input(event: InputEvent) -> void:
 # ─── Floating Numbers ───
 
 func _on_attack_resolved(result: Dictionary) -> void:
+	var attacker_id: String = result.get("attacker", "")
+	var target_id: String = result.get("target", "")
+	var attacker_unit = _find_unit(attacker_id)
+	var target_unit = _find_unit(target_id)
+
+	# Lunge animation (even on miss — the attacker still swings)
+	if not attacker_unit.is_empty() and not target_unit.is_empty():
+		board.animate_attack(attacker_id, attacker_unit["position"], target_unit["position"])
+
 	if not result.get("hit", false):
 		_sfx.attack_miss()
-		var target_id: String = result.get("target", "")
-		var target_unit = _find_unit(target_id)
 		if not target_unit.is_empty():
 			var screen_pos := _unit_screen_pos(target_unit)
 			FloatingNumber.spawn(self, "MISS", screen_pos, Color(0.6, 0.6, 0.6))
@@ -1197,8 +1241,6 @@ func _on_attack_resolved(result: Dictionary) -> void:
 
 	var damage: int = result.get("damage", 0)
 	var is_crit: bool = result.get("crit", false)
-	var target_id: String = result.get("target", "")
-	var target_unit = _find_unit(target_id)
 
 	if is_crit:
 		_sfx.critical_hit()
@@ -1207,8 +1249,9 @@ func _on_attack_resolved(result: Dictionary) -> void:
 		_sfx.attack_hit()
 		_screen_shake(4.0)
 
-	# Flash target cell red
+	# Hit flash on target unit
 	if not target_unit.is_empty():
+		board.animate_hit_flash(target_id)
 		var tpos: Vector2i = target_unit.get("position", Vector2i(-1, -1))
 		if tpos.x >= 0:
 			board.flash_cell(tpos, Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0))
