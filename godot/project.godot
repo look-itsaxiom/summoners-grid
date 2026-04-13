@@ -15,6 +15,13 @@ config/icon="res://assets/icon.png"
 
 [autoload]
 
+ThemeLoader="*res://scripts/engine/theme_loader.gd"
+
+
+
+
+
+
 
 Marketplace="*res://scripts/engine/marketplace.gd"
 
