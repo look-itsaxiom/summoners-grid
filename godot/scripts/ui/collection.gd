@@ -2,6 +2,7 @@ extends Control
 ## Card Collection Gallery — browse owned cards with filtering.
 ## Production-quality layout with card grid, filters, and detail view.
 
+var CardWidgetScript = preload("res://scripts/ui/card_widget.gd")
 const BG_COLOR := Color(0.04, 0.04, 0.09)
 const GOLD := Color(1.0, 0.85, 0.0)
 
@@ -335,136 +336,12 @@ func _refresh_grid() -> void:
 		_grid.add_child(_create_card_widget(card))
 
 
-func _create_card_widget(card: Dictionary) -> PanelContainer:
-	var rarity: String = card.get("rarity", "common")
-	var rc: Color = RARITY_COLORS.get(rarity, Color(0.5, 0.5, 0.5))
-	var glow: float = {"common": 0.0, "uncommon": 0.05, "rare": 0.15, "legend": 0.3, "myth": 0.5}.get(rarity, 0.0)
-
-	# Check if card is new (acquired in last session / recently)
-	var is_new := false
-	var acquired: String = card.get("acquired_at", "")
-	if acquired != "" and acquired.length() >= 10:
-		var today := Time.get_date_string_from_system()
-		is_new = acquired.begins_with(today)
-
-	var panel := PanelContainer.new()
-	panel.custom_minimum_size = Vector2(150, 200)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.07, 0.07, 0.13).lerp(rc, glow * 0.2)
-	style.border_color = rc
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
-	style.content_margin_left = 10
-	style.content_margin_right = 10
-	style.content_margin_top = 12
-	style.content_margin_bottom = 8
-	panel.add_theme_stylebox_override("panel", style)
-
-	# Card frame background image
-	if rarity in _card_frames and _card_frames[rarity] != null:
-		var frame_tex: TextureRect = TextureRect.new()
-		frame_tex.texture = _card_frames[rarity]
-		frame_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		frame_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		frame_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
-		frame_tex.modulate = Color(1, 1, 1, 0.3)  # Subtle background
-		frame_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_child(frame_tex)
-
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 4)
-	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	panel.add_child(vbox)
-
-	# Species art (sprite if available, emoji fallback)
-	var sp: String = card.get("species", "")
-	if sp in _species_sprites and _species_sprites[sp] != null:
-		var sprite := TextureRect.new()
-		sprite.texture = _species_sprites[sp]
-		sprite.custom_minimum_size = Vector2(60, 60)
-		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		vbox.add_child(sprite)
-	else:
-		var emoji := Label.new()
-		emoji.text = SPECIES_EMOJI.get(sp, "🃏")
-		emoji.add_theme_font_size_override("font_size", 40)
-		emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vbox.add_child(emoji)
-
-	# Card name
-	var name_lbl := Label.new()
-	name_lbl.text = card.get("name", "?")
-	name_lbl.add_theme_font_size_override("font_size", 13)
-	name_lbl.add_theme_color_override("font_color", Color.WHITE)
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(name_lbl)
-
-	# Rarity
-	var rarity_lbl := Label.new()
-	rarity_lbl.text = rarity.to_upper()
-	rarity_lbl.add_theme_font_size_override("font_size", 10)
-	rarity_lbl.add_theme_color_override("font_color", rc)
-	rarity_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(rarity_lbl)
-
-	# Species
-	var species_lbl := Label.new()
-	species_lbl.text = card.get("species", "?").capitalize()
-	species_lbl.add_theme_font_size_override("font_size", 10)
-	species_lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
-	species_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(species_lbl)
-
-	# Power level (if available)
-	var power: int = card.get("power", 0)
-	if power > 0:
-		var power_lbl := Label.new()
-		power_lbl.text = "⚡ %d" % power
-		power_lbl.add_theme_font_size_override("font_size", 10)
-		var power_color := Color(0.5, 0.5, 0.6)
-		if power >= 110: power_color = Color(0.85, 0.2, 0.85)
-		elif power >= 95: power_color = Color(1.0, 0.75, 0.0)
-		elif power >= 80: power_color = Color(0.3, 0.5, 0.9)
-		power_lbl.add_theme_color_override("font_color", power_color)
-		power_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vbox.add_child(power_lbl)
-	else:
-		# DNA fallback
-		var dna_lbl := Label.new()
-		dna_lbl.text = card.get("dna", "").substr(0, 16)
-		dna_lbl.add_theme_font_size_override("font_size", 7)
-		dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
-		dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vbox.add_child(dna_lbl)
-
-	# "NEW" badge for recently acquired cards
-	if is_new:
-		var badge := Label.new()
-		badge.text = "NEW"
-		badge.add_theme_font_size_override("font_size", 9)
-		badge.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-		badge.position = Vector2(4, 2)
-		panel.add_child(badge)
-
-	# Make clickable
-	var click_btn := Button.new()
-	click_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
-	click_btn.flat = true
-	click_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	click_btn.pressed.connect(func(): _show_card_detail(card))
-	panel.add_child(click_btn)
-
-	return panel
+func _create_card_widget(card: Dictionary) -> Control:
+	var cw := Control.new()
+	cw.set_script(CardWidgetScript)
+	cw.setup(card, false)  # Full size for collection
+	cw.card_clicked.connect(func(): _show_card_detail(card))
+	return cw
 
 
 func _show_card_detail(card: Dictionary) -> void:
