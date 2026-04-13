@@ -12,7 +12,7 @@ var phase_label: Label
 var turn_label: Label
 var player_a_info: Label
 var player_b_info: Label
-var hand_container: HBoxContainer
+var hand_container: GridContainer
 var log_label: RichTextLabel
 var end_turn_btn: Button
 var status_label: Label
@@ -102,12 +102,15 @@ func _build_ui() -> void:
 	sidebar.add_child(hand_label)
 
 	var hand_scroll := ScrollContainer.new()
-	hand_scroll.custom_minimum_size.y = 120
+	hand_scroll.custom_minimum_size.y = 140
 	hand_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	hand_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	sidebar.add_child(hand_scroll)
 
-	hand_container = HBoxContainer.new()
-	hand_container.add_theme_constant_override("separation", 4)
+	hand_container = GridContainer.new()
+	hand_container.columns = 3
+	hand_container.add_theme_constant_override("h_separation", 4)
+	hand_container.add_theme_constant_override("v_separation", 4)
 	hand_scroll.add_child(hand_container)
 
 	# Game log
@@ -218,9 +221,11 @@ func _refresh_hand() -> void:
 			label_text += "\n[%s]" % ct.to_upper()
 
 		btn.text = label_text
-		btn.custom_minimum_size = Vector2(120, 55)
-		btn.add_theme_font_size_override("font_size", 11)
+		btn.custom_minimum_size = Vector2(85, 55)
+		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", 10)
 		btn.clip_text = false
+		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		btn.tooltip_text = card.get("description", card.get("name", ""))
 
 		# Color by type
