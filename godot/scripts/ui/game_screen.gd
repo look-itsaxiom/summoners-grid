@@ -944,19 +944,32 @@ func _show_game_over_overlay(winner_id: String) -> void:
 	stats_label.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85))
 	panel.add_child(stats_label)
 
+	# Coin reward display
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage and not _gm.spectator_mode:
+		var won: bool = winner_id == "playerA"
+		var reward: int = CardStorage.WIN_REWARD if won else CardStorage.LOSS_REWARD
+		var reward_label := Label.new()
+		reward_label.text = "+%d 🪙  (Balance: %d)" % [reward, storage.get_coins()]
+		reward_label.add_theme_font_size_override("font_size", 16)
+		reward_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+		reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(reward_label)
+
 	# Spacer
 	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 8
+	spacer.custom_minimum_size.y = 4
 	panel.add_child(spacer)
 
-	# Buttons
+	# Buttons — 3 options: Play Again, Pack Store, Menu
 	var btn_container := HBoxContainer.new()
-	btn_container.add_theme_constant_override("separation", 16)
+	btn_container.add_theme_constant_override("separation", 12)
 	btn_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(btn_container)
 
-	_add_overlay_button(btn_container, "New Game", Color(0.2, 0.5, 0.3), func(): get_tree().reload_current_scene())
-	_add_overlay_button(btn_container, "Main Menu", Color(0.3, 0.3, 0.45), func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	_add_overlay_button(btn_container, "Play Again", Color(0.2, 0.5, 0.3), func(): get_tree().reload_current_scene())
+	_add_overlay_button(btn_container, "Pack Store", Color(0.6, 0.4, 0.15), func(): get_tree().change_scene_to_file("res://scenes/pack_store.tscn"))
+	_add_overlay_button(btn_container, "Menu", Color(0.3, 0.3, 0.45), func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
 
 
 func _add_overlay_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
