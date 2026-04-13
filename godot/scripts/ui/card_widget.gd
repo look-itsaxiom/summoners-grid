@@ -102,14 +102,36 @@ func _draw() -> void:
 	# Art border
 	draw_rect(art_rect, Color(0.2, 0.18, 0.15), false, 1.0)
 
-	# Species art
+	# Card art — species for summons, type icons for actions
 	var art_tex: Texture2D = null
-	if is_mini and species in _species_sprites:
+	if species != "" and is_mini and species in _species_sprites:
 		art_tex = _species_sprites[species]
-	elif not is_mini and species in _card_art:
+	elif species != "" and not is_mini and species in _card_art:
 		art_tex = _card_art[species]
-	elif species in _species_sprites:
+	elif species != "" and species in _species_sprites:
 		art_tex = _species_sprites[species]
+	else:
+		# Try action type art
+		var type_art_map := {
+			"action": "res://assets/card_art/action_attack.png",
+			"quest": "res://assets/card_art/quest_scroll.png",
+			"building": "res://assets/card_art/building_tower.png",
+			"counter": "res://assets/card_art/action_shield.png",
+			"reaction": "res://assets/card_art/action_shield.png",
+		}
+		# Check for specific effect types
+		var effects: Array = card_data.get("effects", [])
+		for eff in effects:
+			var etype: String = eff.get("type", "")
+			if etype == "heal":
+				type_art_map["action"] = "res://assets/card_art/action_heal.png"
+				break
+			elif etype == "buff":
+				type_art_map["action"] = "res://assets/card_art/action_buff.png"
+				break
+		var art_path: String = type_art_map.get(ct, "")
+		if art_path != "" and ResourceLoader.exists(art_path):
+			art_tex = load(art_path)
 
 	if art_tex != null:
 		var tex_size := art_tex.get_size()

@@ -60,7 +60,7 @@ func _build_ui() -> void:
 		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
 		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
-		bg_tex.modulate = Color(0.4, 0.4, 0.5, 0.6)
+		bg_tex.modulate = Color(0.5, 0.45, 0.55, 0.8)
 		add_child(bg_tex)
 
 	# Main layout: HBoxContainer with board on left, sidebar on right
