@@ -23,6 +23,7 @@ const COLOR_VALID_MOVE := Color(0.0, 0.5, 1.0, 0.25)
 const COLOR_VALID_ATTACK := Color(1.0, 0.2, 0.2, 0.25)
 const COLOR_VALID_PLACE := Color(0.0, 1.0, 0.4, 0.2)
 const COLOR_SELECTED := Color(1.0, 0.85, 0.0, 0.3)
+const COLOR_WEAPON_RANGE := Color(1.0, 0.5, 0.0, 0.12)
 const COLOR_HP_HIGH := Color(0.2, 0.8, 0.2)
 const COLOR_HP_MED := Color(0.8, 0.7, 0.15)
 const COLOR_HP_LOW := Color(0.8, 0.2, 0.2)
@@ -32,6 +33,7 @@ const COLOR_UNIT_B := Color(1.0, 0.4, 0.4)
 var valid_moves: Array[Vector2i] = []
 var valid_attacks: Array[String] = []  # instance_ids
 var valid_placements: Array[Vector2i] = []
+var weapon_range_cells: Array[Vector2i] = []  # hover range overlay
 var selected_cell: Vector2i = Vector2i(-1, -1)
 var hovered_cell: Vector2i = Vector2i(-1, -1)
 
@@ -127,6 +129,10 @@ func _draw() -> void:
 				color = color.lerp(Color.WHITE, 0.05)
 
 			draw_rect(rect, color)
+
+			# Weapon range overlay (subtle orange tint)
+			if pos in weapon_range_cells:
+				draw_rect(rect, COLOR_WEAPON_RANGE)
 
 			# Grid lines
 			draw_rect(rect, COLOR_GRID_LINE, false, 1.0)
@@ -317,7 +323,24 @@ func clear_highlights() -> void:
 	valid_moves.clear()
 	valid_attacks.clear()
 	valid_placements.clear()
+	weapon_range_cells.clear()
 	selected_cell = Vector2i(-1, -1)
+	queue_redraw()
+
+
+## Show weapon range overlay for a unit at given position with given range.
+func show_weapon_range(unit_pos: Vector2i, weapon_range: int) -> void:
+	weapon_range_cells.clear()
+	for dy in range(-weapon_range, weapon_range + 1):
+		for dx in range(-weapon_range, weapon_range + 1):
+			if dx == 0 and dy == 0:
+				continue
+			var dist := maxi(absi(dx), absi(dy))  # Chebyshev
+			if dist <= weapon_range:
+				var cx: int = unit_pos.x + dx
+				var cy: int = unit_pos.y + dy
+				if cx >= 0 and cx < BOARD_W and cy >= 0 and cy < BOARD_H:
+					weapon_range_cells.append(Vector2i(cx, cy))
 	queue_redraw()
 
 

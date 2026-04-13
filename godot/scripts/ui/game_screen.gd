@@ -58,6 +58,7 @@ func _build_ui() -> void:
 	board.set_script(board_script)
 	board.cell_clicked.connect(_on_cell_clicked)
 	board.cell_right_clicked.connect(_on_cell_right_clicked)
+	board.cell_hovered.connect(_on_cell_hovered)
 	main_hbox.add_child(board)
 
 	# Right sidebar
@@ -1218,6 +1219,34 @@ func _find_unit_at(pos: Vector2i) -> Dictionary:
 		if s["position"] == pos:
 			return s
 	return {}
+
+
+# ─── Hover: weapon range + unit info ───
+
+func _on_cell_hovered(pos: Vector2i) -> void:
+	# Don't show range if player has something selected
+	if selected_card_index >= 0 or selected_unit_id != "":
+		board.weapon_range_cells.clear()
+		return
+
+	var unit := _find_unit_at(pos)
+	if unit.is_empty():
+		board.weapon_range_cells.clear()
+		board.queue_redraw()
+		status_label.text = "Select a card or unit."
+		return
+
+	# Show unit info in sidebar
+	status_label.text = _format_unit_detail(unit)
+
+	# Show weapon range
+	var weapon: Dictionary = unit.get("card", {}).get("equipment", {}).get("weapon", {})
+	var wrange: int = weapon.get("range", 0)
+	if wrange > 0:
+		board.show_weapon_range(unit["position"], wrange)
+	else:
+		board.weapon_range_cells.clear()
+		board.queue_redraw()
 
 
 # ─── Card Inspector (right-click) ───

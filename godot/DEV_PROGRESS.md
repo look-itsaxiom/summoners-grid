@@ -49,7 +49,7 @@ Check this file every Ralph Loop iteration.
 | 37 | Coin flip turn order | done | done | |
 | 38 | Deck preview screen | done | done | shows summons+stats, main deck by type, advance deck, START/BACK |
 | 39 | Persistent settings | done | done | Settings screen (audio/gameplay toggles), ConfigFile save/load, volume via AudioServer |
-| 40 | Weapon range visualization | done | TODO | |
+| 40 | Weapon range visualization | done | done | Hover shows Chebyshev range overlay (orange tint) + sidebar stats |
 
 ## Visual Polish (15 items) — GAME LOOK
 | # | Item | Web | Godot | Notes |
