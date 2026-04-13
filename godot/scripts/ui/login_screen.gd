@@ -180,20 +180,37 @@ func _build_login_ui() -> void:
 	_add_btn(btn_row, "SIGN IN", Color(0.2, 0.5, 0.3), _on_sign_in)
 	_add_btn(btn_row, "CREATE ACCOUNT", Color(0.3, 0.4, 0.6), _on_sign_up)
 
-	# Guest option
+	# Guest option — prominent during alpha
+	var guest_spacer := Control.new()
+	guest_spacer.custom_minimum_size.y = 4
+	center.add_child(guest_spacer)
+
 	var guest_btn := Button.new()
-	guest_btn.text = "Play as Guest"
-	guest_btn.add_theme_font_size_override("font_size", 11)
+	guest_btn.text = "PLAY AS GUEST"
+	guest_btn.custom_minimum_size = Vector2(200, 42)
+	guest_btn.add_theme_font_size_override("font_size", 14)
 	guest_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	var gs := StyleBoxFlat.new()
-	gs.bg_color = Color(0.15, 0.15, 0.2)
-	gs.corner_radius_top_left = 4
-	gs.corner_radius_top_right = 4
-	gs.corner_radius_bottom_left = 4
-	gs.corner_radius_bottom_right = 4
+	gs.bg_color = Color(0.25, 0.2, 0.4)
+	gs.corner_radius_top_left = 6
+	gs.corner_radius_top_right = 6
+	gs.corner_radius_bottom_left = 6
+	gs.corner_radius_bottom_right = 6
+	gs.content_margin_top = 8
+	gs.content_margin_bottom = 8
 	guest_btn.add_theme_stylebox_override("normal", gs)
+	var gs_hover := gs.duplicate()
+	gs_hover.bg_color = gs.bg_color.lightened(0.15)
+	guest_btn.add_theme_stylebox_override("hover", gs_hover)
 	guest_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 	center.add_child(guest_btn)
+
+	var alpha_note := Label.new()
+	alpha_note.text = "Accounts are optional during alpha"
+	alpha_note.add_theme_font_size_override("font_size", 10)
+	alpha_note.add_theme_color_override("font_color", Color(0.35, 0.35, 0.45))
+	alpha_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(alpha_note)
 
 
 func _add_btn(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
