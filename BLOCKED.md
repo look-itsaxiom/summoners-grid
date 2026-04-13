@@ -7,10 +7,11 @@ Either run `! npx supabase login` in this terminal, or create a project at https
 I need: **Project URL** + **Anon Key** → save to `user://supabase_config.json`
 Auth code is ready: `godot/scripts/engine/auth.gd`
 
-### 2. Steamworks Developer Account (unlocks distribution)
-Register at https://partner.steamgames.com ($100 one-time fee).
-Store page draft is ready: `docs/STEAM_STORE_PAGE.md`
+### 2. itch.io Account (unlocks distribution) — PIVOTED from Steam
+Create a game page at https://itch.io. Need: **project slug** (e.g. `skibbysoft/summoners-grid`).
+Butler CLI can upload builds automatically once we have the slug.
 Export builds ready: `builds/summoners-grid-linux.x86_64` (71MB) + `builds/summoners-grid-windows.exe` (103MB)
+Steam deferred — $100 fee not needed for alpha launch.
 
 ### 3. Stripe Account (unlocks real money purchases)
 Sign up at https://stripe.com. I need: **Publishable Key** + **Secret Key**.
