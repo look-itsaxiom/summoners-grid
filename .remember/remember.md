@@ -1,14 +1,17 @@
 # Handoff
 
 ## State
-Branch `ralphs-here`, tag `v0.1.0-alpha`. 104 session commits (232 total), all pushed. Production-ready F2P tactical card game. 27 GDScript files, 8120+ LOC, 10 scenes, 14 AI art assets. 387 tests. Full economy (coins/packs/daily/ranks/starter). Dopamine pack opening. Smart AI. Fade transitions. Procedural audio. Export builds: Linux 71MB, Windows 103MB.
+Branch `ralphs-here`. 29 commits this session. 127 tests. Game LIVE on itch.io (skibbysoft-games.itch.io/summoners-grid) with v0.1.2-alpha builds (Linux+Windows). 2 devlogs published as "Hex" persona. 32 GDScript files, 12 scenes, 21 art assets. Achievements (10), daily challenges (7), AI difficulty (Easy/Normal/Hard) all shipped.
 
 ## Next
-1. **Supabase** — `! npx supabase login` or supabase.com → `user://supabase_config.json`
-2. **Steam** — $100 at partner.steamgames.com. Store page: `docs/STEAM_STORE_PAGE.md`
-3. **Stripe** — stripe.com keys. Coin bundles already in pack store UI (disabled).
+1. **Cover image** — upload `docs/screenshots/cover_630x500.png` to itch.io edit page
+2. **Supabase auth fix** — signups failing with "email_address_invalid", key works for API
+3. **Page visibility** — flip itch.io from Restricted to Public when ready
+4. **Stripe** — coin bundle payments when keys provided
 
 ## Context
-- Own stack (not Immutable). All UI in Godot. No web frontend.
-- Pack opening: invisible Button click catcher (z_index=10).
-- `BLOCKED.md` has 3 credential requests. 5-day sprint from 2026-04-13.
+- Butler authenticated, builds auto-push via `butler push builds/... skibbysoft-games/summoners-grid:linux`
+- Devlog persona is "Hex" — casual-technical, specific numbers, ends with "What's Next"
+- Achievements persist to `user://achievements.json`, toast via CanvasLayer
+- Daily challenges rotate by date hash, 7 types, checked after each match
+- game_eval uses GDScript `#` comments, not `//`
