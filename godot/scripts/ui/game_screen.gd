@@ -159,6 +159,11 @@ func _start_test_game() -> void:
 	if _gm.use_random_decks:
 		deck_a = _cards.create_random_deck()
 		deck_b = _cards.create_random_deck()
+	elif not _gm._custom_deck_a.is_empty():
+		# Use the custom deck from deck builder
+		deck_a = _gm._custom_deck_a
+		deck_b = _cards.create_player_b_deck()
+		_gm._custom_deck_a = {}  # Clear after use
 	else:
 		deck_a = _cards.create_player_a_deck()
 		deck_b = _cards.create_player_b_deck()

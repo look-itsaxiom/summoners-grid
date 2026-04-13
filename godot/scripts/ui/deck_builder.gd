@@ -300,8 +300,71 @@ func _on_play() -> void:
 		_deck_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 		return
 
-	# For now, play with standard decks (custom deck integration is next step)
+	# Build a playable deck from the selected collection cards
+	var cards_db = get_node("/root/CardDB")
+	var custom_deck := _build_playable_deck(cards_db)
+
+	# Store in GameManager for the game screen to use
 	var gm = get_node("/root/GameManager")
 	gm.spectator_mode = false
 	gm.use_random_decks = false
+	gm.set("_custom_deck_a", custom_deck)
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
+
+
+## Build a playable deck by mapping collection cards to game templates.
+## Each collected card's species determines which summon template to use.
+## Rarity applies a stat bonus multiplier.
+func _build_playable_deck(cards_db: Node) -> Dictionary:
+	var rarity_bonus := {
+		"common": 1.0, "uncommon": 1.05, "rare": 1.1, "legend": 1.2, "myth": 1.3,
+	}
+
+	# Map species → summon templates
+	var species_to_summon := {
+		"gignen": "gignen_warrior_a",
+		"fae": "fae_magician_b",
+		"stoneheart": "stoneheart_warrior_b",
+		"wilderling": "wilderling_scout_b",
+		"angar": "gignen_magician_a",  # Fallback mapping
+		"demar": "fae_magician_b",     # Fallback mapping
+		"creptilis": "gignen_scout_a", # Fallback mapping
+	}
+
+	var species_to_role := {
+		"gignen": "warrior", "fae": "magician", "stoneheart": "warrior",
+		"wilderling": "scout", "angar": "magician", "demar": "magician",
+		"creptilis": "scout",
+	}
+
+	var summon_slots: Array = []
+	for card in _deck_summons:
+		var sp: String = card.get("species", "gignen")
+		var template_id: String = species_to_summon.get(sp, "gignen_warrior_a")
+		var role: String = species_to_role.get(sp, "warrior")
+
+		var template: Dictionary = cards_db.SUMMONS.get(template_id, {}).duplicate(true)
+		if template.is_empty():
+			template = cards_db.SUMMONS["gignen_warrior_a"].duplicate(true)
+
+		# Apply rarity bonus to base stats
+		var bonus: float = rarity_bonus.get(card.get("rarity", "common"), 1.0)
+		if bonus > 1.0:
+			var stats: Dictionary = template.get("base_stats", {})
+			for key in stats:
+				stats[key] = int(stats[key] * bonus)
+			template["base_stats"] = stats
+
+		# Override name with collected card name
+		template["name"] = card.get("name", template.get("name", "?"))
+
+		summon_slots.append({"summon": template, "role_id": role})
+
+	# Use the standard main deck and advance deck for now
+	var std_deck: Dictionary = cards_db.create_player_a_deck()
+
+	return {
+		"summon_slots": summon_slots,
+		"main_deck": std_deck["main_deck"],
+		"advance_deck": std_deck["advance_deck"],
+	}

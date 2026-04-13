@@ -25,6 +25,7 @@ var phase: String = "draw"
 var turn_number: int = 1
 var spectator_mode: bool = false
 var use_random_decks: bool = false
+var _custom_deck_a: Dictionary = {}  # Set by deck builder, used instead of default deck
 var coin_flip_winner: String = ""
 var turn_order_decided: bool = false
 var is_game_over: bool = false
