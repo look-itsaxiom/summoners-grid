@@ -1016,6 +1016,15 @@ func _on_game_over(winner_id: String) -> void:
 	var mode := "spectator" if _gm.spectator_mode else ("random" if _gm.use_random_decks else "standard")
 	get_node("/root/Settings").record_match(winner_id, _gm.turn_number, mode)
 
+	# Campaign mode — complete stage on win
+	if _gm.get("_campaign_mode") and winner_id == "playerA":
+		var campaign = get_node_or_null("/root/Campaign")
+		if campaign:
+			var reward: int = campaign.complete_current_stage()
+			if reward > 0:
+				status_label.text = "CAMPAIGN STAGE COMPLETE! +%d coins" % reward
+		_gm.set("_campaign_mode", false)
+
 	# Check achievements
 	var achievements = get_node_or_null("/root/Achievements")
 	if achievements:

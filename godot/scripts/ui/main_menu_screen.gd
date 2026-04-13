@@ -89,6 +89,7 @@ func _build_ui() -> void:
 	play_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	play_col.add_child(play_header)
 
+	_add_button(play_col, "Campaign", Color(0.6, 0.3, 0.7), _on_campaign, 220)
 	_add_button(play_col, "BATTLE VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai, 220)
 	_add_button(play_col, "Random Deck", Color(0.7, 0.55, 0.0), _on_random_game, 220)
 	_add_button(play_col, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai, 220)
@@ -128,6 +129,16 @@ func _build_ui() -> void:
 	var spacer3 := Control.new()
 	spacer3.custom_minimum_size.y = 4
 	center.add_child(spacer3)
+
+	# Campaign progress
+	var campaign = get_node_or_null("/root/Campaign")
+	if campaign and not campaign.is_campaign_complete():
+		var cp_label := Label.new()
+		cp_label.text = campaign.get_progress_text()
+		cp_label.add_theme_font_size_override("font_size", 11)
+		cp_label.add_theme_color_override("font_color", Color(0.6, 0.3, 0.7))
+		cp_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		center.add_child(cp_label)
 
 	# Daily challenge
 	var daily = get_node_or_null("/root/DailyChallenge")
@@ -312,6 +323,122 @@ func _on_collection() -> void:
 
 func _on_how_to_play() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/how_to_play.tscn")
+
+
+func _on_campaign() -> void:
+	var campaign = get_node_or_null("/root/Campaign")
+	if campaign == null or campaign.is_campaign_complete():
+		# Show completion or fallback
+		var gm = get_node("/root/GameManager")
+		gm.spectator_mode = false
+		gm.use_random_decks = false
+		get_node("/root/SceneTransition").change_scene("res://scenes/deck_preview.tscn")
+		return
+
+	# Show stage briefing overlay
+	var stage: Dictionary = campaign.get_current_stage()
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(460, 0)
+	panel.position = Vector2(410, 180)
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.08, 0.06, 0.14)
+	ps.border_color = Color(0.6, 0.3, 0.7)
+	ps.border_width_top = 2
+	ps.border_width_bottom = 2
+	ps.border_width_left = 2
+	ps.border_width_right = 2
+	ps.corner_radius_top_left = 10
+	ps.corner_radius_top_right = 10
+	ps.corner_radius_bottom_left = 10
+	ps.corner_radius_bottom_right = 10
+	ps.content_margin_top = 20
+	ps.content_margin_bottom = 16
+	ps.content_margin_left = 24
+	ps.content_margin_right = 24
+	panel.add_theme_stylebox_override("panel", ps)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	panel.add_child(vbox)
+
+	var stage_num := Label.new()
+	stage_num.text = "STAGE %d / %d" % [campaign.current_stage + 1, campaign.get_stage_count()]
+	stage_num.add_theme_font_size_override("font_size", 11)
+	stage_num.add_theme_color_override("font_color", Color(0.6, 0.3, 0.7))
+	stage_num.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(stage_num)
+
+	var title := Label.new()
+	title.text = stage["name"]
+	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var desc := Label.new()
+	desc.text = stage["description"]
+	desc.add_theme_font_size_override("font_size", 13)
+	desc.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(desc)
+
+	var diff_names := ["Easy", "Normal", "Hard"]
+	var diff_label := Label.new()
+	diff_label.text = "Difficulty: %s  |  Reward: %d coins" % [diff_names[stage["difficulty"]], stage["reward"]]
+	diff_label.add_theme_font_size_override("font_size", 12)
+	diff_label.add_theme_color_override("font_color", Color(0.5, 0.55, 0.7))
+	diff_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(diff_label)
+
+	var btn_row := HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 12)
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(btn_row)
+
+	var back_btn := Button.new()
+	back_btn.text = "Back"
+	back_btn.custom_minimum_size = Vector2(120, 38)
+	back_btn.add_theme_font_size_override("font_size", 13)
+	var bs := StyleBoxFlat.new()
+	bs.bg_color = Color(0.2, 0.2, 0.3)
+	bs.corner_radius_top_left = 6
+	bs.corner_radius_top_right = 6
+	bs.corner_radius_bottom_left = 6
+	bs.corner_radius_bottom_right = 6
+	back_btn.add_theme_stylebox_override("normal", bs)
+	back_btn.pressed.connect(func(): overlay.queue_free())
+	btn_row.add_child(back_btn)
+
+	var fight_btn := Button.new()
+	fight_btn.text = "FIGHT!"
+	fight_btn.custom_minimum_size = Vector2(140, 38)
+	fight_btn.add_theme_font_size_override("font_size", 15)
+	var fs := StyleBoxFlat.new()
+	fs.bg_color = Color(0.5, 0.2, 0.6)
+	fs.corner_radius_top_left = 6
+	fs.corner_radius_top_right = 6
+	fs.corner_radius_bottom_left = 6
+	fs.corner_radius_bottom_right = 6
+	fight_btn.add_theme_stylebox_override("normal", fs)
+	fight_btn.pressed.connect(func():
+		var settings = get_node_or_null("/root/Settings")
+		if settings:
+			settings.ai_difficulty = stage["difficulty"]
+		var gm = get_node("/root/GameManager")
+		gm.spectator_mode = false
+		gm.use_random_decks = false
+		gm.set("_campaign_mode", true)
+		get_node("/root/SceneTransition").change_scene("res://scenes/deck_preview.tscn")
+	)
+	btn_row.add_child(fight_btn)
 
 
 func _on_match_history() -> void:
