@@ -355,7 +355,7 @@ func _distribute_stats(budget: int, species: String) -> Dictionary:
 		if not stats.has(s):
 			other_stats.append(s)
 
-	var per_stat: int = remaining / other_stats.size()
+	var per_stat: int = int(remaining) / int(other_stats.size())
 	for s in other_stats:
 		var val := maxi(4, per_stat - 2 + randi() % 5)
 		stats[s] = val

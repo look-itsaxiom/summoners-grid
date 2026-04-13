@@ -22,7 +22,6 @@ var _cards: Array = []  # All owned cards
 var _filtered: Array = []  # After applying filters
 var _grid: GridContainer
 var _count_label: Label
-var _detail_panel: VBoxContainer  # Reserved for future card detail view
 var _filter_species: String = ""
 var _filter_rarity: String = ""
 

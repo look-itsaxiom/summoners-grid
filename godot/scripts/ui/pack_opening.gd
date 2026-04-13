@@ -390,7 +390,6 @@ func _on_continue() -> void:
 
 # Screen shake
 var _shake_intensity := 0.0
-var _original_position := Vector2.ZERO
 var _shake_active := false
 
 func _screen_shake(intensity: float) -> void:
