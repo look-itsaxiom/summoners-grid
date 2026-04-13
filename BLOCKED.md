@@ -1,17 +1,27 @@
 # BLOCKED — Waiting on Axiom
 
 ## What I Need
-Run `npx supabase login` to authenticate the Supabase CLI, then I can create a cloud project for auth + database.
 
-Alternatively, create a project at https://supabase.com/dashboard and give me:
-1. Project URL (e.g., https://xxxxx.supabase.co)
-2. Anon Key (public, safe for client)
+### 1. Supabase Project (unlocks user accounts)
+Either run `! npx supabase login` in this terminal, or create a project at https://supabase.com/dashboard.
+I need: **Project URL** + **Anon Key** → save to `user://supabase_config.json`
+Auth code is ready: `godot/scripts/engine/auth.gd`
+
+### 2. Steamworks Developer Account (unlocks distribution)
+Register at https://partner.steamgames.com ($100 one-time fee).
+Store page draft is ready: `docs/STEAM_STORE_PAGE.md`
+Export builds ready: `builds/summoners-grid-linux.x86_64` (71MB) + `builds/summoners-grid-windows.exe` (103MB)
+
+### 3. Stripe Account (unlocks real money purchases)
+Sign up at https://stripe.com. I need: **Publishable Key** + **Secret Key**.
+Coin bundles are already in the pack store UI (disabled, ready to enable).
 
 ## Why I Can't Do It Myself
-Supabase login requires browser-based OAuth that I can't complete.
+All three require human identity, payment info, or browser-based authentication.
 
 ## What I'm Doing Instead
-Continuing to polish the game client, generate more art, and build features that work offline. The auth code is ready to plug in credentials.
+Continuing to polish the game client. Everything works offline in guest mode.
+The product is alpha-complete with 97 commits, 387 tests, 9 screens, full economy.
 
 ## Created
-2026-04-13T07:00:00Z
+2026-04-13
