@@ -256,7 +256,11 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 		bg_color = bg_color.lerp(Color(1, 0.9, 0.8, 0.95), flash_amt)
 
 	draw_rect(bg_rect, bg_color)
-	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.5), false, 1.5)
+	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.6), false, 2.0)
+
+	# Team color top bar
+	var bar_rect := Rect2(bg_rect.position + Vector2(1, 1), Vector2(bg_rect.size.x - 2, 3))
+	draw_rect(bar_rect, team_color)
 
 	# Species sprite (if available)
 	if species in _species_sprites and _species_sprites[species] != null:

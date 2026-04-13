@@ -1,17 +1,19 @@
 # Handoff
 
 ## State
-Branch `ralphs-here`, v0.1.6. 39 session commits. 127 tests. itch.io page at DRAFT (reverted from public — premature launch). Marketplace built with fees (5% list, 10% sale, featured 50 coins). Campaign mode (5 stages). Achievements (10). Daily challenges (7). AI difficulty (Easy/Normal/Hard). Butler authenticated. 3 devlogs written (pacing feedback: max 2/day at noon+midnight).
+Branch `ralphs-here`, v0.2.8-alpha. 64 session commits. 127 tests. itch.io DRAFT with web+linux+windows builds. Major visual overhaul: CardWidget renders cards consistently across hand/collection/pack opening/forge. Global Kenney theme (ThemeLoader autoload). ComfyUI backgrounds on 6 screens + board arena. Cinzel+Lato fonts. 479+ art assets.
 
 ## Next
-1. **Launch prep** — screenshots, itch.io page polish, branding before going public
-2. **Supabase auth** — needed for real P2P marketplace trading
-3. **Stripe** — real money coin purchases
+1. **Keep polishing visuals** — board units need CardWidget treatment, more ComfyUI art quality passes
+2. **itch.io launch prep** — screenshots, GIF cover, custom CSS page, THEN go public
+3. **Supabase auth** — P2P marketplace needs accounts
+4. **Define the hook** — what sells this game in one sentence?
 
 ## Context
-- itch.io: skibbysoft-games.itch.io/summoners-grid — currently DRAFT, not public
-- Devlog persona: "Hex" — don't spam, save for milestones
-- CardStorage save method: `save_collection()` not `_save()`
-- Marketplace is local-only with NPC seeds until Supabase accounts work
-- `game_eval` uses `#` comments not `//`
-- Axiom wants players selling cards to EACH OTHER (the greed), not just to void
+- CardWidget at `scripts/ui/card_widget.gd` — reusable card renderer (mini+full modes)
+- ThemeLoader autoload applies Kenney textures globally to all Button/Panel/Label
+- Art direction: dark stone + warm gold + purple magic (ComfyUI + Kenney brown)
+- ComfyUI: 30 steps, cfg 8.0 for better quality
+- itch.io DRAFT — don't go public until properly ready
+- `save_collection()` not `_save()`, `game_eval` uses `#` not `//`
+- Axiom: compare to MTG Arena/Marvel Snap/Pokemon TCG Live — that's the bar
