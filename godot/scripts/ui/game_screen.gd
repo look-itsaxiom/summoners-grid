@@ -960,7 +960,7 @@ func _show_game_over_overlay(winner_id: String) -> void:
 	stats_label.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85))
 	panel.add_child(stats_label)
 
-	# Coin reward display
+	# Coin reward + rank display
 	var storage = get_node_or_null("/root/CardStorage")
 	if storage and not _gm.spectator_mode:
 		var won: bool = winner_id == "playerA"
@@ -971,6 +971,17 @@ func _show_game_over_overlay(winner_id: String) -> void:
 		reward_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
 		reward_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		panel.add_child(reward_label)
+
+		var rank: Dictionary = storage.get_rank()
+		var rank_label := Label.new()
+		var rank_text := "Rank: %s" % rank["name"]
+		if rank.has("next") and not rank["next"].is_empty():
+			rank_text += " (%d/%d to %s)" % [rank["wins"], rank["next"]["min"], rank["next"]["name"]]
+		rank_label.text = rank_text
+		rank_label.add_theme_font_size_override("font_size", 11)
+		rank_label.add_theme_color_override("font_color", rank["color"])
+		rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		panel.add_child(rank_label)
 
 	# Spacer
 	var spacer := Control.new()
