@@ -613,6 +613,34 @@ func _show_card_detail(card: Dictionary) -> void:
 	)
 	vbox.add_child(sell_btn)
 
+	# List on Marketplace button
+	var mp = get_node_or_null("/root/Marketplace")
+	if mp:
+		var suggested: int = mp.SUGGESTED_PRICES.get(rarity, 100)
+		var floor_price: int = mp.PRICE_FLOORS.get(rarity, 30)
+		var listing_fee: int = maxi(1, int(suggested * mp.LISTING_FEE_PCT))
+		var list_btn := Button.new()
+		list_btn.text = "List for %d coins (fee: %d)" % [suggested, listing_fee]
+		list_btn.custom_minimum_size = Vector2(220, 32)
+		list_btn.add_theme_font_size_override("font_size", 11)
+		list_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		var list_style := StyleBoxFlat.new()
+		list_style.bg_color = Color(0.4, 0.3, 0.1)
+		list_style.corner_radius_top_left = 4
+		list_style.corner_radius_top_right = 4
+		list_style.corner_radius_bottom_left = 4
+		list_style.corner_radius_bottom_right = 4
+		list_btn.add_theme_stylebox_override("normal", list_style)
+		list_btn.pressed.connect(func():
+			var ci: int = _get_card_index(card)
+			if ci >= 0:
+				var fee: int = mp.list_card(card, ci, suggested)
+				if fee >= 0:
+					overlay.queue_free()
+					_refresh_display()
+		)
+		vbox.add_child(list_btn)
+
 	# Dismiss hint
 	var hint := Label.new()
 	hint.text = "Click anywhere to close"
