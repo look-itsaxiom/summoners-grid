@@ -31,6 +31,7 @@ var _sfx: Node
 var _is_revealing := false
 var _pack_type: String = "standard"
 var _species_sprites: Dictionary = {}
+var _card_art: Dictionary = {}
 
 # Can be set directly or read from ApiClient autoload
 var pack_data: Dictionary = {}
@@ -42,6 +43,9 @@ func _ready() -> void:
 		var path := "res://assets/sprites/%s.png" % sp
 		if ResourceLoader.exists(path):
 			_species_sprites[sp] = load(path)
+		var art_path := "res://assets/card_art/%s.png" % sp
+		if ResourceLoader.exists(art_path):
+			_card_art[sp] = load(art_path)
 
 	# Read pack data from ApiClient if not set directly
 	if pack_data.is_empty():
@@ -261,12 +265,14 @@ func _reveal_card(index: int) -> void:
 	for child in vbox.get_children():
 		child.queue_free()
 
-	# Species art
+	# Species art — prefer large card art for reveal impact
 	var sp: String = card.get("species", "")
-	if sp in _species_sprites and _species_sprites[sp] != null:
+	var art_tex: Texture2D = _card_art.get(sp) if sp in _card_art else null
+	var sprite_tex: Texture2D = _species_sprites.get(sp) if sp in _species_sprites else null
+	if art_tex != null or sprite_tex != null:
 		var sprite := TextureRect.new()
-		sprite.texture = _species_sprites[sp]
-		sprite.custom_minimum_size = Vector2(50, 50)
+		sprite.texture = art_tex if art_tex != null else sprite_tex
+		sprite.custom_minimum_size = Vector2(80, 80) if art_tex != null else Vector2(50, 50)
 		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER

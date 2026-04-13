@@ -54,7 +54,7 @@ Check this file every Ralph Loop iteration.
 ## Visual Polish (15 items) — GAME LOOK
 | # | Item | Web | Godot | Notes |
 |---|------|-----|-------|-------|
-| 41 | Card art (per species/rarity) | todo | TODO | |
+| 41 | Card art (per species/rarity) | todo | done | 7 species card art portraits (ComfyUI), used in collection detail + pack reveals |
 | 42 | Grid tile textures | done | done | checkerboard pattern + territory borders, code-drawn |
 | 43 | Summon sprites on board | todo | done | 7 species sprites loaded, 28px in 48px cells, text fallback for missing |
 | 44 | Card play animations | todo | done | Summon appear (scale-in), action card target flash, SFX wired |

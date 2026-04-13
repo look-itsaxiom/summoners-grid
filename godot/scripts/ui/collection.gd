@@ -31,6 +31,8 @@ var _card_frames: Dictionary = {}
 
 # Species sprite textures
 var _species_sprites: Dictionary = {}
+# Large card art textures (for detail popup)
+var _card_art: Dictionary = {}
 
 func _load_card_frames() -> void:
 	for r in ["common", "uncommon", "rare", "legend", "myth"]:
@@ -41,6 +43,9 @@ func _load_card_frames() -> void:
 		var path := "res://assets/sprites/%s.png" % sp
 		if ResourceLoader.exists(path):
 			_species_sprites[sp] = load(path)
+		var art_path := "res://assets/card_art/%s.png" % sp
+		if ResourceLoader.exists(art_path):
+			_card_art[sp] = load(art_path)
 
 
 func _ready() -> void:
@@ -471,9 +476,17 @@ func _show_card_detail(card: Dictionary) -> void:
 	vbox.add_theme_constant_override("separation", 8)
 	panel.add_child(vbox)
 
-	# Species art
+	# Species art — use large card art if available, else sprite
 	var sp: String = card.get("species", "")
-	if sp in _species_sprites and _species_sprites[sp] != null:
+	if sp in _card_art and _card_art[sp] != null:
+		var art := TextureRect.new()
+		art.texture = _card_art[sp]
+		art.custom_minimum_size = Vector2(150, 220)
+		art.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		art.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(art)
+	elif sp in _species_sprites and _species_sprites[sp] != null:
 		var sprite := TextureRect.new()
 		sprite.texture = _species_sprites[sp]
 		sprite.custom_minimum_size = Vector2(80, 80)
