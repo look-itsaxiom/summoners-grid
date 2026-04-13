@@ -63,10 +63,48 @@ func _build_ui() -> void:
 	subtitle.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
 	outer.add_child(subtitle)
 
+	# Tab buttons
+	var tab_row := HBoxContainer.new()
+	tab_row.add_theme_constant_override("separation", 8)
+	outer.add_child(tab_row)
+
+	var browse_btn := Button.new()
+	browse_btn.text = "Browse All"
+	browse_btn.custom_minimum_size = Vector2(120, 30)
+	browse_btn.add_theme_font_size_override("font_size", 12)
+	var bb_style := StyleBoxFlat.new()
+	bb_style.bg_color = Color(0.3, 0.25, 0.1)
+	bb_style.corner_radius_top_left = 4
+	bb_style.corner_radius_top_right = 4
+	browse_btn.add_theme_stylebox_override("normal", bb_style)
+	browse_btn.pressed.connect(func(): _refresh_listings())
+	tab_row.add_child(browse_btn)
+
+	var my_btn := Button.new()
+	my_btn.text = "My Listings"
+	my_btn.custom_minimum_size = Vector2(120, 30)
+	my_btn.add_theme_font_size_override("font_size", 12)
+	var mb_style := StyleBoxFlat.new()
+	mb_style.bg_color = Color(0.15, 0.15, 0.25)
+	mb_style.corner_radius_top_left = 4
+	mb_style.corner_radius_top_right = 4
+	my_btn.add_theme_stylebox_override("normal", mb_style)
+	my_btn.pressed.connect(func(): _refresh_listings(true))
+	tab_row.add_child(my_btn)
+
+	# Fee summary
+	var fee_info := Label.new()
+	fee_info.text = "Fees collected: %d coins" % _mp.total_fees_collected
+	fee_info.add_theme_font_size_override("font_size", 10)
+	fee_info.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5))
+	fee_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	fee_info.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	tab_row.add_child(fee_info)
+
 	# Scroll area for listings
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.custom_minimum_size.y = 400
+	scroll.custom_minimum_size.y = 380
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	outer.add_child(scroll)
 
@@ -87,11 +125,13 @@ func _build_ui() -> void:
 	_add_btn(btn_row, "Back to Menu", Color(0.2, 0.2, 0.35), func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 
 
-func _refresh_listings() -> void:
+func _refresh_listings(my_only: bool = false) -> void:
 	for child in _list_container.get_children():
 		child.queue_free()
 
 	var sorted: Array = _mp.get_listings_sorted()
+	if my_only:
+		sorted = sorted.filter(func(l): return l.get("seller", "") == "you")
 	if sorted.is_empty():
 		var empty := Label.new()
 		empty.text = "No cards for sale. Check back later!"
