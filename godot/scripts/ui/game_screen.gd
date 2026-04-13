@@ -23,6 +23,7 @@ var selected_unit_id: String = ""
 
 @onready var _cards = get_node("/root/CardDB")
 @onready var _sfx = get_node("/root/SFX")
+@onready var _bgm = get_node("/root/BGM")
 
 
 var FloatingNumber = preload("res://scripts/ui/floating_number.gd")
@@ -37,6 +38,8 @@ func _ready() -> void:
 	_gm.game_over_signal.connect(_on_game_over)
 	_gm.attack_resolved.connect(_on_attack_resolved)
 	_gm.summon_defeated.connect(_on_summon_defeated)
+
+	_bgm.play("battle")
 
 
 func _build_ui() -> void:
@@ -819,8 +822,10 @@ func _on_phase_changed(_new_phase: String) -> void:
 func _on_game_over(winner_id: String) -> void:
 	if winner_id == "playerA":
 		_sfx.victory()
+		_bgm.play("victory")
 	else:
 		_sfx.game_defeat()
+		_bgm.play("defeat")
 	status_label.text = "%s WINS!" % winner_id.to_upper()
 	end_turn_btn.visible = false
 

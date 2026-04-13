@@ -8,6 +8,9 @@ const BG_COLOR := Color(0.05, 0.05, 0.1)
 
 func _ready() -> void:
 	_build_ui()
+	var bgm = get_node_or_null("/root/BGM")
+	if bgm:
+		bgm.play("menu")
 
 
 func _build_ui() -> void:

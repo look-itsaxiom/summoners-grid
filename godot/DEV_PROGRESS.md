@@ -65,7 +65,7 @@ Check this file every Ralph Loop iteration.
 | 49 | HP bar styling | done | PARTIAL | basic bar, no glow/gradient |
 | 50 | Card hover preview | todo | done | card detail panel in sidebar + unit stat panel |
 | 51 | Board zoom + pan | todo | TODO | |
-| 52 | Background music | todo | TODO | |
+| 52 | Background music | todo | done | procedural BGM: menu, battle, victory, defeat (bgm.gd) |
 | 53 | UI skin / theme | todo | done | dark fantasy theme, styled panels, per-type card colors, game over panel |
 | 54 | Responsive layout | todo | TODO | |
 | 55 | Turn timer visual | todo | TODO | |
