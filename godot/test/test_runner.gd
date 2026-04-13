@@ -30,6 +30,7 @@ func _run_all_tests() -> void:
 	_test_quest_completion()
 	_test_effect_stack()
 	_test_play_example()
+	_test_dna_system()
 
 	print("\n=== Results: %d passed, %d failed ===" % [_pass, _fail])
 
@@ -489,3 +490,43 @@ func _test_play_example() -> void:
 	_check("PE: Heal base", heal_base, s.calculate_healing(mage_spi, 40, false))
 	_check("PE: Heal crit > base", true, heal_crit > heal_base)
 	_check("PE: Crit is 1.5x", true, heal_crit == floori(heal_base * 1.5))
+
+
+func _test_dna_system() -> void:
+	print("--- DNA System ---")
+	var DNA = preload("res://scripts/engine/dna.gd")
+
+	# Generate a DNA
+	var dna: String = DNA.generate_dna("gignen", "rare")
+	_check("DNA length", 32, dna.length())
+	_check("DNA valid", true, DNA.validate_dna(dna))
+
+	# Parse round-trip
+	var parsed: Dictionary = DNA.parse_dna(dna)
+	_check("DNA version", 1, parsed["version"])
+	_check("DNA species index", 0, parsed["species_index"])  # gignen = index 0
+	_check("DNA rarity index", 2, parsed["rarity_index"])    # rare = index 2
+
+	# Reconstruct
+	var card: Dictionary = DNA.reconstruct(dna)
+	_check("DNA card not empty", true, not card.is_empty())
+	_check("DNA card species", "gignen", card.get("species", ""))
+	_check("DNA card rarity", "rare", card.get("rarity", ""))
+	_check("DNA card has name", true, card.get("name", "").length() > 0)
+	_check("DNA card has stats", true, card.get("base_stats", {}).has("STR"))
+
+	# Deterministic: same DNA → same card
+	var card2: Dictionary = DNA.reconstruct(dna)
+	_check("DNA deterministic name", card["name"], card2["name"])
+	_check("DNA deterministic STR", card["base_stats"]["STR"], card2["base_stats"]["STR"])
+
+	# Invalid DNA
+	_check("DNA invalid length", false, DNA.validate_dna("abc"))
+	_check("DNA invalid chars", false, DNA.validate_dna("zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"))
+	_check("DNA bad checksum", false, DNA.validate_dna(dna.substr(0, 30) + "ff"))
+
+	# Generate without species/rarity (random)
+	var random_dna: String = DNA.generate_dna()
+	_check("Random DNA valid", true, DNA.validate_dna(random_dna))
+	var random_card: Dictionary = DNA.reconstruct(random_dna)
+	_check("Random card has species", true, random_card.get("species", "") in DNA.SPECIES_ORDER)

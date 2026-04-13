@@ -73,12 +73,12 @@ Check this file every Ralph Loop iteration.
 ## Infrastructure (18 items) — PLATFORM
 | # | Item | Web | Godot | Notes |
 |---|------|-----|-------|-------|
-| 56 | Card DNA system (128-bit hex) | done | TODO | port from src/engine/dna.ts |
-| 57 | DNA → SummonCard reconstruction | done | TODO | |
+| 56 | Card DNA system (128-bit hex) | done | done | 32-char hex, generate/parse/validate, Mulberry32 PRNG |
+| 57 | DNA → SummonCard reconstruction | done | done | Deterministic: name, stats, growth rates from DNA seed |
 | 58 | DNA → NFT metadata (ERC-721) | done | N/A | backend concern |
 | 59 | DNA → Art prompt (ComfyUI) | done | N/A | backend concern |
 | 60 | DNA → Sprite prompt | done | N/A | backend concern |
-| 61 | DNA validation + checksum | done | TODO | |
+| 61 | DNA validation + checksum | done | done | XOR checksum, version/species/rarity bounds check |
 | 62 | Platform GDD document | done | done | exists |
 | 63-68 | API routes, auth, NFT minting | various | N/A | backend/web concerns |
 | 69 | ComfyUI art pipeline | done | N/A | separate service |
