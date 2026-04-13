@@ -2,6 +2,7 @@ extends Control
 ## Pack Opening Ceremony — the dopamine machine.
 ## Cards reveal one at a time with escalating excitement.
 
+var CardWidgetScript = preload("res://scripts/ui/card_widget.gd")
 const BG_COLOR := Color(0.03, 0.03, 0.08)
 const GOLD := Color(1.0, 0.85, 0.0)
 
@@ -273,74 +274,20 @@ func _reveal_card(index: int) -> void:
 	var rarity_color: Color = RARITY_COLORS.get(rarity, Color(0.5, 0.5, 0.5))
 	var glow_strength: float = RARITY_GLOW.get(rarity, 0.0)
 
-	# Update panel border to rarity color
-	var style: StyleBoxFlat = panel.get_theme_stylebox("panel").duplicate()
-	style.border_color = rarity_color
-	style.bg_color = Color(0.08, 0.08, 0.14).lerp(rarity_color, glow_strength * 0.3)
-	if glow_strength > 0.3:
-		style.border_width_top = 3
-		style.border_width_bottom = 3
-		style.border_width_left = 3
-		style.border_width_right = 3
-	panel.add_theme_stylebox_override("panel", style)
-
-	# Replace content
-	var vbox: VBoxContainer = panel.get_child(0)
-	for child in vbox.get_children():
+	# Replace panel contents with CardWidget
+	for child in panel.get_children():
 		child.queue_free()
 
-	# Species art — prefer large card art for reveal impact
-	var sp: String = card.get("species", "")
-	var art_tex: Texture2D = _card_art.get(sp) if sp in _card_art else null
-	var sprite_tex: Texture2D = _species_sprites.get(sp) if sp in _species_sprites else null
-	if art_tex != null or sprite_tex != null:
-		var sprite := TextureRect.new()
-		sprite.texture = art_tex if art_tex != null else sprite_tex
-		sprite.custom_minimum_size = Vector2(80, 80) if art_tex != null else Vector2(50, 50)
-		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		vbox.add_child(sprite)
-	else:
-		var species_map := {"gignen": "⚔️", "fae": "✨", "stoneheart": "🪨", "wilderling": "🐺", "angar": "👼", "demar": "😈", "creptilis": "🦎"}
-		var emoji := Label.new()
-		emoji.text = species_map.get(sp, "🃏")
-		emoji.add_theme_font_size_override("font_size", 36)
-		emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		vbox.add_child(emoji)
+	# Clear panel styling — CardWidget draws its own frame
+	var clear_style := StyleBoxFlat.new()
+	clear_style.bg_color = Color(0, 0, 0, 0)
+	panel.add_theme_stylebox_override("panel", clear_style)
 
-	# Name
-	var name_lbl := Label.new()
-	name_lbl.text = card.get("name", "?")
-	name_lbl.add_theme_font_size_override("font_size", 13)
-	name_lbl.add_theme_color_override("font_color", Color.WHITE)
-	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(name_lbl)
-
-	# Rarity
-	var rarity_lbl := Label.new()
-	rarity_lbl.text = rarity.to_upper()
-	rarity_lbl.add_theme_font_size_override("font_size", 11)
-	rarity_lbl.add_theme_color_override("font_color", rarity_color)
-	rarity_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(rarity_lbl)
-
-	# Species
-	var species_lbl := Label.new()
-	species_lbl.text = card.get("species", "?").capitalize()
-	species_lbl.add_theme_font_size_override("font_size", 10)
-	species_lbl.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
-	species_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(species_lbl)
-
-	# DNA
-	var dna_lbl := Label.new()
-	dna_lbl.text = card.get("dna", "").substr(0, 16)
-	dna_lbl.add_theme_font_size_override("font_size", 8)
-	dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
-	dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(dna_lbl)
+	var cw := Control.new()
+	cw.set_script(CardWidgetScript)
+	cw.setup(card, false)  # Full size for reveal impact
+	cw.set_anchors_preset(Control.PRESET_FULL_RECT)
+	panel.add_child(cw)
 
 	# Sound — escalating pitch based on rarity
 	if _sfx:
