@@ -297,6 +297,13 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 	var rc: Color = RARITY_COLORS.get(rarity, Color(0.5, 0.5, 0.5))
 	var glow: float = {"common": 0.0, "uncommon": 0.05, "rare": 0.15, "legend": 0.3, "myth": 0.5}.get(rarity, 0.0)
 
+	# Check if card is new (acquired in last session / recently)
+	var is_new := false
+	var acquired: String = card.get("acquired_at", "")
+	if acquired != "" and acquired.length() >= 10:
+		var today := Time.get_date_string_from_system()
+		is_new = acquired.begins_with(today)
+
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(150, 200)
 	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -396,6 +403,15 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 		dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
 		dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(dna_lbl)
+
+	# "NEW" badge for recently acquired cards
+	if is_new:
+		var badge := Label.new()
+		badge.text = "NEW"
+		badge.add_theme_font_size_override("font_size", 9)
+		badge.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		badge.position = Vector2(4, 2)
+		panel.add_child(badge)
 
 	# Make clickable
 	var click_btn := Button.new()
