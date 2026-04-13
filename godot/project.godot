@@ -40,6 +40,12 @@ config/features=PackedStringArray("4.3")
 
 
 
+
+
+
+
+
+
 SFX="*res://scripts/engine/sfx.gd"
 
 CardDB="*res://scripts/data/cards.gd"
@@ -60,6 +66,8 @@ GameManager="*res://scripts/engine/game_manager.gd"
 Settings="*res://scripts/engine/settings.gd"
 
 ApiClient="*res://scripts/engine/api_client.gd"
+
+CardStorage="*res://scripts/engine/card_storage.gd"
 
 BGM="*res://scripts/engine/bgm.gd"
 

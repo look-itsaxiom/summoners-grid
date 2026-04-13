@@ -28,15 +28,18 @@ var _filter_rarity: String = ""
 
 
 func _ready() -> void:
-	# Load collection from ApiClient or generate demo cards
-	var api = get_node_or_null("/root/ApiClient")
-	if api and api._last_pack_data.has("cards"):
-		# If coming from pack opening, show those cards
-		pass
+	# Load collection from persistent storage
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage:
+		_cards = storage.get_cards()
 
-	# For demo: generate a collection of 20 cards
+	# If empty (first launch), show demo collection
 	if _cards.is_empty():
 		_cards = _generate_demo_collection()
+
+	# Sort by rarity (rarest first)
+	var rarity_order := {"myth": 0, "legend": 1, "rare": 2, "uncommon": 3, "common": 4}
+	_cards.sort_custom(func(a, b): return rarity_order.get(a.get("rarity", "common"), 9) < rarity_order.get(b.get("rarity", "common"), 9))
 
 	_filtered = _cards.duplicate()
 	_build_ui()
