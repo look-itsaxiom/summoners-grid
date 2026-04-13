@@ -1,6 +1,8 @@
 extends Control
 ## Card Forge — combine 3 cards of same rarity into 1 card of next rarity.
 
+var CardWidgetScript = preload("res://scripts/ui/card_widget.gd")
+
 const BG_COLOR := Color(0.05, 0.05, 0.1)
 const GOLD := Color(1.0, 0.85, 0.0)
 
@@ -132,49 +134,27 @@ func _refresh_grid() -> void:
 		_grid.add_child(btn)
 
 
-func _create_card_btn(card: Dictionary, index: int) -> Button:
+func _create_card_btn(card: Dictionary, index: int) -> Control:
 	var rarity: String = card.get("rarity", "common")
-	var btn := Button.new()
-	btn.text = "%s\n%s" % [card.get("name", "?"), rarity.to_upper()]
-	btn.custom_minimum_size = Vector2(120, 70)
-	btn.add_theme_font_size_override("font_size", 10)
-	btn.clip_text = false
-	btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(0.1, 0.1, 0.16)
-	style.border_color = RARITY_COLORS.get(rarity, Color(0.3, 0.3, 0.3))
-	style.border_width_top = 2
-	style.border_width_bottom = 2
-	style.border_width_left = 2
-	style.border_width_right = 2
-	style.corner_radius_top_left = 4
-	style.corner_radius_top_right = 4
-	style.corner_radius_bottom_left = 4
-	style.corner_radius_bottom_right = 4
-	btn.add_theme_stylebox_override("normal", style)
-
-	btn.pressed.connect(func(): _toggle_select(index, rarity, btn))
-	return btn
+	var cw := Control.new()
+	cw.set_script(CardWidgetScript)
+	cw.setup(card, true)  # Mini mode for forge grid
+	cw.card_clicked.connect(func(): _toggle_select(index, rarity, cw))
+	return cw
 
 
-func _toggle_select(index: int, rarity: String, btn: Button) -> void:
+func _toggle_select(index: int, rarity: String, cw: Control) -> void:
 	if index in _selected:
 		_selected.erase(index)
-		var style: StyleBoxFlat = btn.get_theme_stylebox("normal").duplicate()
-		style.bg_color = Color(0.1, 0.1, 0.16)
-		btn.add_theme_stylebox_override("normal", style)
+		cw.modulate = Color(1, 1, 1)
 	else:
-		# Can only select same rarity
 		if _selected.size() > 0 and rarity != _selected_rarity:
 			return
 		if _selected.size() >= 3:
 			return
 		_selected.append(index)
 		_selected_rarity = rarity
-		var style: StyleBoxFlat = btn.get_theme_stylebox("normal").duplicate()
-		style.bg_color = Color(0.25, 0.2, 0.1)
-		btn.add_theme_stylebox_override("normal", style)
+		cw.modulate = Color(1.3, 1.1, 0.7)  # Gold highlight for selected
 
 	if _selected.is_empty():
 		_selected_rarity = ""
