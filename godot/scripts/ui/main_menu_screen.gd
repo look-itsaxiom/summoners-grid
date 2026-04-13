@@ -61,6 +61,7 @@ func _build_ui() -> void:
 	_add_button(center, "PLAY VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai)
 	_add_button(center, "Random Deck Game", Color(0.9, 0.7, 0.0), _on_random_game)
 	_add_button(center, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai)
+	_add_button(center, "How to Play", Color(0.25, 0.4, 0.6), _on_how_to_play)
 
 	# Spacer
 	var spacer3 := Control.new()
@@ -145,3 +146,7 @@ func _on_watch_ai() -> void:
 	gm.spectator_mode = true
 	gm.use_random_decks = false
 	get_tree().change_scene_to_file("res://scenes/game.tscn")
+
+
+func _on_how_to_play() -> void:
+	get_tree().change_scene_to_file("res://scenes/how_to_play.tscn")

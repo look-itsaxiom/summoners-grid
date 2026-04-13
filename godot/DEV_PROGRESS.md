@@ -45,7 +45,7 @@ Check this file every Ralph Loop iteration.
 | 33 | SVG minimap | done | N/A | not needed in Godot |
 | 34 | Turn transition banners | done | done | turn_banner.gd |
 | 35 | Spectator mode + speed control | done | PARTIAL | spectator works, no speed control |
-| 36 | Tutorial / How to Play | done | TODO | |
+| 36 | Tutorial / How to Play | done | done | how_to_play.gd — objective, turns, cards, combat, VP, elements, tips |
 | 37 | Coin flip turn order | done | done | |
 | 38 | Deck preview screen | done | done | shows summons+stats, main deck by type, advance deck, START/BACK |
 | 39 | Persistent settings | done | TODO | |
