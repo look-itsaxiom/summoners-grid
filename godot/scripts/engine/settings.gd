@@ -17,6 +17,8 @@ var match_history: Array = []
 var total_wins := 0
 var total_losses := 0
 var total_draws := 0
+var current_streak := 0
+var best_streak := 0
 
 
 func _ready() -> void:
@@ -68,8 +70,12 @@ func record_match(winner: String, turns: int, mode: String) -> void:
 
 	if winner == "playerA":
 		total_wins += 1
+		current_streak += 1
+		if current_streak > best_streak:
+			best_streak = current_streak
 	elif winner == "playerB":
 		total_losses += 1
+		current_streak = 0
 	else:
 		total_draws += 1
 
@@ -84,6 +90,8 @@ func save_history() -> void:
 		"total_wins": total_wins,
 		"total_losses": total_losses,
 		"total_draws": total_draws,
+		"current_streak": current_streak,
+		"best_streak": best_streak,
 	}
 	var file := FileAccess.open(HISTORY_PATH, FileAccess.WRITE)
 	if file:
@@ -104,6 +112,8 @@ func load_history() -> void:
 		total_wins = parsed.get("total_wins", 0)
 		total_losses = parsed.get("total_losses", 0)
 		total_draws = parsed.get("total_draws", 0)
+		current_streak = parsed.get("current_streak", 0)
+		best_streak = parsed.get("best_streak", 0)
 
 
 func get_win_rate() -> float:
@@ -114,7 +124,12 @@ func get_win_rate() -> float:
 
 
 func get_stats_text() -> String:
-	return "%dW / %dL (%.0f%% win rate, %d games)" % [
+	var text := "%dW / %dL (%.0f%% win rate, %d games)" % [
 		total_wins, total_losses, get_win_rate(),
 		total_wins + total_losses + total_draws
 	]
+	if best_streak > 0:
+		text += "  |  Best streak: %d" % best_streak
+	if current_streak > 1:
+		text += "  |  Current: %d" % current_streak
+	return text

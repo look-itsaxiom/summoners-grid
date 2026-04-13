@@ -1102,6 +1102,14 @@ func _show_game_over_overlay(winner_id: String) -> void:
 	if max_damage > 0:
 		stats_lines.append("  Highest Damage   %d" % max_damage)
 
+	# Win streak
+	var settings_node = get_node_or_null("/root/Settings")
+	if settings_node and not _gm.spectator_mode:
+		if settings_node.current_streak > 1:
+			stats_lines.append("  Win Streak       %d" % settings_node.current_streak)
+		if settings_node.best_streak > 1:
+			stats_lines.append("  Best Streak      %d" % settings_node.best_streak)
+
 	var stats_label := Label.new()
 	stats_label.text = "\n".join(stats_lines)
 	stats_label.add_theme_font_size_override("font_size", 12)
