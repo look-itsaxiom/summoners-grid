@@ -1007,7 +1007,7 @@ func _show_game_over_overlay(winner_id: String) -> void:
 	btn_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(btn_container)
 
-	_add_overlay_button(btn_container, "Play Again", Color(0.2, 0.5, 0.3), func(): get_tree().reload_current_scene())
+	_add_overlay_button(btn_container, "Play Again", Color(0.2, 0.5, 0.3), func(): get_node("/root/SceneTransition").change_scene("res://scenes/game.tscn"))
 	# Highlight Pack Store if player can afford a pack
 	var can_buy: bool = storage != null and storage.get_coins() >= CardStorage.PACK_COST_STANDARD
 	var store_color := Color(0.8, 0.55, 0.1) if can_buy else Color(0.4, 0.3, 0.2)
