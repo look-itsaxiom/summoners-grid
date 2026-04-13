@@ -1,47 +1,48 @@
 # QA — Last Run
 
 **Date:** 2026-04-13
-**Iteration:** 21 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + export build verification + editor systems check
+**Iteration:** 27 (Ralph Loop QA Rotation)
+**Type:** Full stack — Godot tests + Web tests + API endpoints + Pack Store
 
-## Headless Test Results
+## Test Results
 
-**107 passed, 0 failed**
+| Suite | Tests | Status |
+|-------|-------|--------|
+| Godot headless | 107 | PASS |
+| Web prototype (Vitest) | 280 | PASS |
+| **Total** | **387** | **ALL PASS** |
 
-## Export Build Verification
+## API Endpoint Tests
 
-- **Linux x86_64 (68MB):** Launched standalone, ran 8 seconds, clean exit (SIGTERM from timeout)
-- **Windows x86_64 (100MB):** Export completed successfully (not runnable on Linux host)
+| Endpoint | Method | Result |
+|----------|--------|--------|
+| /api/health | GET | OK (v0.3.0-alpha) |
+| /api/packs/open | POST | 5 cards generated, stored in DB |
+| /api/collection | GET | Returns owned cards (5 total) |
+| /api/cards/[dna] | GET | Rejects invalid DNA correctly |
+| /api/auth/me | GET | Returns 401 without token |
 
-## Editor Systems Check (via godot-mcp game_eval)
-
-- BGM: playing "menu" track on startup
-- SFX: enabled
-- Card data: 6 summons, 32 actions loaded
-- Scene: menu loaded correctly
+## Pack Store UI
+- Login screen renders (SSR verified via curl)
+- Dev mode wallet connection works
+- Pack purchase → card generation → collection view flow works
 
 ## Issues Found
+None. 8th consecutive clean QA cycle.
 
-None. 7th consecutive clean QA cycle.
+## Full Product Status
 
-## Session Final Summary (21 iterations)
+### Ready
+- Game client (Godot): 3 modes, sprites, audio, full UI
+- Web prototype: 280 tests, reference engine
+- Database: SQLite with users, cards, packs, decks, matches
+- API: Pack opening, collection, health, card lookup
+- Pack Store UI: Login, store, opening, collection views
+- Art Pipeline: ComfyUI running, 7 species sprites generated
+- DNA System: 128-bit encoding, NFT metadata, round-trip verified
 
-### Features Built
-- Effect stack LIFO with speed lock (16 tests)
-- Deck Preview screen (summons + main deck by type + advance deck)
-- How to Play tutorial (7 sections)
-- Background music (4 procedural tracks with auto-transitions)
-- Card/unit detail panels
-- Hand card 3-column grid with 7 card type colors
-- Board checkerboard + territory borders + unit card backgrounds + cell flashes
-- Game over screen with styled panel + detailed stats
-- All 12 SFX wired to game events + floating heal numbers
-- Desktop export builds (Linux + Windows)
-
-### Metrics
-- 107 headless tests, all passing
-- 7 clean QA rotations, zero bugs
-- ~24 commits
-- 2 new screens (Deck Preview, How to Play)
-- 2 new engine files (bgm.gd, effect stack in game_manager.gd)
-- 2 export builds (Linux 68MB, Windows 100MB)
+### Blocked on Immutable Hub
+- Auth (Passport login)
+- Payments (Checkout)
+- NFT Minting
+- Marketplace
