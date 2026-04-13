@@ -45,6 +45,17 @@ func _build_dev_mode_ui() -> void:
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_child(center)
 
+	# Logo image
+	var logo_path := "res://assets/title_logo.png"
+	if ResourceLoader.exists(logo_path):
+		var logo := TextureRect.new()
+		logo.texture = load(logo_path)
+		logo.custom_minimum_size = Vector2(200, 100)
+		logo.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		logo.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		logo.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		center.add_child(logo)
+
 	var title := Label.new()
 	title.text = "Summoner's Grid"
 	title.add_theme_font_size_override("font_size", 42)
