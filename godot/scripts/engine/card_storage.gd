@@ -165,11 +165,11 @@ func get_rank() -> Dictionary:
 		{"name": "Master", "min": 50, "color": Color(0.85, 0.2, 0.85)},
 		{"name": "Legend", "min": 100, "color": Color(1.0, 0.4, 0.2)},
 	]
-	var current := ranks[0]
+	var current: Dictionary = ranks[0]
 	for r in ranks:
 		if _total_wins >= r["min"]:
 			current = r
-	var next_rank := {}
+	var next_rank: Dictionary = {}
 	for i in range(ranks.size() - 1):
 		if ranks[i]["name"] == current["name"] and i + 1 < ranks.size():
 			next_rank = ranks[i + 1]
