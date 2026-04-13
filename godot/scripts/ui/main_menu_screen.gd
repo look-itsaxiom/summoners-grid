@@ -122,9 +122,10 @@ func _build_ui() -> void:
 	bottom_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	center.add_child(bottom_row)
 
-	_add_button(bottom_row, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 140)
-	_add_button(bottom_row, "History", Color(0.2, 0.2, 0.3), _on_match_history, 120)
-	_add_button(bottom_row, "Settings", Color(0.2, 0.2, 0.3), _on_settings, 120)
+	_add_button(bottom_row, "Collection", Color(0.3, 0.5, 0.3), _on_collection, 110)
+	_add_button(bottom_row, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 110)
+	_add_button(bottom_row, "History", Color(0.2, 0.2, 0.3), _on_match_history, 100)
+	_add_button(bottom_row, "Settings", Color(0.2, 0.2, 0.3), _on_settings, 100)
 
 	# Spacer
 	var spacer3 := Control.new()
