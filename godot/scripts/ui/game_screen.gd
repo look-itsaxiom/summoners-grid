@@ -1016,6 +1016,13 @@ func _on_game_over(winner_id: String) -> void:
 	var mode := "spectator" if _gm.spectator_mode else ("random" if _gm.use_random_decks else "standard")
 	get_node("/root/Settings").record_match(winner_id, _gm.turn_number, mode)
 
+	# Check achievements
+	var achievements = get_node_or_null("/root/Achievements")
+	if achievements:
+		if not _gm.spectator_mode and not _gm.use_random_decks and winner_id == "playerA":
+			achievements.try_unlock("deck_master")
+		achievements.check_all()
+
 	var storage = get_node_or_null("/root/CardStorage")
 	var _ranked_up := false
 	var _new_rank_name := ""

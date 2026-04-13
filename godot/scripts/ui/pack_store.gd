@@ -237,6 +237,15 @@ func _buy_pack(pack_type: String) -> void:
 	# Save cards to persistent storage (reuse storage from coin check)
 	storage.add_pack(cards, pack_type)
 
+	# Check for myth pull achievement
+	var achievements = get_node_or_null("/root/Achievements")
+	if achievements:
+		for card in cards:
+			if card.get("rarity", "") == "myth":
+				achievements.try_unlock("myth_hunter")
+				break
+		achievements.check_all()
+
 	# Store pack data in ApiClient for the opening scene to read
 	_api.set("_last_pack_data", {
 		"success": true,
