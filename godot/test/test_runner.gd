@@ -28,6 +28,7 @@ func _run_all_tests() -> void:
 	_test_save_load()
 	_test_territory_vp()
 	_test_quest_completion()
+	_test_effect_stack()
 
 	print("\n=== Results: %d passed, %d failed ===" % [_pass, _fail])
 
@@ -375,3 +376,69 @@ func _test_quest_completion() -> void:
 	# Should gain 2 levels
 	var unit_after: Dictionary = gm.board_summons[0]
 	_check("Quest +2 levels", level_before + 2, unit_after["level"])
+
+
+func _test_effect_stack() -> void:
+	print("--- Effect Stack ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	# Reset for clean test
+	gm.initialize_game(c.create_player_a_deck(), c.create_player_b_deck())
+	gm.decide_turn_order("playerA")
+
+	# Stack starts empty
+	_check("Stack empty at start", true, gm.is_stack_empty())
+	_check("Top speed empty", "", gm.get_stack_top_speed())
+
+	# Speed priority constants
+	_check("Counter > Reaction", true, gm.SPEED_PRIORITY["counter"] > gm.SPEED_PRIORITY["reaction"])
+	_check("Reaction > Action", true, gm.SPEED_PRIORITY["reaction"] > gm.SPEED_PRIORITY["action"])
+
+	# Push an action-speed card
+	var action_card := { "id": "test_action", "name": "Test Action", "speed": "action",
+		"effects": [], "card_type": "action" }
+	var pushed: bool = gm.push_to_stack(action_card, "playerA")
+	_check("Push action", true, pushed)
+	_check("Stack size 1", 1, gm.effect_stack.size())
+	_check("Top speed action", "action", gm.get_stack_top_speed())
+
+	# Can push reaction (higher speed) on top of action
+	_check("Can push reaction", true, gm.can_push_to_stack("reaction"))
+	var reaction_card := { "id": "test_react", "name": "Test Reaction", "speed": "reaction",
+		"effects": [], "card_type": "reaction" }
+	pushed = gm.push_to_stack(reaction_card, "playerB")
+	_check("Push reaction", true, pushed)
+	_check("Stack size 2", 2, gm.effect_stack.size())
+	_check("Top speed reaction", "reaction", gm.get_stack_top_speed())
+
+	# Cannot push action (lower speed) on top of reaction — Speed Lock
+	_check("Cannot push action (locked)", false, gm.can_push_to_stack("action"))
+
+	# Can push counter (higher speed) on top of reaction
+	_check("Can push counter", true, gm.can_push_to_stack("counter"))
+	var counter_card := { "id": "test_counter", "name": "Test Counter", "speed": "counter",
+		"effects": [], "card_type": "counter" }
+	pushed = gm.push_to_stack(counter_card, "playerA")
+	_check("Push counter", true, pushed)
+	_check("Stack size 3", 3, gm.effect_stack.size())
+
+	# Counter on top locks out both action and reaction
+	_check("Action locked by counter", false, gm.can_push_to_stack("action"))
+	_check("Reaction locked by counter", false, gm.can_push_to_stack("reaction"))
+	_check("Counter can stack", true, gm.can_push_to_stack("counter"))
+
+	# LIFO resolution — counter resolves first, then reaction, then action
+	var resolved_order: Array = []
+	for i in range(gm.effect_stack.size() - 1, -1, -1):
+		resolved_order.append(gm.effect_stack[i]["id"])
+	_check("LIFO order", ["test_counter", "test_react", "test_action"], resolved_order)
+
+	# Resolve clears the stack
+	gm.resolve_effect_stack()
+	_check("Stack empty after resolve", true, gm.is_stack_empty())
+
+	# Empty stack allows any speed
+	_check("Empty allows action", true, gm.can_push_to_stack("action"))
+	_check("Empty allows reaction", true, gm.can_push_to_stack("reaction"))
+	_check("Empty allows counter", true, gm.can_push_to_stack("counter"))

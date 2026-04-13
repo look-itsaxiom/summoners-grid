@@ -9,6 +9,8 @@ signal log_added(entry: Dictionary)
 signal summon_placed(unit: Dictionary)
 signal summon_moved(instance_id: String, from: Vector2i, to: Vector2i)
 signal summon_defeated(unit: Dictionary)
+signal effect_stack_changed(stack: Array)
+signal effect_resolved(entry: Dictionary)
 
 const BOARD_WIDTH := 12
 const BOARD_HEIGHT := 14
@@ -33,6 +35,11 @@ var board_summons: Array = []
 var board_buildings: Array = []
 var game_log: Array = []
 var face_down_cards: Dictionary = { "playerA": [], "playerB": [] }
+
+# Effect Stack — LIFO resolution per GDD
+# Each entry: { id, speed, source, source_owner, effects, targets, resolved }
+var effect_stack: Array = []
+const SPEED_PRIORITY := { "action": 1, "reaction": 2, "counter": 3 }
 
 # Maps summon card IDs to their starting role
 var summon_role_map: Dictionary = {}
@@ -76,6 +83,7 @@ func initialize_game(deck_a: Dictionary, deck_b: Dictionary) -> void:
 	board_summons.clear()
 	board_buildings.clear()
 	face_down_cards = { "playerA": [], "playerB": [] }
+	effect_stack.clear()
 	summon_role_map.clear()
 	_reset_players()
 
@@ -370,8 +378,15 @@ func play_card(card_index: int, target_ids: Array = []) -> void:
 		if tgt_idx >= 0:
 			target_unit = board_summons[tgt_idx]
 
-	if card_type == "action" and not target_unit.is_empty():
-		_resolve_action_card(card, target_unit)
+	if card_type == "action":
+		# Push to effect stack instead of resolving inline
+		if push_to_stack(card, active_player, target_ids):
+			# Auto-resolve if no opponent response expected (AI games, etc.)
+			# In a full implementation, wait for opponent response window.
+			# For now: resolve immediately to maintain existing behavior.
+			resolve_effect_stack()
+		else:
+			add_log("Failed to push %s to stack." % card.get("name", "?"))
 	elif card_type == "quest" and not target_unit.is_empty():
 		_resolve_quest_card(card, target_unit)
 	elif card_type == "building":
@@ -751,6 +766,130 @@ func _trigger_iron_will(context: Dictionary) -> void:
 	add_log("%s survives with Iron Will! (1 HP)" % unit["card"].get("name", "?"))
 
 
+# ─── Effect Stack (LIFO) ───
+
+## Check if a card at given speed can be pushed onto the stack.
+## Speed Lock: only same or higher speed allowed when stack is non-empty.
+func can_push_to_stack(speed: String) -> bool:
+	if effect_stack.is_empty():
+		return true
+	var top_speed: String = effect_stack.back().get("speed", "action")
+	return SPEED_PRIORITY.get(speed, 0) >= SPEED_PRIORITY.get(top_speed, 0)
+
+
+## Push a card effect onto the stack. Returns false if speed-locked.
+func push_to_stack(card: Dictionary, source_owner: String, target_ids: Array = []) -> bool:
+	var speed: String = card.get("speed", "action")
+	if not can_push_to_stack(speed):
+		add_log("Speed Lock! Cannot play %s-speed card while %s-speed is on the stack." % [
+			speed, effect_stack.back().get("speed", "?")])
+		return false
+
+	var entry := {
+		"id": card.get("id", ""),
+		"speed": speed,
+		"source": card,
+		"source_owner": source_owner,
+		"effects": card.get("effects", []),
+		"targets": target_ids,
+		"resolved": false,
+	}
+	effect_stack.append(entry)
+	add_log("→ %s pushed to effect stack (%s speed)" % [card.get("name", "?"), speed])
+	effect_stack_changed.emit(effect_stack)
+	return true
+
+
+## Resolve the entire effect stack LIFO. Called when both players pass.
+func resolve_effect_stack() -> void:
+	if effect_stack.is_empty():
+		return
+
+	add_log("— Resolving effect stack (%d entries) —" % effect_stack.size())
+
+	while effect_stack.size() > 0:
+		var entry: Dictionary = effect_stack.pop_back()
+		if entry.get("resolved", false):
+			continue
+
+		var card: Dictionary = entry.get("source", {})
+		var owner: String = entry.get("source_owner", "")
+		var targets: Array = entry.get("targets", [])
+
+		add_log("Resolving: %s (owner: %s)" % [card.get("name", "?"), owner])
+
+		# Determine target unit
+		var target_unit: Dictionary = {}
+		if targets.size() > 0:
+			var tgt_idx := _find_summon_index(targets[0])
+			if tgt_idx >= 0:
+				target_unit = board_summons[tgt_idx]
+
+		# Find caster from owner's summons
+		var caster: Dictionary = _find_caster_for(card, owner)
+
+		# Resolve effects
+		for effect in entry.get("effects", []):
+			if not target_unit.is_empty():
+				# Re-check target is still alive
+				var tgt_idx := _find_summon_index(target_unit["instance_id"])
+				if tgt_idx == -1:
+					add_log("Target no longer on board, skipping effect.")
+					break
+				target_unit = board_summons[tgt_idx]
+
+			var effect_type: String = effect.get("type", "")
+			if effect_type == "damage" and not target_unit.is_empty():
+				_resolve_damage_effect(card, effect, caster, target_unit)
+			elif effect_type == "heal" and not target_unit.is_empty():
+				_resolve_heal_effect(effect, caster, target_unit)
+			elif effect_type == "buff" and not target_unit.is_empty():
+				_resolve_buff_effect(card, effect, target_unit)
+			elif effect_type == "debuff" and not target_unit.is_empty():
+				add_log("%s: %s" % [target_unit["card"].get("name", "?"), effect.get("description", "")])
+			else:
+				add_log("Effect: %s" % effect.get("description", ""))
+
+		entry["resolved"] = true
+		effect_resolved.emit(entry)
+
+	add_log("— Effect stack resolved —")
+	effect_stack_changed.emit(effect_stack)
+
+
+## Find the best caster summon for a card from a player's board units.
+func _find_caster_for(card: Dictionary, owner: String) -> Dictionary:
+	var my_summons := _get_summons_for(owner)
+	var caster: Dictionary = {}
+
+	for req in card.get("requirements", []):
+		var req_family: String = req.get("role_family", "")
+		if req_family != "":
+			for s in my_summons:
+				var role_def: Dictionary = RolesData.get_definition(s["current_role"])
+				if role_def.get("family", "") == req_family:
+					caster = s
+					break
+		if not caster.is_empty():
+			break
+
+	if caster.is_empty() and my_summons.size() > 0:
+		caster = my_summons[0]
+	return caster
+
+
+## Check if the effect stack is empty (both players can take new actions).
+func is_stack_empty() -> bool:
+	return effect_stack.is_empty()
+
+
+## Get the current top speed level on the stack ("" if empty).
+func get_stack_top_speed() -> String:
+	if effect_stack.is_empty():
+		return ""
+	return effect_stack.back().get("speed", "action")
+
+
 # ─── Attack Resolution ───
 
 signal attack_resolved(result: Dictionary)
@@ -1004,6 +1143,7 @@ func save_game() -> bool:
 		"board_summons": board_summons,
 		"board_buildings": board_buildings,
 		"face_down_cards": face_down_cards,
+		"effect_stack": effect_stack,
 		"summon_role_map": summon_role_map,
 	}
 
@@ -1048,6 +1188,7 @@ func load_game() -> bool:
 	board_summons = data.get("board_summons", [])
 	board_buildings = data.get("board_buildings", [])
 	face_down_cards = data.get("face_down_cards", { "playerA": [], "playerB": [] })
+	effect_stack = data.get("effect_stack", [])
 	summon_role_map = data.get("summon_role_map", {})
 
 	# Restore Vector2i positions (JSON loses type info)
