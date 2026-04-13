@@ -1,37 +1,44 @@
 # QA — Last Run
 
 **Date:** 2026-04-12
-**Iteration:** 9 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + interactive Play vs AI via godot-mcp
+**Iteration:** 12 (Ralph Loop QA Rotation)
+**Type:** Full — headless tests + Random Deck Game interactive via godot-mcp
 
 ## Headless Test Results
 
 **107 passed, 0 failed**
 
-## Visual QA: Play vs AI (Interactive)
+## Visual QA: Random Deck Game (Interactive)
 
-Played through Turns 1-3 interactively via godot-mcp.
+Played through Turns 1-2 of a Random Deck Game interactively.
 
 ### Verified Working
-- Menu: all buttons functional, title centered
-- Turn 1: draw skip, level skip, summon placement at (5,1)
-- Summon draw: 3 cards drawn after placement, hand went to 6
-- Card selection: gold border, description shown in status area
-- Sharpened Blade: selected → clicked warrior → effect stack push → resolve → WP +10
-- End Turn: AI took its turn automatically
-- AI Turn 2: moved scout, attacked warrior (crit for 40 damage!), placed stoneheart
-- Level-up: Warrior 5→6, damage retained (68→74 HP, max 108→114)
-- Hand display: 3-column grid, all 6 cards visible, word wrap working
-- Card type labels: [SUMMON], [ACTION], [BUILDING] all correct
-- Card colors: distinct per type (blue summon, brown action)
-- Game log: scrolling, color-coded turn numbers, all actions logged
+- **Random Deck Game mode:** Generates valid random decks (Wilderling Warrior, Angar Scout, Demar Mage)
+- **Board:** Checkerboard pattern visible, territory borders clear, three zone colors distinct
+- **Unit cards:** Dark background with team-colored border, readable HP/level/role text
+- **Card detail panel:** Shows card name, type, element, description for selected cards
+- **Hand display:** 7 cards in 3x3 grid (3+3+1), all visible, ADVANCE card in purple
+- **Card type colors:** All 7 types rendering with correct colors (tested SUMMON, ACTION, ADVANCE)
+- **AI turn:** Placed summon, played Earth Wall through effect stack, moved unit
+- **Level-up:** Wilderling 5→6 with correct HP update (146/146)
+- **Effect stack:** Earth Wall push → resolve → DEF boost applied
+- **Turn transitions:** Clean transition from Player A → AI → Player A
 
 ### Issues Found
-None. Zero bugs, zero crashes, zero visual regressions.
+None. Zero bugs, zero crashes, zero visual regressions across all recent changes.
 
-### Remaining Visual Polish (not bugs)
-- No card play or attack animations
-- No background music
-- Board units use text labels (need sprites)
-- Board uses colored rects (need tile textures)
-- No card hover preview
+### Visual Polish Status
+Completed this session:
+- [x] Menu layout (title centered, buttons styled)
+- [x] Hand card grid (3-column, all cards visible)
+- [x] Card type labels and per-type colors (7 types)
+- [x] Card/unit detail panels in sidebar
+- [x] Game over screen with styled panel + stats
+- [x] Board checkerboard + territory borders + unit card backgrounds
+
+Remaining for future sessions:
+- [ ] Card play and attack animations
+- [ ] Background music / sound effects polish
+- [ ] Summon sprites (currently text labels)
+- [ ] Board tile textures (currently code-drawn)
+- [ ] Card hover preview (enlarged card on hover)
