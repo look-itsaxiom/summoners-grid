@@ -205,8 +205,7 @@ func _buy_pack(pack_type: String) -> void:
 	var pack_size: int = 10 if pack_type == "premium" else 5
 	var cards: Array = _generate_local_pack(pack_size)
 
-	# Save cards to persistent storage
-	var storage = get_node("/root/CardStorage")
+	# Save cards to persistent storage (reuse storage from coin check)
 	storage.add_pack(cards, pack_type)
 
 	# Store pack data in ApiClient for the opening scene to read

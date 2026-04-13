@@ -61,6 +61,16 @@ func _ready() -> void:
 
 	_build_ui()
 
+	# Full-screen invisible click catcher for card reveals
+	var click_catcher := Button.new()
+	click_catcher.name = "ClickCatcher"
+	click_catcher.set_anchors_preset(Control.PRESET_FULL_RECT)
+	click_catcher.flat = true
+	click_catcher.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	click_catcher.pressed.connect(_on_reveal_click)
+	click_catcher.z_index = 10  # Above card panels but below buttons
+	add_child(click_catcher)
+
 	# Start the ceremony after a brief pause
 	get_tree().create_timer(0.5).timeout.connect(_start_reveal)
 
@@ -215,15 +225,14 @@ func _start_reveal() -> void:
 	_is_revealing = true
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if _is_revealing and _current_index < _cards.size():
-			_reveal_card(_current_index)
-			_current_index += 1
-			get_viewport().set_input_as_handled()
+## Called when the invisible click catcher is pressed.
+func _on_reveal_click() -> void:
+	if _is_revealing and _current_index < _cards.size():
+		_reveal_card(_current_index)
+		_current_index += 1
 
-			if _current_index >= _cards.size():
-				_all_revealed()
+		if _current_index >= _cards.size():
+			_all_revealed()
 
 
 func _reveal_card(index: int) -> void:
@@ -327,6 +336,11 @@ func _reveal_card(index: int) -> void:
 func _all_revealed() -> void:
 	_is_revealing = false
 	_title_label.text = "PACK COMPLETE!"
+
+	# Hide click catcher so buttons become clickable
+	var catcher = get_node_or_null("ClickCatcher")
+	if catcher:
+		catcher.visible = false
 
 	# Count rarities for summary
 	var counts := {}
