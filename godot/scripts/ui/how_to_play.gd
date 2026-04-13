@@ -122,6 +122,27 @@ func _build_ui() -> void:
 		"Neutral has no advantages or weaknesses",
 	])
 
+	# Economy
+	_add_divider(main)
+	_add_label(main, "COLLECTING CARDS", 16, HEADER_COLOR)
+	_add_text_block(main, [
+		"Build your collection by opening card packs from the Pack Store:",
+		"",
+		"• You start with 500 coins and 3 starter cards",
+		"• Standard Pack (300 coins): 5 cards, guaranteed Uncommon+ and Rare+",
+		"• Premium Pack (1,000 coins): 10 cards, guaranteed Rare+ and Legend+",
+		"• 5 rarities: Common, Uncommon, Rare, Legend, and Myth",
+		"• Rarer cards have higher stats and Power levels",
+		"",
+		"Earn coins by playing:",
+		"• Win a match: +150 coins",
+		"• Lose a match: +50 coins",
+		"• Daily login bonus: +100 coins",
+		"",
+		"Use the Deck Builder to select 3 summons from your collection",
+		"and take them into battle. Rarer cards are genuinely stronger!",
+	])
+
 	# Tips
 	_add_divider(main)
 	_add_label(main, "TIPS", 16, HEADER_COLOR)
