@@ -1625,6 +1625,9 @@ func _on_attack_resolved(result: Dictionary) -> void:
 	if is_crit:
 		_sfx.critical_hit()
 		_screen_shake(12.0)
+		# Spawn burst particles on crit
+		if not target_unit.is_empty():
+			_spawn_crit_burst(_unit_screen_pos(target_unit))
 	else:
 		_sfx.attack_hit()
 		_screen_shake(4.0)
@@ -1679,6 +1682,26 @@ func _on_summon_defeated(unit: Dictionary) -> void:
 	_sfx.defeat()
 	var screen_pos := _unit_screen_pos(unit)
 	FloatingNumber.spawn(self, "DEFEATED", screen_pos + Vector2(0, -15), Color(1.0, 0.3, 0.3), true)
+
+
+func _spawn_crit_burst(pos: Vector2) -> void:
+	for i in range(12):
+		var particle := ColorRect.new()
+		var sz: float = 2 + randf() * 4
+		particle.custom_minimum_size = Vector2(sz, sz)
+		particle.size = Vector2(sz, sz)
+		particle.color = Color(1.0, 0.85, 0.0, 0.9)
+		particle.position = pos - Vector2(sz / 2, sz / 2)
+		particle.z_index = 90
+		add_child(particle)
+
+		var angle: float = randf() * TAU
+		var dist: float = 40 + randf() * 60
+		var target_pos := pos + Vector2(cos(angle), sin(angle)) * dist
+		var tw := create_tween()
+		tw.tween_property(particle, "position", target_pos, 0.3 + randf() * 0.2).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(particle, "modulate:a", 0.0, 0.4)
+		tw.tween_callback(func(): particle.queue_free())
 
 
 func _get_element_color(element: String) -> Color:
