@@ -356,13 +356,27 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 	species_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(species_lbl)
 
-	# DNA
-	var dna_lbl := Label.new()
-	dna_lbl.text = card.get("dna", "").substr(0, 16)
-	dna_lbl.add_theme_font_size_override("font_size", 7)
-	dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
-	dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(dna_lbl)
+	# Power level (if available)
+	var power: int = card.get("power", 0)
+	if power > 0:
+		var power_lbl := Label.new()
+		power_lbl.text = "⚡ %d" % power
+		power_lbl.add_theme_font_size_override("font_size", 10)
+		var power_color := Color(0.5, 0.5, 0.6)
+		if power >= 110: power_color = Color(0.85, 0.2, 0.85)
+		elif power >= 95: power_color = Color(1.0, 0.75, 0.0)
+		elif power >= 80: power_color = Color(0.3, 0.5, 0.9)
+		power_lbl.add_theme_color_override("font_color", power_color)
+		power_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(power_lbl)
+	else:
+		# DNA fallback
+		var dna_lbl := Label.new()
+		dna_lbl.text = card.get("dna", "").substr(0, 16)
+		dna_lbl.add_theme_font_size_override("font_size", 7)
+		dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
+		dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(dna_lbl)
 
 	return panel
 

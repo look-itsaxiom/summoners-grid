@@ -248,14 +248,64 @@ func _generate_local_pack(pack_size: int) -> Array:
 		for _j in range(32):
 			dna += "0123456789abcdef"[randi() % 16]
 
+		# Generate stats based on species ranges + rarity bonus
+		var stat_total := {"common": 70, "uncommon": 80, "rare": 90, "legend": 105, "myth": 120}
+		var budget: int = stat_total.get(rarity, 70) + randi() % 10
+		var stats := _distribute_stats(budget, sp)
+
 		cards.append({
 			"name": card_name,
 			"species": sp,
 			"rarity": rarity,
 			"dna": dna,
+			"power": budget,
+			"stats": stats,
 		})
 
 	return cards
+
+
+## Distribute a stat budget across 9 stats with species bias.
+func _distribute_stats(budget: int, species: String) -> Dictionary:
+	# Species primary stat biases
+	var bias := {
+		"gignen": ["STR", "LCK"],
+		"fae": ["INT", "SPI"],
+		"stoneheart": ["END", "DEF"],
+		"wilderling": ["SPD", "STR"],
+		"angar": ["ACC", "INT"],
+		"demar": ["INT", "MDF"],
+		"creptilis": ["DEF", "SPI"],
+	}
+	var primary_stats: Array = bias.get(species, ["STR", "INT"])
+	var all_stats := ["STR", "END", "DEF", "INT", "SPI", "MDF", "SPD", "ACC", "LCK"]
+
+	var stats := {}
+	var remaining := budget
+
+	# Give primary stats a boost
+	for ps in primary_stats:
+		var val := 8 + randi() % 6  # 8-13
+		stats[ps] = val
+		remaining -= val
+
+	# Distribute rest evenly with variance
+	var other_stats: Array = []
+	for s in all_stats:
+		if not stats.has(s):
+			other_stats.append(s)
+
+	var per_stat: int = remaining / other_stats.size()
+	for s in other_stats:
+		var val := maxi(4, per_stat - 2 + randi() % 5)
+		stats[s] = val
+		remaining -= val
+
+	# Dump remainder into random stat
+	if remaining > 0:
+		stats[all_stats[randi() % all_stats.size()]] += remaining
+
+	return stats
 
 
 func _add_nav_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
