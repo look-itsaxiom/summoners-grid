@@ -289,25 +289,67 @@ func _add_feature_card(parent: HBoxContainer, title_text: String, desc_text: Str
 func _add_button(parent: Container, text: String, color: Color, callback: Callable, width: int = 300) -> void:
 	var btn := Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(width, 42)
+	btn.custom_minimum_size = Vector2(width, 44)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	btn.add_theme_font_size_override("font_size", 15)
+	btn.add_theme_color_override("font_color", Color(0.95, 0.9, 0.8))
+	btn.add_theme_color_override("font_shadow_color", Color(0.2, 0.1, 0.0, 0.5))
+	btn.add_theme_constant_override("shadow_offset_x", 1)
+	btn.add_theme_constant_override("shadow_offset_y", 1)
 	btn.pressed.connect(callback)
 
-	# Style
-	var style := StyleBoxFlat.new()
-	style.bg_color = color
-	style.corner_radius_top_left = 8
-	style.corner_radius_top_right = 8
-	style.corner_radius_bottom_left = 8
-	style.corner_radius_bottom_right = 8
-	style.content_margin_top = 10
-	style.content_margin_bottom = 10
-	btn.add_theme_stylebox_override("normal", style)
+	# Try Kenney texture buttons, fallback to flat
+	var btn_tex_path := "res://assets/ui/kenney/buttonLong_brown.png"
+	var btn_pressed_path := "res://assets/ui/kenney/buttonLong_brown_pressed.png"
+	if ResourceLoader.exists(btn_tex_path):
+		var normal_style := StyleBoxTexture.new()
+		normal_style.texture = load(btn_tex_path)
+		normal_style.texture_margin_left = 12
+		normal_style.texture_margin_right = 12
+		normal_style.texture_margin_top = 8
+		normal_style.texture_margin_bottom = 8
+		normal_style.content_margin_left = 16
+		normal_style.content_margin_right = 16
+		normal_style.content_margin_top = 10
+		normal_style.content_margin_bottom = 10
+		normal_style.modulate_color = color.lerp(Color(0.8, 0.7, 0.6), 0.3)
+		btn.add_theme_stylebox_override("normal", normal_style)
 
-	var hover_style := style.duplicate()
-	hover_style.bg_color = color.lightened(0.15)
-	btn.add_theme_stylebox_override("hover", hover_style)
+		var hover_style := StyleBoxTexture.new()
+		hover_style.texture = load(btn_tex_path)
+		hover_style.texture_margin_left = 12
+		hover_style.texture_margin_right = 12
+		hover_style.texture_margin_top = 8
+		hover_style.texture_margin_bottom = 8
+		hover_style.content_margin_left = 16
+		hover_style.content_margin_right = 16
+		hover_style.content_margin_top = 10
+		hover_style.content_margin_bottom = 10
+		hover_style.modulate_color = color.lerp(Color(1.0, 0.9, 0.8), 0.3).lightened(0.15)
+		btn.add_theme_stylebox_override("hover", hover_style)
+
+		if ResourceLoader.exists(btn_pressed_path):
+			var pressed_style := StyleBoxTexture.new()
+			pressed_style.texture = load(btn_pressed_path)
+			pressed_style.texture_margin_left = 12
+			pressed_style.texture_margin_right = 12
+			pressed_style.texture_margin_top = 8
+			pressed_style.texture_margin_bottom = 8
+			pressed_style.content_margin_left = 16
+			pressed_style.content_margin_right = 16
+			pressed_style.content_margin_top = 12
+			pressed_style.content_margin_bottom = 8
+			btn.add_theme_stylebox_override("pressed", pressed_style)
+	else:
+		var style := StyleBoxFlat.new()
+		style.bg_color = color
+		style.corner_radius_top_left = 8
+		style.corner_radius_top_right = 8
+		style.corner_radius_bottom_left = 8
+		style.corner_radius_bottom_right = 8
+		style.content_margin_top = 10
+		style.content_margin_bottom = 10
+		btn.add_theme_stylebox_override("normal", style)
 
 	parent.add_child(btn)
 
