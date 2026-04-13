@@ -56,6 +56,8 @@ var _pan_start := Vector2.ZERO
 # Species sprite textures (loaded once)
 var _species_sprites: Dictionary = {}
 
+var _tile_textures: Dictionary = {}
+
 @onready var _gm = get_node("/root/GameManager")
 
 
@@ -64,7 +66,15 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_process(true)
 	_load_sprites()
+	_load_tiles()
 	_apply_color_mode()
+
+
+func _load_tiles() -> void:
+	for tile_name in ["tile_blue", "tile_neutral", "tile_red"]:
+		var path := "res://assets/%s.png" % tile_name
+		if ResourceLoader.exists(path):
+			_tile_textures[tile_name] = load(path)
 
 
 func _apply_color_mode() -> void:
@@ -145,8 +155,17 @@ func _draw() -> void:
 			elif pos == hovered_cell:
 				color = color.lerp(Color.WHITE, 0.05)
 
-			color.a = 0.7  # Semi-transparent so board bg shows through
-			draw_rect(rect, color)
+			# Draw tile texture if available, otherwise flat color
+			var tile_key := "tile_neutral"
+			if y < TERRITORY_DEPTH:
+				tile_key = "tile_blue"
+			elif y >= BOARD_H - TERRITORY_DEPTH:
+				tile_key = "tile_red"
+			if tile_key in _tile_textures:
+				draw_texture_rect(_tile_textures[tile_key], rect, false, color.lightened(0.3) * Color(1, 1, 1, 0.8))
+			else:
+				color.a = 0.7
+				draw_rect(rect, color)
 
 			# Subtle inner bevel — lighter top-left edge, darker bottom-right
 			var bevel_light := Color(1, 1, 1, 0.04)
