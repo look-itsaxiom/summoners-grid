@@ -43,7 +43,7 @@ func open_pack(pack_type: String = "standard") -> Dictionary:
 	if _auth_token != "":
 		headers.append("Authorization: Bearer %s" % _auth_token)
 
-	var result := await _post(url, body, headers)
+	var result := await _http_post(url, body, headers)
 	return result
 
 
@@ -54,17 +54,17 @@ func get_collection() -> Dictionary:
 	if _auth_token != "":
 		headers.append("Authorization: Bearer %s" % _auth_token)
 
-	var result := await _get(url, headers)
+	var result := await _http_get(url, headers)
 	return result
 
 
 ## Check API health.
 func health_check() -> Dictionary:
-	return await _get(base_url + "/api/health", [])
+	return await _http_get(base_url + "/api/health", [])
 
 
 ## Internal GET request.
-func _get(url: String, headers: Array) -> Dictionary:
+func _http_get(url: String, headers: Array) -> Dictionary:
 	var http := HTTPRequest.new()
 	add_child(http)
 
@@ -92,7 +92,7 @@ func _get(url: String, headers: Array) -> Dictionary:
 
 
 ## Internal POST request.
-func _post(url: String, body: String, headers: Array) -> Dictionary:
+func _http_post(url: String, body: String, headers: Array) -> Dictionary:
 	var http := HTTPRequest.new()
 	add_child(http)
 
