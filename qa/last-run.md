@@ -1,29 +1,29 @@
 # QA — Last Run
 
-**Date:** 2026-04-12
-**Iteration:** 15 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + Play vs AI interactive via godot-mcp
+**Date:** 2026-04-13
+**Iteration:** 18 (Ralph Loop QA Rotation)
+**Type:** Full — headless tests + complete flow QA via godot-mcp
 
 ## Headless Test Results
 
 **107 passed, 0 failed**
 
-## Visual QA: Play vs AI (Interactive)
+## Visual QA: Complete User Flow
 
-Played Turn 1-2 interactively. Placed warrior, drew 3 cards.
+Tested full flow: Menu → Deck Preview → START GAME → Game
 
 ### Verified Working
-- All previous features remain stable (menu, hand, cards, board, panels)
-- Cell flash system runs without errors (0.4s fades too fast for screenshot capture but code is wired to summon/move/attack events)
-- All 12 SFX wired (click, card_play, summon_place, attack_hit/miss, crit, heal, level_up, vp_gain, defeat, victory, game_defeat)
-- Floating heal numbers connected via log parsing
-- DEV_PROGRESS accurately reflects current state
+- **Menu:** All 3 buttons, title centered, menu BGM playing
+- **Deck Preview (NEW):** Summons with stats/weapons, main deck by type (action×12, building×2, quest×3, counter×2, reaction×1), advance deck (4 cards), all color-coded, scroll works, START GAME transitions to game
+- **Game:** Battle BGM plays, Turn 1 loads correctly from deck preview, all UI elements present
+- **BGM transitions:** menu → battle confirmed via game_eval
+- **All previous features stable:** board, hand grid, card detail panels, game log
 
 ### Issues Found
-None. 5th consecutive clean QA cycle.
+None. 6th consecutive clean QA cycle across 18 iterations.
 
-### Session Cumulative (15 iterations)
+### Session Cumulative
 - 107 headless tests, all passing
-- 5 clean QA rotations (iterations 3, 6, 9, 12, 15)
-- Zero bugs found across entire session
-- ~15 commits of engine + UI + polish work
+- 6 clean QA rotations
+- ~20 commits: engine, UI, board, audio, deck preview
+- Zero bugs found
