@@ -391,7 +391,7 @@ func _screen_shake(intensity: float) -> void:
 	_shake_intensity = intensity
 	_shake_active = true
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	if _shake_active:
 		_shake_intensity *= 0.85
 		if _shake_intensity < 0.5:
