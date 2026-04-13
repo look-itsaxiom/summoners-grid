@@ -176,10 +176,12 @@ func _process(delta: float) -> void:
 	_particle_timer += delta
 	if _particle_timer > 0.3 and _particles.size() < 20:
 		_particle_timer = 0.0
+		var sz := 1 + randi() % 3  # 1-3px
 		var sparkle := ColorRect.new()
-		sparkle.custom_minimum_size = Vector2(2, 2)
-		sparkle.size = Vector2(2, 2)
-		sparkle.color = Color(1.0, 0.85, 0.0, 0.3)
+		sparkle.custom_minimum_size = Vector2(sz, sz)
+		sparkle.size = Vector2(sz, sz)
+		var hue := randf_range(0.1, 0.17)  # Gold to amber range
+		sparkle.color = Color.from_hsv(hue, 0.6, 1.0, 0.2 + randf() * 0.2)
 		sparkle.position = Vector2(randf() * 1280, 720 + 10)
 		sparkle.z_index = -1
 		add_child(sparkle)
