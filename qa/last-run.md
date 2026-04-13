@@ -1,38 +1,50 @@
 # QA — Last Run
 
-**Date:** 2026-04-13
-**Iteration:** 39 (Ralph Loop QA Rotation)
-**Type:** Full product — all tests + all 8 screens + economy loop
+**Date:** 2026-04-13 (Day 1 of 5-day sprint)
+**Iteration:** 42 (Ralph Loop QA Rotation)
+**Type:** Tests + repo status review
 
 ## Test Results
 
-| Suite | Tests | Status |
-|-------|-------|--------|
-| Godot headless | 107 | PASS |
-| Web prototype (Vitest) | 280 | PASS |
-| **Total** | **387** | **ALL PASS** |
+**107 Godot + 280 Web = 387 tests, ALL PASSING**
 
-## Screen Verification (all via godot-mcp)
+## Session Summary (42 iterations, ~40 commits)
 
-| Screen | Status | Notes |
-|--------|--------|-------|
-| Main Menu | ✓ | Two-column PLAY/COLLECT layout |
-| Pack Store | ✓ | Standard + Premium packs displayed |
-| Pack Opening | ✓ | 10-card premium reveal, rarity sorting, LEGEND gold glow |
-| My Collection | ✓ | 15 cards from 2 packs, sorted rarest-first |
-| Deck Builder | ✓ | Shows persistent collection, 3 slot selection |
-| Deck Preview | ✓ | (not retested — stable from prior QA) |
-| Game Board | ✓ | AI vs AI Turn 5, sprites, effect stack, combat |
-| How to Play | ✓ | (not retested — stable from prior QA) |
+### Screens Built (8 total)
+1. Main Menu — two-column PLAY/COLLECT layout
+2. Pack Store — Standard ($3) + Premium ($10), clickable BUY buttons
+3. Pack Opening — dopamine ceremony, one-at-a-time reveal, rarity effects
+4. My Collection — 5-column grid, filters, rarity glow, card frame art
+5. Deck Builder — select 3 summons from collection
+6. Deck Preview — review full deck before battle
+7. Game Board — full tactical combat with sprites, effect stack, audio
+8. How to Play — 7-section tutorial
 
-## Economy Loop Verified
+### Engine & Systems
+- Effect stack LIFO with speed lock (16 dedicated tests)
+- 107 headless tests covering all formulas and mechanics
+- Persistent card storage (user:// JSON, survives between sessions)
+- API backend (Next.js: pack opening, collection, health endpoints)
+- SQLite database (users, cards, packs, decks, matches)
 
-1. Pack Store → Buy Premium Pack → 10 cards generated
-2. Pack Opening → All cards revealed with rarity colors
-3. CardStorage → 15 total cards (5 + 10), 2 packs in history
-4. Collection → All 15 cards displayed, sorted, filterable
-5. Deck Builder → Same 15 cards available for deck building
+### Art Assets (12 total, all ComfyUI-generated)
+- 7 species sprites (gignen, fae, stoneheart, wilderling, angar, demar, creptilis)
+- 5 card frame backgrounds (common, uncommon, rare, legend, myth)
 
-## Issues Found
+### Audio
+- 12 procedural SFX (all wired to game events)
+- 4 procedural BGM tracks (menu, battle, victory, defeat)
 
-None. All screens load, all transitions work, all data persists.
+### Architecture Documents
+- PRODUCT_ARCHITECTURE.md — full system overview
+- REVENUE_ROADMAP.md — path to first revenue
+- PLATFORM_OPTIONS.md — auth/payment/distribution alternatives
+- SECURITY_ARCHITECTURE.md — threat model and mitigations
+
+### Economy Loop (end-to-end verified)
+Menu → Pack Store → BUY PACK (clickable!) → Pack Opening Ceremony →
+Cards saved to CardStorage → My Collection (persistent) → Deck Builder
+
+### Platform Decision
+Own stack: Supabase Auth + Stripe Payments + Steam Distribution
+Blockchain optional post-launch (Base chain for NFT bridge)
