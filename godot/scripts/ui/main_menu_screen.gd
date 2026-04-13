@@ -130,7 +130,7 @@ func _on_play_vs_ai() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.spectator_mode = false
 	gm.use_random_decks = false
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_tree().change_scene_to_file("res://scenes/deck_preview.tscn")
 
 
 func _on_random_game() -> void:

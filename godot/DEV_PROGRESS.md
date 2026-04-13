@@ -47,7 +47,7 @@ Check this file every Ralph Loop iteration.
 | 35 | Spectator mode + speed control | done | PARTIAL | spectator works, no speed control |
 | 36 | Tutorial / How to Play | done | TODO | |
 | 37 | Coin flip turn order | done | done | |
-| 38 | Deck preview screen | done | TODO | |
+| 38 | Deck preview screen | done | done | shows summons+stats, main deck by type, advance deck, START/BACK |
 | 39 | Persistent settings | done | TODO | |
 | 40 | Weapon range visualization | done | TODO | |
 
