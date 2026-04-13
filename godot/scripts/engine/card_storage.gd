@@ -17,11 +17,14 @@ const LOSS_REWARD := 50  # Coins for losing (participation)
 
 
 var _has_claimed_starter := false
+var _last_daily_claim: String = ""  # ISO date of last daily bonus
+const DAILY_BONUS := 100  # Free coins per day
 
 
 func _ready() -> void:
 	load_collection()
 	_check_starter_pack()
+	_check_daily_bonus()
 
 
 ## Grant a free starter pack on first launch.
@@ -49,6 +52,21 @@ func _check_starter_pack() -> void:
 
 	_has_claimed_starter = true
 	save_collection()
+
+
+## Check and grant daily login bonus.
+func _check_daily_bonus() -> void:
+	var today := Time.get_date_string_from_system()
+	if _last_daily_claim == today:
+		return
+	_last_daily_claim = today
+	_coins += DAILY_BONUS
+	save_collection()
+
+
+## Check if daily bonus was claimed today.
+func got_daily_bonus_today() -> bool:
+	return _last_daily_claim == Time.get_date_string_from_system()
 
 
 ## Get all owned cards.
@@ -165,6 +183,7 @@ func save_collection() -> void:
 		"total_matches": _total_matches,
 		"total_wins": _total_wins,
 		"has_claimed_starter": _has_claimed_starter,
+		"last_daily_claim": _last_daily_claim,
 		"saved_at": Time.get_datetime_string_from_system(),
 	}
 
@@ -202,3 +221,4 @@ func load_collection() -> void:
 	_total_matches = data.get("total_matches", 0)
 	_total_wins = data.get("total_wins", 0)
 	_has_claimed_starter = data.get("has_claimed_starter", false)
+	_last_daily_claim = data.get("last_daily_claim", "")

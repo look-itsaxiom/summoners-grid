@@ -1,16 +1,16 @@
 # Handoff
 
 ## State
-Branch `ralphs-here` (~65 commits, all pushed to GitHub). Complete F2P card game: 9 screens (login/splash, menu with particles, pack store with coin economy, dopamine pack opening with click-to-reveal, collection with species sprites + card frames, deck builder → gameplay connection, deck preview, full tactical combat board, how-to-play tutorial). 107 Godot + 280 web = 387 tests. Coin economy (start 500, win +150, lose +50, standard pack 300, premium 1000). Card stats with power levels (70-129 based on rarity). Species-themed names with legendary titles. Fade transitions, procedural audio (12 SFX + 4 BGM), 12 AI art assets. Auth system coded but needs Supabase credentials.
+Branch `ralphs-here` (~72 commits, all pushed). Complete F2P tactical card game: 9 screens (splash, menu w/particles+stats, pack store w/coins, dopamine pack opening w/click reveals, collection w/card detail popup+sprites+frames, deck builder→gameplay, deck preview, combat board w/AI pacing, tutorial). 387 tests. Coin economy (500 start, win+150/lose+50, packs 300/1000). Free starter pack (3 uncommon cards on first launch). Card stats w/power levels (70-129). 210 species-themed names w/legendary titles. Fade transitions. 12 AI art assets. Procedural audio. Auth+login ready for Supabase. Export builds (71MB Linux, 103MB Windows).
 
 ## Next
-1. **Supabase credentials** — run `! npx supabase login` or create project at supabase.com → save URL + anon key to `user://supabase_config.json`. Auth code ready in `godot/scripts/engine/auth.gd`.
-2. **Stripe integration** — for real pack purchases. Security architecture in `docs/SECURITY_ARCHITECTURE.md`.
-3. **Steamworks account** — $100 at partner.steamgames.com. Store page draft ready: `docs/STEAM_STORE_PAGE.md`.
+1. **Supabase** — `! npx supabase login` or create project at supabase.com. Auth code ready: `godot/scripts/engine/auth.gd`.
+2. **Stripe** — for coin purchases. Security model: `docs/SECURITY_ARCHITECTURE.md`.
+3. **Steam** — $100 at partner.steamgames.com. Store page: `docs/STEAM_STORE_PAGE.md`.
 
 ## Context
-- Immutable abandoned (Hub gated). Decision: own stack (Supabase + Stripe + Steam). See `docs/PLATFORM_OPTIONS.md`.
-- All UI in Godot, no web frontend. Next.js is API-only backend (`app/api/`).
-- Pack opening uses full-screen invisible Button as click catcher (z_index=10).
-- `BLOCKED.md` has Supabase login request. Axiom checks in hourly, 5-day sprint (started 2026-04-13).
-- User wants: production-grade, secure, dopamine pack opening, everything in game client, the soul of game design with the greed of monetization.
+- Immutable abandoned. Own stack: Supabase+Stripe+Steam. See `docs/PLATFORM_OPTIONS.md`.
+- All UI in Godot. No web frontend. Next.js is API-only.
+- Pack opening uses invisible Button click catcher (z_index=10).
+- `BLOCKED.md` has Supabase request. 5-day sprint started 2026-04-13.
+- User wants: production-grade, secure, dopamine, soul+greed, everything in-game.
