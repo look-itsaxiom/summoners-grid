@@ -15,6 +15,9 @@ config/icon="res://assets/icon.png"
 
 [autoload]
 
+
+Marketplace="*res://scripts/engine/marketplace.gd"
+
 Campaign="*res://scripts/engine/campaign.gd"
 
 

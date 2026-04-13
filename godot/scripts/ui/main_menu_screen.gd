@@ -108,6 +108,7 @@ func _build_ui() -> void:
 	collect_col.add_child(collect_header)
 
 	_add_button(collect_col, "Pack Store", Color(0.6, 0.4, 0.15), _on_pack_store, 220)
+	_add_button(collect_col, "Marketplace", Color(0.5, 0.35, 0.1), _on_marketplace, 220)
 	_add_button(collect_col, "Deck Builder", Color(0.4, 0.3, 0.55), _on_deck_builder, 220)
 	_add_button(collect_col, "My Collection", Color(0.3, 0.5, 0.3), _on_collection, 220)
 
@@ -311,6 +312,10 @@ func _on_watch_ai() -> void:
 
 func _on_pack_store() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/pack_store.tscn")
+
+
+func _on_marketplace() -> void:
+	get_node("/root/SceneTransition").change_scene("res://scenes/marketplace.tscn")
 
 
 func _on_deck_builder() -> void:
