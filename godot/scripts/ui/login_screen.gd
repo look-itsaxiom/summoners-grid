@@ -28,11 +28,28 @@ func _ready() -> void:
 		_build_login_ui()
 
 
+func _add_background() -> void:
+	var bg_path := "res://assets/login_bg.png"
+	if ResourceLoader.exists(bg_path):
+		var bg_tex := TextureRect.new()
+		bg_tex.texture = load(bg_path)
+		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		add_child(bg_tex)
+		var overlay := ColorRect.new()
+		overlay.color = Color(0.0, 0.0, 0.05, 0.5)
+		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(overlay)
+	else:
+		var bg := ColorRect.new()
+		bg.color = BG_COLOR
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
+
+
 func _build_dev_mode_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = BG_COLOR
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	_add_background()
 
 	var margin := MarginContainer.new()
 	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -103,10 +120,7 @@ func _build_dev_mode_ui() -> void:
 
 
 func _build_login_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = BG_COLOR
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	_add_background()
 
 	var login_margin := MarginContainer.new()
 	login_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
