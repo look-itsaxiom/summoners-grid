@@ -52,6 +52,17 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
+	# Board background art
+	var board_bg_path := "res://assets/board_bg_v2.png"
+	if ResourceLoader.exists(board_bg_path):
+		var bg_tex := TextureRect.new()
+		bg_tex.texture = load(board_bg_path)
+		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg_tex.modulate = Color(0.4, 0.4, 0.5, 0.6)
+		add_child(bg_tex)
+
 	# Main layout: HBoxContainer with board on left, sidebar on right
 	var main_hbox := HBoxContainer.new()
 	main_hbox.set_anchors_preset(Control.PRESET_FULL_RECT)
