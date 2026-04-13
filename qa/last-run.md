@@ -1,29 +1,47 @@
 # QA — Last Run
 
 **Date:** 2026-04-13
-**Iteration:** 18 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + complete flow QA via godot-mcp
+**Iteration:** 21 (Ralph Loop QA Rotation)
+**Type:** Full — headless tests + export build verification + editor systems check
 
 ## Headless Test Results
 
 **107 passed, 0 failed**
 
-## Visual QA: Complete User Flow
+## Export Build Verification
 
-Tested full flow: Menu → Deck Preview → START GAME → Game
+- **Linux x86_64 (68MB):** Launched standalone, ran 8 seconds, clean exit (SIGTERM from timeout)
+- **Windows x86_64 (100MB):** Export completed successfully (not runnable on Linux host)
 
-### Verified Working
-- **Menu:** All 3 buttons, title centered, menu BGM playing
-- **Deck Preview (NEW):** Summons with stats/weapons, main deck by type (action×12, building×2, quest×3, counter×2, reaction×1), advance deck (4 cards), all color-coded, scroll works, START GAME transitions to game
-- **Game:** Battle BGM plays, Turn 1 loads correctly from deck preview, all UI elements present
-- **BGM transitions:** menu → battle confirmed via game_eval
-- **All previous features stable:** board, hand grid, card detail panels, game log
+## Editor Systems Check (via godot-mcp game_eval)
 
-### Issues Found
-None. 6th consecutive clean QA cycle across 18 iterations.
+- BGM: playing "menu" track on startup
+- SFX: enabled
+- Card data: 6 summons, 32 actions loaded
+- Scene: menu loaded correctly
 
-### Session Cumulative
+## Issues Found
+
+None. 7th consecutive clean QA cycle.
+
+## Session Final Summary (21 iterations)
+
+### Features Built
+- Effect stack LIFO with speed lock (16 tests)
+- Deck Preview screen (summons + main deck by type + advance deck)
+- How to Play tutorial (7 sections)
+- Background music (4 procedural tracks with auto-transitions)
+- Card/unit detail panels
+- Hand card 3-column grid with 7 card type colors
+- Board checkerboard + territory borders + unit card backgrounds + cell flashes
+- Game over screen with styled panel + detailed stats
+- All 12 SFX wired to game events + floating heal numbers
+- Desktop export builds (Linux + Windows)
+
+### Metrics
 - 107 headless tests, all passing
-- 6 clean QA rotations
-- ~20 commits: engine, UI, board, audio, deck preview
-- Zero bugs found
+- 7 clean QA rotations, zero bugs
+- ~24 commits
+- 2 new screens (Deck Preview, How to Play)
+- 2 new engine files (bgm.gd, effect stack in game_manager.gd)
+- 2 export builds (Linux 68MB, Windows 100MB)
