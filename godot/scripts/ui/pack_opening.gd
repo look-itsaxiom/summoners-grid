@@ -30,6 +30,7 @@ var _grid: GridContainer
 var _sfx: Node
 var _is_revealing := false
 var _pack_type: String = "standard"
+var _species_sprites: Dictionary = {}
 
 # Can be set directly or read from ApiClient autoload
 var pack_data: Dictionary = {}
@@ -37,6 +38,10 @@ var pack_data: Dictionary = {}
 
 func _ready() -> void:
 	_sfx = get_node_or_null("/root/SFX")
+	for sp in ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]:
+		var path := "res://assets/sprites/%s.png" % sp
+		if ResourceLoader.exists(path):
+			_species_sprites[sp] = load(path)
 
 	# Read pack data from ApiClient if not set directly
 	if pack_data.is_empty():
@@ -247,13 +252,23 @@ func _reveal_card(index: int) -> void:
 	for child in vbox.get_children():
 		child.queue_free()
 
-	# Species emoji
-	var species_map := {"gignen": "⚔️", "fae": "✨", "stoneheart": "🪨", "wilderling": "🐺", "angar": "👼", "demar": "😈", "creptilis": "🦎"}
-	var emoji := Label.new()
-	emoji.text = species_map.get(card.get("species", ""), "🃏")
-	emoji.add_theme_font_size_override("font_size", 36)
-	emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(emoji)
+	# Species art
+	var sp: String = card.get("species", "")
+	if sp in _species_sprites and _species_sprites[sp] != null:
+		var sprite := TextureRect.new()
+		sprite.texture = _species_sprites[sp]
+		sprite.custom_minimum_size = Vector2(50, 50)
+		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(sprite)
+	else:
+		var species_map := {"gignen": "⚔️", "fae": "✨", "stoneheart": "🪨", "wilderling": "🐺", "angar": "👼", "demar": "😈", "creptilis": "🦎"}
+		var emoji := Label.new()
+		emoji.text = species_map.get(sp, "🃏")
+		emoji.add_theme_font_size_override("font_size", 36)
+		emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(emoji)
 
 	# Name
 	var name_lbl := Label.new()

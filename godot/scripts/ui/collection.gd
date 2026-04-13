@@ -29,11 +29,18 @@ var _filter_rarity: String = ""
 # Card frame textures by rarity
 var _card_frames: Dictionary = {}
 
+# Species sprite textures
+var _species_sprites: Dictionary = {}
+
 func _load_card_frames() -> void:
 	for r in ["common", "uncommon", "rare", "legend", "myth"]:
 		var path := "res://assets/card_frames/%s.png" % r
 		if ResourceLoader.exists(path):
 			_card_frames[r] = load(path)
+	for sp in ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]:
+		var path := "res://assets/sprites/%s.png" % sp
+		if ResourceLoader.exists(path):
+			_species_sprites[sp] = load(path)
 
 
 func _ready() -> void:
@@ -307,12 +314,22 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 	vbox.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(vbox)
 
-	# Species emoji
-	var emoji := Label.new()
-	emoji.text = SPECIES_EMOJI.get(card.get("species", ""), "🃏")
-	emoji.add_theme_font_size_override("font_size", 40)
-	emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(emoji)
+	# Species art (sprite if available, emoji fallback)
+	var sp: String = card.get("species", "")
+	if sp in _species_sprites and _species_sprites[sp] != null:
+		var sprite := TextureRect.new()
+		sprite.texture = _species_sprites[sp]
+		sprite.custom_minimum_size = Vector2(60, 60)
+		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(sprite)
+	else:
+		var emoji := Label.new()
+		emoji.text = SPECIES_EMOJI.get(sp, "🃏")
+		emoji.add_theme_font_size_override("font_size", 40)
+		emoji.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(emoji)
 
 	# Card name
 	var name_lbl := Label.new()
