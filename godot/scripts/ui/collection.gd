@@ -254,7 +254,15 @@ func _refresh_grid() -> void:
 			continue
 		_filtered.append(card)
 
-	_count_label.text = "%d / %d cards" % [_filtered.size(), _cards.size()]
+	var rarity_parts: Array[String] = []
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage:
+		var rc: Dictionary = storage.get_rarity_counts()
+		for r in ["myth", "legend", "rare", "uncommon", "common"]:
+			if rc.has(r) and rc[r] > 0:
+				rarity_parts.append("%d %s" % [rc[r], r])
+	var breakdown := " · ".join(rarity_parts) if rarity_parts.size() > 0 else ""
+	_count_label.text = "%d / %d cards%s" % [_filtered.size(), _cards.size(), ("  (%s)" % breakdown) if breakdown != "" else ""]
 
 	# Clear grid
 	for child in _grid.get_children():
