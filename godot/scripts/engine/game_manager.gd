@@ -11,6 +11,7 @@ signal summon_moved(instance_id: String, from: Vector2i, to: Vector2i)
 signal summon_defeated(unit: Dictionary)
 signal effect_stack_changed(stack: Array)
 signal effect_resolved(entry: Dictionary)
+signal summon_leveled(unit: Dictionary, old_level: int, new_level: int)
 
 const BOARD_WIDTH := 12
 const BOARD_HEIGHT := 14
@@ -171,20 +172,22 @@ func execute_level_phase() -> void:
 			gignen_spaces.has("%d,%d" % [pos.x, pos.y])
 		)
 		var levels := 2 if is_on_gignen else 1
+		var old_level: int = s["level"]
 		var leveled: Dictionary = SummonFactory.apply_level_up(s, levels)
 
 		if is_on_gignen:
 			add_log("%s levels up: %d → %d (Gignen Country bonus!) (HP: %d/%d)" % [
-				s.get("card", {}).get("name", "?"), s["level"], leveled["level"],
+				s.get("card", {}).get("name", "?"), old_level, leveled["level"],
 				leveled["current_hp"], leveled["max_hp"]
 			])
 		else:
 			add_log("%s levels up: %d → %d (HP: %d/%d)" % [
-				s.get("card", {}).get("name", "?"), s["level"], leveled["level"],
+				s.get("card", {}).get("name", "?"), old_level, leveled["level"],
 				leveled["current_hp"], leveled["max_hp"]
 			])
 
 		board_summons[i] = leveled
+		summon_leveled.emit(leveled, old_level, leveled["level"])
 
 	advance_phase()
 

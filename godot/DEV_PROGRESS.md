@@ -60,9 +60,9 @@ Check this file every Ralph Loop iteration.
 | 44 | Card play animations | todo | PARTIAL | Summon appear (scale-in), card play SFX wired |
 | 45 | Attack animations | todo | done | Lunge toward target + hit flash + screen shake |
 | 46 | Movement trail | todo | done | Smooth slide tween between cells (0.2s) |
-| 47 | Level-up VFX | todo | TODO | |
+| 47 | Level-up VFX | todo | done | Golden ring expansion + "LV UP!" floating text + cell flash |
 | 48 | Elemental VFX | todo | TODO | |
-| 49 | HP bar styling | done | PARTIAL | basic bar, no glow/gradient |
+| 49 | HP bar styling | done | done | Gradient highlight on top half, color-coded (green/yellow/red) |
 | 50 | Card hover preview | todo | done | card detail panel in sidebar + unit stat panel |
 | 51 | Board zoom + pan | todo | TODO | |
 | 52 | Background music | todo | done | procedural BGM: menu, battle, victory, defeat (bgm.gd) |

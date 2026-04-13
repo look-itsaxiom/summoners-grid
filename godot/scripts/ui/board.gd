@@ -41,6 +41,9 @@ var _cell_flashes: Dictionary = {}
 var _unit_anims: Dictionary = {}
 var _animating := false
 
+# Level-up ring effects: Array of { pos: Vector2i, radius: float, alpha: float }
+var _level_rings: Array = []
+
 # Species sprite textures (loaded once)
 var _species_sprites: Dictionary = {}
 
@@ -82,6 +85,18 @@ func _process(delta: float) -> void:
 		if anim.get("flash", 0.0) > 0:
 			anim["flash"] = maxf(0.0, anim["flash"] - delta * 4.0)
 			needs_redraw = true
+
+	# Level-up ring expansion
+	if not _level_rings.is_empty():
+		var done_rings: Array = []
+		for ring in _level_rings:
+			ring["radius"] += delta * 80.0
+			ring["alpha"] -= delta * 2.0
+			if ring["alpha"] <= 0:
+				done_rings.append(ring)
+		for ring in done_rings:
+			_level_rings.erase(ring)
+		needs_redraw = true
 
 	if _animating:
 		needs_redraw = true
@@ -153,6 +168,13 @@ func _draw() -> void:
 			draw_rect(rect, COLOR_VALID_ATTACK)
 			draw_rect(rect, Color(1, 0.2, 0.2, 0.6), false, 2.0)
 
+	# Draw level-up ring effects
+	for ring in _level_rings:
+		var rpos: Vector2i = ring["pos"]
+		var center := offset + Vector2(rpos.x * CELL_SIZE + CELL_SIZE * 0.5, (BOARD_H - 1 - rpos.y) * CELL_SIZE + CELL_SIZE * 0.5)
+		var ring_color := Color(1.0, 0.85, 0.0, ring["alpha"] * 0.8)
+		draw_arc(center, ring["radius"], 0, TAU, 32, ring_color, 2.0)
+
 	# Draw cell flash animations
 	for pos in _cell_flashes:
 		var flash: Dictionary = _cell_flashes[pos]
@@ -221,9 +243,10 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var level_pos := screen_pos + Vector2(2, 43)
 	draw_string(ThemeDB.fallback_font, level_pos, level_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 7, Color(0.6, 0.6, 0.8))
 
-	# HP bar
+	# HP bar with glow
 	var bar_y := screen_pos.y + CELL_SIZE - 7
-	var bar_rect := Rect2(screen_pos.x + 2, bar_y, CELL_SIZE - 4, 4)
+	var bar_w: float = CELL_SIZE - 4
+	var bar_rect := Rect2(screen_pos.x + 2, bar_y, bar_w, 4)
 	draw_rect(bar_rect, Color(0.1, 0.1, 0.15))
 
 	var hp_pct: float = float(unit["current_hp"]) / float(unit["max_hp"])
@@ -232,8 +255,12 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 		hp_color = COLOR_HP_LOW
 	elif hp_pct <= 0.5:
 		hp_color = COLOR_HP_MED
-	var fill_rect := Rect2(screen_pos.x + 2, bar_y, (CELL_SIZE - 4) * hp_pct, 4)
+	var fill_w: float = bar_w * hp_pct
+	var fill_rect := Rect2(screen_pos.x + 2, bar_y, fill_w, 4)
 	draw_rect(fill_rect, hp_color)
+	# Subtle bright highlight on top half of bar
+	var highlight_rect := Rect2(screen_pos.x + 2, bar_y, fill_w, 2)
+	draw_rect(highlight_rect, hp_color.lightened(0.3) * Color(1, 1, 1, 0.4))
 
 	# Team indicator line
 	var line_y := screen_pos.y + CELL_SIZE - 2
@@ -371,6 +398,14 @@ func animate_attack(attacker_id: String, attacker_pos: Vector2i, target_pos: Vec
 func animate_hit_flash(instance_id: String) -> void:
 	_ensure_anim(instance_id)
 	_unit_anims[instance_id]["flash"] = 1.0
+	queue_redraw()
+
+
+## Show an expanding golden ring at a grid position (level-up VFX).
+func animate_level_up(grid_pos: Vector2i) -> void:
+	_level_rings.append({ "pos": grid_pos, "radius": 4.0, "alpha": 1.0 })
+	# Second ring with slight delay effect (starts smaller)
+	_level_rings.append({ "pos": grid_pos, "radius": 0.0, "alpha": 0.8 })
 	queue_redraw()
 
 

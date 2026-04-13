@@ -38,6 +38,7 @@ func _ready() -> void:
 	_gm.game_over_signal.connect(_on_game_over)
 	_gm.attack_resolved.connect(_on_attack_resolved)
 	_gm.summon_defeated.connect(_on_summon_defeated)
+	_gm.summon_leveled.connect(_on_summon_leveled)
 
 	_bgm.play("battle")
 
@@ -1267,6 +1268,15 @@ func _on_attack_resolved(result: Dictionary) -> void:
 		FloatingNumber.spawn(self, str(damage), screen_pos, color, is_crit)
 
 	board.queue_redraw()
+
+
+func _on_summon_leveled(unit: Dictionary, _old_level: int, _new_level: int) -> void:
+	var pos: Vector2i = unit.get("position", Vector2i(-1, -1))
+	if pos.x >= 0:
+		board.animate_level_up(pos)
+		board.flash_cell(pos, Color(1.0, 0.85, 0.0))
+	var screen_pos := _unit_screen_pos(unit)
+	FloatingNumber.spawn(self, "LV UP!", screen_pos + Vector2(0, -10), Color(1.0, 0.85, 0.0))
 
 
 func _on_summon_defeated(unit: Dictionary) -> void:
