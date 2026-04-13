@@ -109,6 +109,23 @@ func _build_ui() -> void:
 	spacer3.custom_minimum_size.y = 4
 	center.add_child(spacer3)
 
+	# Player stats bar
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage and storage.get_card_count() > 0:
+		var stats_text := "📦 %d cards collected  |  %d packs opened" % [
+			storage.get_card_count(), storage.get_pack_history().size()]
+		var rarities: Dictionary = storage.get_rarity_counts()
+		if rarities.has("myth"):
+			stats_text += "  |  ✨ %d myth" % rarities["myth"]
+		if rarities.has("legend"):
+			stats_text += "  |  🏆 %d legend" % rarities["legend"]
+		var stats_label := Label.new()
+		stats_label.text = stats_text
+		stats_label.add_theme_font_size_override("font_size", 10)
+		stats_label.add_theme_color_override("font_color", Color(0.45, 0.45, 0.55))
+		stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		center.add_child(stats_label)
+
 	# Version
 	var version := Label.new()
 	version.text = "Alpha Build — Summoner's Grid (Godot)"
