@@ -34,14 +34,14 @@ Check this file every Ralph Loop iteration.
 | 22 | 5 counter + 3 reaction cards | done | done | 5 counters + 3 reactions in cards.gd |
 | 23 | 14 advance cards (3 named summons) | done | done | 14 advances incl 3 named summons |
 | 24 | 14 equipment items | done | done | 6 wpn + 4 armor + 4 acc |
-| 25 | Procedural SFX | done | done | 12 sounds (sfx.gd) |
+| 25 | Procedural SFX | done | done | 12 sounds (sfx.gd), all wired to game events |
 | 26 | Keyboard shortcuts | done | done | 1-9, E, Esc |
 | 27 | Color blind mode | done | TODO | |
 | 28 | Card inspector (right-click) | done | TODO | |
 | 29 | Match history | done | TODO | |
 | 30 | Save/load game | done | done | JSON to user://savegame.json |
 | 31 | Screen shake on crits | done | done | intensity 12 crit, 4 normal |
-| 32 | Floating damage numbers | done | done | floating_number.gd |
+| 32 | Floating damage numbers | done | done | floating_number.gd + green heal numbers |
 | 33 | SVG minimap | done | N/A | not needed in Godot |
 | 34 | Turn transition banners | done | done | turn_banner.gd |
 | 35 | Spectator mode + speed control | done | PARTIAL | spectator works, no speed control |
@@ -55,18 +55,18 @@ Check this file every Ralph Loop iteration.
 | # | Item | Web | Godot | Notes |
 |---|------|-----|-------|-------|
 | 41 | Card art (per species/rarity) | todo | TODO | |
-| 42 | Grid tile textures | done | PARTIAL | colored rects, no texture |
-| 43 | Summon sprites on board | todo | TODO | text labels currently |
+| 42 | Grid tile textures | done | done | checkerboard pattern + territory borders, code-drawn |
+| 43 | Summon sprites on board | todo | PARTIAL | dark card bg with team-colored border, text labels |
 | 44 | Card play animations | todo | TODO | |
 | 45 | Attack animations | todo | TODO | |
 | 46 | Movement trail | todo | TODO | |
 | 47 | Level-up VFX | todo | TODO | |
 | 48 | Elemental VFX | todo | TODO | |
 | 49 | HP bar styling | done | PARTIAL | basic bar, no glow/gradient |
-| 50 | Card hover preview | todo | TODO | |
+| 50 | Card hover preview | todo | done | card detail panel in sidebar + unit stat panel |
 | 51 | Board zoom + pan | todo | TODO | |
 | 52 | Background music | todo | TODO | |
-| 53 | UI skin / theme | todo | TODO | code-generated, no theme resource |
+| 53 | UI skin / theme | todo | done | dark fantasy theme, styled panels, per-type card colors, game over panel |
 | 54 | Responsive layout | todo | TODO | |
 | 55 | Turn timer visual | todo | TODO | |
 
@@ -95,14 +95,20 @@ All TODO — pack store, marketplace, trading, royalties, rewards.
 
 ---
 
-## PRIORITY ORDER (Godot-specific)
-1. **Fix visual bugs** (text truncation, centering, highlights) — IN PROGRESS
-2. **Wire remaining card effects** (Sharpened Blade, counters, quests)
-3. **Port remaining cards** (7 actions, 3 buildings, 4 quests, 8 counters/reactions, 7 advances)
-4. **Territory control VP** (end-of-turn check)
-5. **UI theme** (StyleBoxFlat dark fantasy theme resource)
-6. **Card hover preview** (enlarged tooltip)
-7. **Screen shake + attack animations** (juice)
-8. **Save/load game** (ResourceSaver)
-9. **Deck preview screen** (pre-game)
-10. **Tutorial overlay**
+## PRIORITY ORDER (Godot-specific, updated 2026-04-12)
+~~1. Fix visual bugs~~ — DONE (menu layout, hand grid, card labels)
+~~2. Wire remaining card effects~~ — DONE (effect stack LIFO, all cards)
+~~3. Port remaining cards~~ — DONE (72 items)
+~~4. Territory control VP~~ — DONE
+~~5. UI theme~~ — DONE (dark fantasy, styled panels, card colors)
+~~6. Card hover preview~~ — DONE (card detail + unit stat panels)
+~~7. Screen shake~~ — DONE (crit=12, normal=4)
+~~8. Save/load game~~ — DONE
+
+### Current priorities (revenue-focused):
+1. **Card play + attack animations** (tween-based juice)
+2. **Background music** (procedural or asset-based battle BGM)
+3. **Deck preview screen** (pre-game card browser)
+4. **Tutorial overlay** (first-time player guidance)
+5. **Export builds** (desktop: Windows/Linux/Mac)
+6. **Summon sprites** (pixel art per species, replace text labels)

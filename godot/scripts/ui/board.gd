@@ -34,12 +34,29 @@ var valid_placements: Array[Vector2i] = []
 var selected_cell: Vector2i = Vector2i(-1, -1)
 var hovered_cell: Vector2i = Vector2i(-1, -1)
 
+# Cell flash animations: { Vector2i: { color: Color, alpha: float } }
+var _cell_flashes: Dictionary = {}
+
 @onready var _gm = get_node("/root/GameManager")
 
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(BOARD_W * CELL_SIZE + 40, BOARD_H * CELL_SIZE + 40)
 	mouse_filter = Control.MOUSE_FILTER_STOP
+	set_process(true)
+
+
+func _process(delta: float) -> void:
+	if _cell_flashes.is_empty():
+		return
+	var to_remove: Array[Vector2i] = []
+	for pos in _cell_flashes:
+		_cell_flashes[pos]["alpha"] -= delta * 2.5  # Fade over ~0.4s
+		if _cell_flashes[pos]["alpha"] <= 0:
+			to_remove.append(pos)
+	for pos in to_remove:
+		_cell_flashes.erase(pos)
+	queue_redraw()
 
 
 func _draw() -> void:
@@ -100,6 +117,16 @@ func _draw() -> void:
 			var rect := Rect2(offset + Vector2(pos.x * CELL_SIZE, (BOARD_H - 1 - pos.y) * CELL_SIZE), Vector2(CELL_SIZE, CELL_SIZE))
 			draw_rect(rect, COLOR_VALID_ATTACK)
 			draw_rect(rect, Color(1, 0.2, 0.2, 0.6), false, 2.0)
+
+	# Draw cell flash animations
+	for pos in _cell_flashes:
+		var flash: Dictionary = _cell_flashes[pos]
+		var alpha: float = flash["alpha"]
+		if alpha > 0:
+			var flash_color: Color = flash["color"]
+			flash_color.a = alpha * 0.6
+			var rect := Rect2(offset + Vector2(pos.x * CELL_SIZE, (BOARD_H - 1 - pos.y) * CELL_SIZE), Vector2(CELL_SIZE, CELL_SIZE))
+			draw_rect(rect, flash_color)
 
 
 func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
@@ -213,4 +240,10 @@ func show_moves(positions: Array[Vector2i]) -> void:
 ## Show valid attack targets.
 func show_attacks(instance_ids: Array[String]) -> void:
 	valid_attacks = instance_ids
+	queue_redraw()
+
+
+## Flash a cell with a color (fades out over ~0.4s).
+func flash_cell(pos: Vector2i, color: Color) -> void:
+	_cell_flashes[pos] = { "color": color, "alpha": 1.0 }
 	queue_redraw()

@@ -353,6 +353,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 			if ct == "summon":
 				_gm.play_summon(selected_card_index, pos)
 				_sfx.summon_place()
+				board.flash_cell(pos, Color(0.3, 0.6, 1.0))  # Blue flash on summon
 				selected_card_index = -1
 				board.clear_highlights()
 				_refresh_ui()
@@ -404,6 +405,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 		# Try to move
 		if pos in board.valid_moves:
 			_gm.move_summon(selected_unit_id, pos)
+			board.flash_cell(pos, Color(0.5, 0.8, 1.0))  # Light blue flash on move
 			# Keep unit selected for attack after move
 			board.clear_highlights()
 			var attacks = _gm.get_valid_attacks(selected_unit_id)
@@ -1122,6 +1124,12 @@ func _on_attack_resolved(result: Dictionary) -> void:
 	else:
 		_sfx.attack_hit()
 		_screen_shake(4.0)
+
+	# Flash target cell red
+	if not target_unit.is_empty():
+		var tpos: Vector2i = target_unit.get("position", Vector2i(-1, -1))
+		if tpos.x >= 0:
+			board.flash_cell(tpos, Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0))
 
 	if damage > 0:
 		var screen_pos: Vector2
