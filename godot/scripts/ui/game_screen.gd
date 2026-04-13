@@ -797,60 +797,102 @@ func _on_game_over(winner_id: String) -> void:
 func _show_game_over_overlay(winner_id: String) -> void:
 	# Dim background
 	var overlay := ColorRect.new()
-	overlay.color = Color(0, 0, 0, 0.7)
+	overlay.color = Color(0, 0, 0, 0.75)
 	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(overlay)
 
+	# Styled panel background
+	var panel_bg := PanelContainer.new()
+	panel_bg.set_anchors_preset(Control.PRESET_CENTER)
+	panel_bg.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel_bg.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel_bg.custom_minimum_size = Vector2(400, 360)
+	panel_bg.position = Vector2(440, 130)
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color(0.08, 0.08, 0.14)
+	panel_style.border_color = Color(0.3, 0.25, 0.5)
+	panel_style.border_width_top = 2
+	panel_style.border_width_bottom = 2
+	panel_style.border_width_left = 2
+	panel_style.border_width_right = 2
+	panel_style.corner_radius_top_left = 12
+	panel_style.corner_radius_top_right = 12
+	panel_style.corner_radius_bottom_left = 12
+	panel_style.corner_radius_bottom_right = 12
+	panel_style.content_margin_top = 24
+	panel_style.content_margin_bottom = 20
+	panel_style.content_margin_left = 30
+	panel_style.content_margin_right = 30
+	panel_bg.add_theme_stylebox_override("panel", panel_style)
+	overlay.add_child(panel_bg)
+
 	var panel := VBoxContainer.new()
-	panel.set_anchors_preset(Control.PRESET_CENTER)
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
-	panel.custom_minimum_size = Vector2(350, 320)
-	panel.position = Vector2(465, 150)
-	panel.add_theme_constant_override("separation", 10)
-	overlay.add_child(panel)
+	panel.add_theme_constant_override("separation", 8)
+	panel_bg.add_child(panel)
 
 	var is_player_win: bool = winner_id == "playerA"
+	var is_spectator: bool = _gm.spectator_mode
 
 	# Banner
 	var banner := Label.new()
-	banner.text = "VICTORY" if is_player_win else "DEFEAT"
-	banner.add_theme_font_size_override("font_size", 36)
-	banner.add_theme_color_override("font_color", Color.GOLD if is_player_win else Color.RED)
+	if is_spectator:
+		banner.text = "GAME OVER"
+		banner.add_theme_color_override("font_color", Color(0.8, 0.7, 1.0))
+	else:
+		banner.text = "VICTORY" if is_player_win else "DEFEAT"
+		banner.add_theme_color_override("font_color", Color.GOLD if is_player_win else Color(1.0, 0.3, 0.3))
+	banner.add_theme_font_size_override("font_size", 40)
 	banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(banner)
 
 	var winner_label := Label.new()
 	winner_label.text = "%s Wins!" % ("Player A" if winner_id == "playerA" else "Player B")
-	winner_label.add_theme_font_size_override("font_size", 18)
-	winner_label.add_theme_color_override("font_color", Color.WHITE)
+	winner_label.add_theme_font_size_override("font_size", 16)
+	winner_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
 	winner_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.add_child(winner_label)
+
+	# Divider
+	var divider := ColorRect.new()
+	divider.color = Color(0.3, 0.25, 0.5, 0.5)
+	divider.custom_minimum_size = Vector2(0, 1)
+	panel.add_child(divider)
 
 	# Stats
 	var pa: Dictionary = _gm.players["playerA"]
 	var pb: Dictionary = _gm.players["playerB"]
 	var defeats := 0
 	var cards_played := 0
+	var max_damage := 0
 	for entry in _gm.game_log:
 		var msg: String = entry.get("message", "")
 		if "defeated" in msg: defeats += 1
 		if msg.begins_with("Played "): cards_played += 1
+		if msg.begins_with("Deals "):
+			var dmg_str: String = msg.replace("Deals ", "").replace(" damage!", "")
+			if dmg_str.is_valid_int():
+				max_damage = maxi(max_damage, dmg_str.to_int())
 
-	var stats_text := "Turns: %d\nPlayer A VP: %d | Player B VP: %d\nSummons defeated: %d\nCards played: %d" % [
-		_gm.turn_number, pa["victory_points"], pb["victory_points"], defeats, cards_played
+	var stats_lines: Array[String] = [
+		"  Turns Played     %d" % _gm.turn_number,
+		"  Player A VP      %d / %d" % [pa["victory_points"], _gm.VP_TO_WIN],
+		"  Player B VP      %d / %d" % [pb["victory_points"], _gm.VP_TO_WIN],
+		"  Summons Defeated %d" % defeats,
+		"  Cards Played     %d" % cards_played,
 	]
+	if max_damage > 0:
+		stats_lines.append("  Highest Damage   %d" % max_damage)
+
 	var stats_label := Label.new()
-	stats_label.text = stats_text
-	stats_label.add_theme_font_size_override("font_size", 13)
-	stats_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
-	stats_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	stats_label.text = "\n".join(stats_lines)
+	stats_label.add_theme_font_size_override("font_size", 12)
+	stats_label.add_theme_color_override("font_color", Color(0.7, 0.75, 0.85))
 	panel.add_child(stats_label)
 
 	# Spacer
 	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 10
+	spacer.custom_minimum_size.y = 8
 	panel.add_child(spacer)
 
 	# Buttons
@@ -859,17 +901,29 @@ func _show_game_over_overlay(winner_id: String) -> void:
 	btn_container.alignment = BoxContainer.ALIGNMENT_CENTER
 	panel.add_child(btn_container)
 
-	var new_game_btn := Button.new()
-	new_game_btn.text = "New Game"
-	new_game_btn.custom_minimum_size = Vector2(120, 40)
-	new_game_btn.pressed.connect(func(): get_tree().reload_current_scene())
-	btn_container.add_child(new_game_btn)
+	_add_overlay_button(btn_container, "New Game", Color(0.2, 0.5, 0.3), func(): get_tree().reload_current_scene())
+	_add_overlay_button(btn_container, "Main Menu", Color(0.3, 0.3, 0.45), func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
 
-	var menu_btn := Button.new()
-	menu_btn.text = "Main Menu"
-	menu_btn.custom_minimum_size = Vector2(120, 40)
-	menu_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
-	btn_container.add_child(menu_btn)
+
+func _add_overlay_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
+	var btn := Button.new()
+	btn.text = text
+	btn.custom_minimum_size = Vector2(130, 42)
+	btn.add_theme_font_size_override("font_size", 14)
+	btn.pressed.connect(callback)
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	style.content_margin_top = 8
+	style.content_margin_bottom = 8
+	btn.add_theme_stylebox_override("normal", style)
+	var hover := style.duplicate()
+	hover.bg_color = color.lightened(0.15)
+	btn.add_theme_stylebox_override("hover", hover)
+	parent.add_child(btn)
 
 
 func _find_unit(instance_id: String) -> Dictionary:
