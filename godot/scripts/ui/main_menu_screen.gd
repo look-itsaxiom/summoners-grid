@@ -119,8 +119,9 @@ func _build_ui() -> void:
 	bottom_row.alignment = BoxContainer.ALIGNMENT_CENTER
 	center.add_child(bottom_row)
 
-	_add_button(bottom_row, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 160)
-	_add_button(bottom_row, "Settings", Color(0.2, 0.2, 0.3), _on_settings, 160)
+	_add_button(bottom_row, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 140)
+	_add_button(bottom_row, "History", Color(0.2, 0.2, 0.3), _on_match_history, 120)
+	_add_button(bottom_row, "Settings", Color(0.2, 0.2, 0.3), _on_settings, 120)
 
 	# Spacer
 	var spacer3 := Control.new()
@@ -293,6 +294,10 @@ func _on_collection() -> void:
 
 func _on_how_to_play() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/how_to_play.tscn")
+
+
+func _on_match_history() -> void:
+	get_node("/root/SceneTransition").change_scene("res://scenes/match_history.tscn")
 
 
 func _on_settings() -> void:

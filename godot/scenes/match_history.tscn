@@ -1,0 +1,8 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/match_history_screen.gd" id="1_2bqcx"]
+
+[node name="root" type="Control" unique_id=198651776]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("1_2bqcx")
