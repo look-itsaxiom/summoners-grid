@@ -82,11 +82,28 @@ func _build_ui() -> void:
 	player_b_info.add_theme_color_override("font_color", Color(1.0, 0.4, 0.4))
 	sidebar.add_child(player_b_info)
 
-	# Status
+	# Status / card detail area
+	var status_panel := PanelContainer.new()
+	status_panel.custom_minimum_size = Vector2(0, 60)
+	var sp_style := StyleBoxFlat.new()
+	sp_style.bg_color = Color(0.08, 0.08, 0.14)
+	sp_style.corner_radius_top_left = 4
+	sp_style.corner_radius_top_right = 4
+	sp_style.corner_radius_bottom_left = 4
+	sp_style.corner_radius_bottom_right = 4
+	sp_style.content_margin_left = 6
+	sp_style.content_margin_right = 6
+	sp_style.content_margin_top = 4
+	sp_style.content_margin_bottom = 4
+	status_panel.add_theme_stylebox_override("panel", sp_style)
+	sidebar.add_child(status_panel)
+
 	status_label = Label.new()
 	status_label.text = "Select a card or unit."
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD
-	sidebar.add_child(status_label)
+	status_label.add_theme_font_size_override("font_size", 11)
+	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
+	status_panel.add_child(status_label)
 
 	# End turn button
 	end_turn_btn = Button.new()
@@ -404,9 +421,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 			board.selected_cell = pos
 			board.show_moves(_gm.get_valid_moves(selected_unit_id))
 			board.show_attacks(_gm.get_valid_attacks(selected_unit_id))
-			status_label.text = "%s selected (Lv%d %s)" % [
-				s["card"].get("name", "?"), s["level"], s["current_role"]
-			]
+			status_label.text = _format_unit_detail(s)
 			_refresh_hand()
 			return
 
@@ -427,8 +442,7 @@ func _on_card_selected(index: int) -> void:
 	if index < hand.size():
 		var card: Dictionary = hand[index]
 		var ct: String = card.get("card_type", "")
-		var desc: String = card.get("description", card.get("name", "?"))
-		status_label.text = "Selected: %s — %s" % [card.get("name", "?"), desc]
+		status_label.text = _format_card_detail(card)
 
 		if ct == "summon":
 			board.show_placements(_gm.get_valid_placements())
@@ -924,6 +938,81 @@ func _add_overlay_button(parent: HBoxContainer, text: String, color: Color, call
 	hover.bg_color = color.lightened(0.15)
 	btn.add_theme_stylebox_override("hover", hover)
 	parent.add_child(btn)
+
+
+func _format_card_detail(card: Dictionary) -> String:
+	var lines: Array[String] = []
+	var name_str: String = card.get("name", "?")
+	var ct: String = card.get("card_type", "")
+	var element: String = card.get("element", "neutral")
+
+	# Header: name + type + element
+	var type_label: String = ct.to_upper()
+	if ct == "action":
+		type_label = card.get("speed", "action").to_upper()
+	lines.append("%s  [%s · %s]" % [name_str, type_label, element.capitalize()])
+
+	# Description
+	var desc: String = card.get("description", "")
+	if desc != "":
+		lines.append(desc)
+
+	# Requirements
+	var reqs: Array = card.get("requirements", [])
+	if reqs.size() > 0:
+		var req_parts: Array[String] = []
+		for req in reqs:
+			var req_type: String = req.get("type", "")
+			if req_type == "role":
+				var family: String = req.get("role_family", "")
+				if family != "":
+					req_parts.append("Requires: %s summon" % family.capitalize())
+			elif req_type == "level":
+				req_parts.append("Min level: %d" % req.get("min_level", 0))
+		if req_parts.size() > 0:
+			lines.append(" · ".join(req_parts))
+
+	# Effects summary for action cards
+	if ct == "action":
+		for effect in card.get("effects", []):
+			var etype: String = effect.get("type", "")
+			var bp: int = effect.get("base_power", 0)
+			if etype == "damage" and bp > 0:
+				var dtype: String = effect.get("damage_type", "magical")
+				lines.append("DMG: %d BP (%s)" % [bp, dtype])
+			elif etype == "heal" and bp > 0:
+				lines.append("HEAL: %d BP" % bp)
+			elif etype == "buff":
+				var edesc: String = effect.get("description", "")
+				if edesc != "":
+					lines.append("BUFF: %s" % edesc)
+
+	# Target type
+	var target: String = card.get("target_type", "")
+	if target != "":
+		lines.append("Target: %s" % target.replace("_", " "))
+
+	return "\n".join(lines)
+
+
+func _format_unit_detail(unit: Dictionary) -> String:
+	var card: Dictionary = unit.get("card", {})
+	var stats: Dictionary = unit.get("calculated_stats", {})
+	var lines: Array[String] = []
+
+	lines.append("%s  Lv%d %s" % [card.get("name", "?"), unit["level"], unit["current_role"]])
+	lines.append("HP: %d/%d  MV: %d" % [unit["current_hp"], unit["max_hp"], unit["movement_remaining"]])
+	lines.append("STR %d  DEF %d  INT %d  MDF %d" % [
+		stats.get("STR", 0), stats.get("DEF", 0), stats.get("INT", 0), stats.get("MDF", 0)])
+	lines.append("SPD %d  ACC %d  LCK %d  SPI %d" % [
+		stats.get("SPD", 0), stats.get("ACC", 0), stats.get("LCK", 0), stats.get("SPI", 0)])
+
+	var weapon: Dictionary = card.get("equipment", {}).get("weapon", {})
+	if not weapon.is_empty():
+		lines.append("Weapon: %s (BP:%d, Range:%d)" % [
+			weapon.get("name", "?"), weapon.get("base_power", 0), weapon.get("range", 1)])
+
+	return "\n".join(lines)
 
 
 func _find_unit(instance_id: String) -> Dictionary:
