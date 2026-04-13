@@ -3,6 +3,8 @@ extends Control
 
 var _shake_intensity := 0.0
 var _shake_decay := 5.0
+var _spectator_speed := 1.0  # 1x, 2x, or 4x
+var _speed_buttons: Array = []
 
 @onready var _gm = get_node("/root/GameManager")
 @onready var _sf = get_node("/root/SummonFactory")
@@ -115,6 +117,36 @@ func _build_ui() -> void:
 	end_turn_btn.custom_minimum_size.y = 40
 	end_turn_btn.pressed.connect(_on_end_turn)
 	sidebar.add_child(end_turn_btn)
+
+	# Spectator speed controls
+	if _gm.spectator_mode:
+		var speed_row := HBoxContainer.new()
+		speed_row.add_theme_constant_override("separation", 6)
+		speed_row.alignment = BoxContainer.ALIGNMENT_CENTER
+		sidebar.add_child(speed_row)
+
+		var speed_label := Label.new()
+		speed_label.text = "Speed:"
+		speed_label.add_theme_font_size_override("font_size", 11)
+		speed_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+		speed_row.add_child(speed_label)
+
+		for spd in [1.0, 2.0, 4.0]:
+			var sbtn := Button.new()
+			sbtn.text = "%dx" % int(spd)
+			sbtn.custom_minimum_size = Vector2(50, 30)
+			sbtn.add_theme_font_size_override("font_size", 12)
+			var sstyle := StyleBoxFlat.new()
+			sstyle.bg_color = Color(0.3, 0.25, 0.5) if spd == 1.0 else Color(0.15, 0.15, 0.25)
+			sstyle.corner_radius_top_left = 4
+			sstyle.corner_radius_top_right = 4
+			sstyle.corner_radius_bottom_left = 4
+			sstyle.corner_radius_bottom_right = 4
+			sbtn.add_theme_stylebox_override("normal", sstyle)
+			var speed_val: float = spd
+			sbtn.pressed.connect(func(): _set_spectator_speed(speed_val))
+			speed_row.add_child(sbtn)
+			_speed_buttons.append({ "btn": sbtn, "speed": spd })
 
 	# Hand display
 	var hand_label := Label.new()
@@ -725,7 +757,7 @@ func _run_spectator_loop() -> void:
 		var player_label := "Player A" if _gm.active_player == "playerA" else "Player B"
 		var color := Color(0.4, 0.8, 1.0) if _gm.active_player == "playerA" else Color(1.0, 0.4, 0.4)
 		turn_banner.show_banner("%s — Turn %d" % [player_label, _gm.turn_number], color)
-		await get_tree().create_timer(0.8).timeout
+		await get_tree().create_timer(_spd_delay(0.8)).timeout
 
 		if not is_inside_tree():
 			return
@@ -737,11 +769,11 @@ func _run_spectator_loop() -> void:
 		if _gm.is_game_over:
 			break
 
-		await get_tree().create_timer(0.5).timeout
+		await get_tree().create_timer(_spd_delay(0.5)).timeout
 		if not is_inside_tree():
 			return
 
-		await get_tree().create_timer(0.5).timeout
+		await get_tree().create_timer(_spd_delay(0.5)).timeout
 
 
 func _run_ai_turn_for_spectator() -> void:
@@ -770,7 +802,7 @@ func _run_ai_turn_for_spectator() -> void:
 					board.animate_summon_appear(placed["instance_id"])
 				_sfx.summon_place()
 				board.queue_redraw()
-				await get_tree().create_timer(0.3).timeout
+				await get_tree().create_timer(_spd_delay(0.3)).timeout
 			break
 
 	if _gm.is_game_over: return
@@ -781,7 +813,7 @@ func _run_ai_turn_for_spectator() -> void:
 		if entry["valid_targets"].size() > 0:
 			_gm.play_advance_card(entry["index"], entry["valid_targets"][0]["instance_id"])
 			_sfx.level_up()
-			await get_tree().create_timer(0.2).timeout
+			await get_tree().create_timer(_spd_delay(0.2)).timeout
 			break
 
 	if _gm.is_game_over: return
@@ -818,7 +850,7 @@ func _run_ai_turn_for_spectator() -> void:
 		if nearest["instance_id"] in attacks:
 			_gm.attack_with_summon(unit_id, nearest["instance_id"])
 			board.queue_redraw()
-			await get_tree().create_timer(0.35).timeout
+			await get_tree().create_timer(_spd_delay(0.35)).timeout
 		else:
 			var moves = _gm.get_valid_moves(unit_id)
 			if moves.size() > 0:
@@ -830,15 +862,35 @@ func _run_ai_turn_for_spectator() -> void:
 				_gm.move_summon(unit_id, best)
 				board.animate_move(unit_id, old_pos, best)
 				board.queue_redraw()
-				await get_tree().create_timer(0.25).timeout
+				await get_tree().create_timer(_spd_delay(0.25)).timeout
 				attacks = _gm.get_valid_attacks(unit_id)
 				if nearest["instance_id"] in attacks:
 					_gm.attack_with_summon(unit_id, nearest["instance_id"])
 					board.queue_redraw()
-					await get_tree().create_timer(0.35).timeout
+					await get_tree().create_timer(_spd_delay(0.35)).timeout
 
 	if _gm.is_game_over: return
 	_gm.end_action_phase()
+
+
+func _set_spectator_speed(speed: float) -> void:
+	_spectator_speed = speed
+	# Update button styles to show active
+	for entry in _speed_buttons:
+		var btn: Button = entry["btn"]
+		var s: float = entry["speed"]
+		var style := StyleBoxFlat.new()
+		style.bg_color = Color(0.3, 0.25, 0.5) if s == speed else Color(0.15, 0.15, 0.25)
+		style.corner_radius_top_left = 4
+		style.corner_radius_top_right = 4
+		style.corner_radius_bottom_left = 4
+		style.corner_radius_bottom_right = 4
+		btn.add_theme_stylebox_override("normal", style)
+
+
+## Get a delay adjusted by spectator speed multiplier.
+func _spd_delay(base_seconds: float) -> float:
+	return base_seconds / _spectator_speed
 
 
 func _dist(a: Vector2i, b: Vector2i) -> int:
