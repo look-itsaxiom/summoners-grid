@@ -68,7 +68,7 @@ Check this file every Ralph Loop iteration.
 | 52 | Background music | todo | done | procedural BGM: menu, battle, victory, defeat (bgm.gd) |
 | 53 | UI skin / theme | todo | done | dark fantasy theme, styled panels, per-type card colors, game over panel |
 | 54 | Responsive layout | todo | TODO | |
-| 55 | Turn timer visual | todo | TODO | |
+| 55 | Turn timer visual | todo | done | 60s countdown bar, color shifts blue→yellow→red, auto-ends turn |
 
 ## Infrastructure (18 items) — PLATFORM
 | # | Item | Web | Godot | Notes |

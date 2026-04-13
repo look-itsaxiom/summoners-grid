@@ -19,6 +19,12 @@ var log_label: RichTextLabel
 var end_turn_btn: Button
 var status_label: Label
 var turn_banner: ColorRect
+var _turn_timer_bar: ColorRect
+var _turn_timer_bg: ColorRect
+var _turn_timer_label: Label
+var _turn_time_remaining := 60.0
+var _turn_timer_active := false
+const TURN_TIME_LIMIT := 60.0
 
 var selected_card_index: int = -1
 var selected_unit_id: String = ""
@@ -112,6 +118,30 @@ func _build_ui() -> void:
 	status_label.add_theme_font_size_override("font_size", 11)
 	status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.9))
 	status_panel.add_child(status_label)
+
+	# Turn timer bar
+	var timer_container := VBoxContainer.new()
+	timer_container.add_theme_constant_override("separation", 2)
+	sidebar.add_child(timer_container)
+
+	_turn_timer_label = Label.new()
+	_turn_timer_label.text = "1:00"
+	_turn_timer_label.add_theme_font_size_override("font_size", 11)
+	_turn_timer_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	_turn_timer_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	timer_container.add_child(_turn_timer_label)
+
+	_turn_timer_bg = ColorRect.new()
+	_turn_timer_bg.color = Color(0.1, 0.1, 0.15)
+	_turn_timer_bg.custom_minimum_size = Vector2(0, 6)
+	timer_container.add_child(_turn_timer_bg)
+
+	_turn_timer_bar = ColorRect.new()
+	_turn_timer_bar.color = Color(0.3, 0.6, 0.9)
+	_turn_timer_bar.custom_minimum_size = Vector2(0, 6)
+	_turn_timer_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	# Overlay on top of bg — position manually in _process
+	_turn_timer_bg.add_child(_turn_timer_bar)
 
 	# End turn button
 	end_turn_btn = Button.new()
@@ -230,9 +260,11 @@ func _start_test_game() -> void:
 		_run_ai_turn()
 		if not _gm.is_game_over:
 			turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
+			_start_turn_timer()
 		_refresh_ui()
 	else:
 		turn_banner.show_banner("YOU go first!", Color(0.4, 0.8, 1.0))
+		_start_turn_timer()
 		_gm.execute_draw_phase()
 		_gm.execute_level_phase()
 		_refresh_ui()
@@ -251,7 +283,12 @@ func _refresh_ui() -> void:
 		pb["victory_points"], _count_summons("playerB"), pb["hand"].size()
 	]
 
-	end_turn_btn.visible = not _gm.spectator_mode and _gm.phase == "action" and _gm.active_player == "playerA"
+	var is_player_action := not _gm.spectator_mode and _gm.phase == "action" and _gm.active_player == "playerA"
+	end_turn_btn.visible = is_player_action
+
+	# Timer visibility
+	_turn_timer_bg.visible = not _gm.spectator_mode
+	_turn_timer_label.visible = not _gm.spectator_mode
 
 	_refresh_hand()
 	board.queue_redraw()
@@ -521,6 +558,7 @@ func _on_card_selected(index: int) -> void:
 
 
 func _on_end_turn() -> void:
+	_stop_turn_timer()
 	selected_card_index = -1
 	selected_unit_id = ""
 	board.clear_highlights()
@@ -544,6 +582,7 @@ func _on_end_turn() -> void:
 
 	await get_tree().create_timer(0.5).timeout
 	turn_banner.show_banner("YOUR TURN — Turn %d" % _gm.turn_number, Color(0.4, 0.8, 1.0))
+	_start_turn_timer()
 	_refresh_ui()
 
 
@@ -1404,6 +1443,48 @@ func _process(delta: float) -> void:
 		board.position = board.position.lerp(board.global_position + offset, 0.5) if false else Vector2(28, 0) + offset
 	elif board.position != Vector2(28, 0):
 		board.position = Vector2(28, 0)
+
+	# Turn timer
+	if _turn_timer_active and not _gm.is_game_over and not _gm.spectator_mode:
+		_turn_time_remaining -= delta
+		if _turn_time_remaining <= 0:
+			_turn_time_remaining = 0
+			_turn_timer_active = false
+			_on_end_turn()
+		_update_timer_display()
+
+
+func _start_turn_timer() -> void:
+	_turn_time_remaining = TURN_TIME_LIMIT
+	_turn_timer_active = true
+	_update_timer_display()
+
+
+func _stop_turn_timer() -> void:
+	_turn_timer_active = false
+
+
+func _update_timer_display() -> void:
+	var pct: float = _turn_time_remaining / TURN_TIME_LIMIT
+	var seconds: int = ceili(_turn_time_remaining)
+	_turn_timer_label.text = "%d:%02d" % [seconds / 60, seconds % 60]
+
+	# Color shifts: blue → yellow → red
+	if pct > 0.5:
+		_turn_timer_bar.color = Color(0.3, 0.6, 0.9)
+		_turn_timer_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	elif pct > 0.2:
+		_turn_timer_bar.color = Color(0.8, 0.7, 0.2)
+		_turn_timer_label.add_theme_color_override("font_color", Color(0.8, 0.7, 0.2))
+	else:
+		_turn_timer_bar.color = Color(0.9, 0.2, 0.2)
+		_turn_timer_label.add_theme_color_override("font_color", Color(0.9, 0.2, 0.2))
+
+	# Resize bar width as percentage of parent
+	var parent_width: float = _turn_timer_bg.size.x
+	if parent_width > 0:
+		_turn_timer_bar.custom_minimum_size.x = parent_width * pct
+		_turn_timer_bar.size.x = parent_width * pct
 
 
 func _screen_shake(intensity: float = 8.0) -> void:
