@@ -18,18 +18,25 @@ var _particles: Array = []
 var _particle_timer := 0.0
 
 func _build_ui() -> void:
-	# Background with subtle gradient
+	# Background
 	var bg := ColorRect.new()
 	bg.color = BG_COLOR
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	# Subtle top gradient overlay for depth
+	# Top gradient — darker at top for visual weight
 	var gradient := ColorRect.new()
-	gradient.color = Color(0.08, 0.05, 0.15, 0.3)
+	gradient.color = Color(0.06, 0.03, 0.12, 0.5)
 	gradient.set_anchors_preset(Control.PRESET_FULL_RECT)
-	gradient.anchor_bottom = 0.4
+	gradient.anchor_bottom = 0.35
 	add_child(gradient)
+
+	# Bottom gradient — warm glow from below
+	var bottom_glow := ColorRect.new()
+	bottom_glow.color = Color(0.12, 0.06, 0.02, 0.3)
+	bottom_glow.set_anchors_preset(Control.PRESET_FULL_RECT)
+	bottom_glow.anchor_top = 0.7
+	add_child(bottom_glow)
 
 	set_process(true)
 
@@ -52,8 +59,11 @@ func _build_ui() -> void:
 	# Title
 	var title := Label.new()
 	title.text = "Summoner's Grid"
-	title.add_theme_font_size_override("font_size", 42)
+	title.add_theme_font_size_override("font_size", 46)
 	title.add_theme_color_override("font_color", TITLE_COLOR)
+	title.add_theme_color_override("font_shadow_color", Color(0.4, 0.2, 0.0, 0.6))
+	title.add_theme_constant_override("shadow_offset_x", 2)
+	title.add_theme_constant_override("shadow_offset_y", 3)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
 
