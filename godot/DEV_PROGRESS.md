@@ -56,8 +56,8 @@ Check this file every Ralph Loop iteration.
 |---|------|-----|-------|-------|
 | 41 | Card art (per species/rarity) | todo | TODO | |
 | 42 | Grid tile textures | done | done | checkerboard pattern + territory borders, code-drawn |
-| 43 | Summon sprites on board | todo | PARTIAL | dark card bg with team-colored border, text labels |
-| 44 | Card play animations | todo | PARTIAL | Summon appear (scale-in), card play SFX wired |
+| 43 | Summon sprites on board | todo | done | 7 species sprites loaded, 28px in 48px cells, text fallback for missing |
+| 44 | Card play animations | todo | done | Summon appear (scale-in), action card target flash, SFX wired |
 | 45 | Attack animations | todo | done | Lunge toward target + hit flash + screen shake |
 | 46 | Movement trail | todo | done | Smooth slide tween between cells (0.2s) |
 | 47 | Level-up VFX | todo | done | Golden ring expansion + "LV UP!" floating text + cell flash |

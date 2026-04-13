@@ -428,6 +428,8 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 					if valid_target:
 						_gm.play_card(selected_card_index, [s["instance_id"]])
 						_sfx.card_play()
+						# Card play flash on target
+						board.flash_cell(s["position"], Color(0.8, 0.6, 0.2))
 						selected_card_index = -1
 						board.clear_highlights()
 						_refresh_ui()
