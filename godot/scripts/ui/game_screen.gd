@@ -631,8 +631,13 @@ func _run_ai_turn() -> void:
 			break
 	if _gm.is_game_over: return
 
-	# 2. Play action cards (5-priority system ported from web AI)
-	_ai_play_action_cards(ai_player)
+	# 2. Play action cards — Easy AI skips 40% of the time
+	var difficulty: int = 1
+	var s_node = get_node_or_null("/root/Settings")
+	if s_node:
+		difficulty = s_node.ai_difficulty
+	if difficulty > 0 or randf() > 0.4:
+		_ai_play_action_cards(ai_player)
 	board.queue_redraw()
 	await get_tree().create_timer(0.3).timeout
 
@@ -656,24 +661,40 @@ func _run_ai_turn() -> void:
 				enemies.append(e)
 		if enemies.size() == 0: continue
 
-		# Find nearest enemy
-		# Smart targeting: prefer killable targets > low HP > nearest
+		# Target selection varies by difficulty
 		var attacks = _gm.get_valid_attacks(unit_id)
 		var best_target = enemies[0]
-		var best_score := -999.0
-		for e in enemies:
-			var score := 0.0
-			var in_range: bool = e["instance_id"] in attacks
-			if in_range:
-				score += 100.0  # Strongly prefer attackable targets
-				# Bonus for low HP (killable)
-				var hp_pct: float = float(e["current_hp"]) / float(e["max_hp"])
-				score += (1.0 - hp_pct) * 50.0  # Lower HP = higher score
-			# Proximity bonus
-			score -= _dist(unit["position"], e["position"]) * 2.0
-			if score > best_score:
-				best_score = score
-				best_target = e
+
+		if difficulty == 0:
+			# Easy: attack random enemy, prefer in-range
+			var in_range_enemies: Array = enemies.filter(func(e): return e["instance_id"] in attacks)
+			if in_range_enemies.size() > 0:
+				best_target = in_range_enemies[randi() % in_range_enemies.size()]
+			else:
+				best_target = enemies[randi() % enemies.size()]
+		else:
+			# Normal + Hard: smart targeting
+			var best_score := -999.0
+			for e in enemies:
+				var score := 0.0
+				var in_range: bool = e["instance_id"] in attacks
+				if in_range:
+					score += 100.0
+					var hp_pct: float = float(e["current_hp"]) / float(e["max_hp"])
+					score += (1.0 - hp_pct) * 50.0
+				score -= _dist(unit["position"], e["position"]) * 2.0
+				# Hard mode: bonus for high-value targets (higher level = more VP threat)
+				if difficulty == 2:
+					score += e["level"] * 3.0
+					# Bonus for targets in our territory (territory threat)
+					var ey: int = e["position"].y
+					if ai_player == "playerA" and ey < 3:
+						score += 30.0
+					elif ai_player == "playerB" and ey >= 11:
+						score += 30.0
+				if score > best_score:
+					best_score = score
+					best_target = e
 		var nearest = best_target
 
 		# Attack if in range
@@ -681,6 +702,8 @@ func _run_ai_turn() -> void:
 			_gm.attack_with_summon(unit_id, nearest["instance_id"])
 			board.queue_redraw()
 			await get_tree().create_timer(0.4).timeout
+		elif difficulty == 0 and randf() < 0.3:
+			pass  # Easy AI sometimes doesn't move
 		else:
 			# Move toward nearest enemy
 			var moves = _gm.get_valid_moves(unit_id)

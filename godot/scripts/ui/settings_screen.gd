@@ -107,6 +107,51 @@ func _build_ui() -> void:
 		_settings.save_settings()
 	)
 
+	# AI Difficulty
+	var diff_label := Label.new()
+	diff_label.text = "AI Difficulty"
+	diff_label.add_theme_font_size_override("font_size", 13)
+	diff_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	center.add_child(diff_label)
+
+	var diff_row := HBoxContainer.new()
+	diff_row.add_theme_constant_override("separation", 8)
+	diff_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(diff_row)
+
+	var diff_names := ["Easy", "Normal", "Hard"]
+	var diff_colors := [Color(0.3, 0.5, 0.2), Color(0.4, 0.35, 0.15), Color(0.5, 0.15, 0.15)]
+	for di in range(3):
+		var dbtn := Button.new()
+		dbtn.text = diff_names[di]
+		dbtn.custom_minimum_size = Vector2(80, 32)
+		dbtn.add_theme_font_size_override("font_size", 12)
+		var ds := StyleBoxFlat.new()
+		ds.bg_color = diff_colors[di] if _settings.ai_difficulty == di else Color(0.15, 0.15, 0.2)
+		ds.corner_radius_top_left = 4
+		ds.corner_radius_top_right = 4
+		ds.corner_radius_bottom_left = 4
+		ds.corner_radius_bottom_right = 4
+		dbtn.add_theme_stylebox_override("normal", ds)
+		var diff_idx: int = di
+		var all_btns: Array = []
+		dbtn.pressed.connect(func():
+			_settings.ai_difficulty = diff_idx
+			_settings.save_settings()
+			# Update button styles
+			for child in diff_row.get_children():
+				if child is Button:
+					var idx: int = child.get_index()
+					var st: StyleBoxFlat = StyleBoxFlat.new()
+					st.bg_color = diff_colors[idx] if idx == diff_idx else Color(0.15, 0.15, 0.2)
+					st.corner_radius_top_left = 4
+					st.corner_radius_top_right = 4
+					st.corner_radius_bottom_left = 4
+					st.corner_radius_bottom_right = 4
+					child.add_theme_stylebox_override("normal", st)
+		)
+		diff_row.add_child(dbtn)
+
 	var spacer_acc := Control.new()
 	spacer_acc.custom_minimum_size.y = 4
 	center.add_child(spacer_acc)
