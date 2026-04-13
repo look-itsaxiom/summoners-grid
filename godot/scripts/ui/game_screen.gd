@@ -868,10 +868,19 @@ func _on_game_over(winner_id: String) -> void:
 	get_node("/root/Settings").record_match(winner_id, _gm.turn_number, mode)
 
 	var storage = get_node_or_null("/root/CardStorage")
+	var _ranked_up := false
+	var _new_rank_name := ""
 	if storage and not _gm.spectator_mode:
+		var rank_before: String = storage.get_rank()["name"]
 		var won: bool = winner_id == "playerA"
 		var reward: int = storage.award_match_coins(won)
-		status_label.text = "%s WINS! +%d 🪙" % [winner_id.to_upper(), reward]
+		var rank_after: Dictionary = storage.get_rank()
+		_new_rank_name = rank_after["name"]
+		_ranked_up = rank_after["name"] != rank_before
+		if _ranked_up:
+			status_label.text = "RANK UP! %s → %s  +%d 🪙" % [rank_before, _new_rank_name, reward]
+		else:
+			status_label.text = "%s WINS! +%d 🪙" % [winner_id.to_upper(), reward]
 
 	_refresh_ui()
 	_show_game_over_overlay(winner_id)
