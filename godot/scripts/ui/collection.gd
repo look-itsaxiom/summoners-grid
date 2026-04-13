@@ -194,7 +194,7 @@ func _build_sidebar() -> PanelContainer:
 	bs.corner_radius_bottom_left = 6
 	bs.corner_radius_bottom_right = 6
 	back_btn.add_theme_stylebox_override("normal", bs)
-	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	back_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 	vbox.add_child(back_btn)
 
 	var store_btn := Button.new()
@@ -208,7 +208,7 @@ func _build_sidebar() -> PanelContainer:
 	ss.corner_radius_bottom_left = 6
 	ss.corner_radius_bottom_right = 6
 	store_btn.add_theme_stylebox_override("normal", ss)
-	store_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/pack_store.tscn"))
+	store_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/pack_store.tscn"))
 	vbox.add_child(store_btn)
 
 	return panel

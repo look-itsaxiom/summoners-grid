@@ -114,9 +114,9 @@ func _build_ui() -> void:
 	main.add_child(btn_row)
 
 	_add_nav_button(btn_row, "MY COLLECTION", Color(0.3, 0.5, 0.3), func():
-		get_tree().change_scene_to_file("res://scenes/collection.tscn"))
+		get_node("/root/SceneTransition").change_scene("res://scenes/collection.tscn"))
 	_add_nav_button(btn_row, "BACK TO MENU", Color(0.3, 0.3, 0.45), func():
-		get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+		get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 
 
 func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String, price: String, color: Color, pack_type: String) -> void:

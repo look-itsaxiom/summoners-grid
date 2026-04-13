@@ -80,7 +80,7 @@ func _build_dev_mode_ui() -> void:
 	var hover := style.duplicate()
 	hover.bg_color = style.bg_color.lightened(0.15)
 	play_btn.add_theme_stylebox_override("hover", hover)
-	play_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	play_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 	center.add_child(play_btn)
 
 	var note := Label.new()

@@ -230,34 +230,34 @@ func _on_play_vs_ai() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.spectator_mode = false
 	gm.use_random_decks = false
-	get_tree().change_scene_to_file("res://scenes/deck_preview.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/deck_preview.tscn")
 
 
 func _on_random_game() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.spectator_mode = false
 	gm.use_random_decks = true
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/game.tscn")
 
 
 func _on_watch_ai() -> void:
 	var gm = get_node("/root/GameManager")
 	gm.spectator_mode = true
 	gm.use_random_decks = false
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/game.tscn")
 
 
 func _on_pack_store() -> void:
-	get_tree().change_scene_to_file("res://scenes/pack_store.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/pack_store.tscn")
 
 
 func _on_deck_builder() -> void:
-	get_tree().change_scene_to_file("res://scenes/deck_builder.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/deck_builder.tscn")
 
 
 func _on_collection() -> void:
-	get_tree().change_scene_to_file("res://scenes/collection.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/collection.tscn")
 
 
 func _on_how_to_play() -> void:
-	get_tree().change_scene_to_file("res://scenes/how_to_play.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/how_to_play.tscn")
