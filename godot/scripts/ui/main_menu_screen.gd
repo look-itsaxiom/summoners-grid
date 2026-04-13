@@ -114,7 +114,13 @@ func _build_ui() -> void:
 	spacer2.custom_minimum_size.y = 4
 	center.add_child(spacer2)
 
-	_add_button(center, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 200)
+	var bottom_row := HBoxContainer.new()
+	bottom_row.add_theme_constant_override("separation", 12)
+	bottom_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(bottom_row)
+
+	_add_button(bottom_row, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 160)
+	_add_button(bottom_row, "Settings", Color(0.2, 0.2, 0.3), _on_settings, 160)
 
 	# Spacer
 	var spacer3 := Control.new()
@@ -287,3 +293,7 @@ func _on_collection() -> void:
 
 func _on_how_to_play() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/how_to_play.tscn")
+
+
+func _on_settings() -> void:
+	get_node("/root/SceneTransition").change_scene("res://scenes/settings.tscn")

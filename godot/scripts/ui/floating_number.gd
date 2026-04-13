@@ -7,6 +7,9 @@ var elapsed := 0.0
 
 
 static func spawn(parent: Control, text: String, pos: Vector2, color: Color, is_crit: bool = false) -> void:
+	var settings = parent.get_node_or_null("/root/Settings")
+	if settings != null and not settings.show_damage_numbers:
+		return
 	var label := Label.new()
 	label.set_script(load("res://scripts/ui/floating_number.gd"))
 	label.text = text

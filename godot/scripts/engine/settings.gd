@@ -21,6 +21,16 @@ var total_draws := 0
 func _ready() -> void:
 	load_settings()
 	load_history()
+	_apply_audio()
+
+
+func _apply_audio() -> void:
+	var db: float
+	if not sound_enabled or sound_volume <= 0:
+		db = -80.0
+	else:
+		db = linear_to_db(sound_volume)
+	AudioServer.set_bus_volume_db(AudioServer.get_bus_index("Master"), db)
 
 
 func save_settings() -> void:
