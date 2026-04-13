@@ -246,7 +246,7 @@ func _buy_pack(pack_type: String) -> void:
 	})
 
 	_is_opening = false
-	get_tree().change_scene_to_file("res://scenes/pack_opening.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/pack_opening.tscn")
 
 
 ## Generate a pack of cards locally using randomized species + rarity.
