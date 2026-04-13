@@ -325,21 +325,26 @@ func _refresh_hand() -> void:
 			label_text += "\n[%s]" % ct.to_upper()
 
 		btn.text = label_text
-		btn.custom_minimum_size = Vector2(85, 55)
+		btn.custom_minimum_size = Vector2(85, 60)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.add_theme_font_size_override("font_size", 10)
 		btn.clip_text = false
 		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		btn.tooltip_text = card.get("description", card.get("name", ""))
 
-		# Color by type
+		# Color by type — card-like style with top color stripe
 		var style := StyleBoxFlat.new()
-		style.corner_radius_top_left = 4
-		style.corner_radius_top_right = 4
-		style.corner_radius_bottom_left = 4
-		style.corner_radius_bottom_right = 4
-		style.content_margin_left = 4
-		style.content_margin_right = 4
+		style.corner_radius_top_left = 5
+		style.corner_radius_top_right = 5
+		style.corner_radius_bottom_left = 3
+		style.corner_radius_bottom_right = 3
+		style.content_margin_left = 5
+		style.content_margin_right = 5
+		style.content_margin_top = 6
+		style.content_margin_bottom = 4
+		style.shadow_color = Color(0, 0, 0, 0.3)
+		style.shadow_size = 2
+		style.shadow_offset = Vector2(1, 2)
 
 		if ct == "summon":
 			style.bg_color = Color(0.15, 0.2, 0.35)
@@ -367,12 +372,16 @@ func _refresh_hand() -> void:
 			style.border_color = Color(0.5, 0.3, 0.6)
 
 		style.border_width_bottom = 2
-		style.border_width_top = 2
-		style.border_width_left = 2
-		style.border_width_right = 2
+		style.border_width_top = 3  # Thicker top = color stripe effect
+		style.border_width_left = 1
+		style.border_width_right = 1
 
 		if i == selected_card_index:
 			style.border_color = Color.GOLD
+			style.border_width_top = 3
+			style.border_width_bottom = 3
+			style.border_width_left = 3
+			style.border_width_right = 3
 			style.bg_color = style.bg_color.lightened(0.15)
 
 		btn.add_theme_stylebox_override("normal", style)
