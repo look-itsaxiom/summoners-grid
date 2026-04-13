@@ -54,21 +54,59 @@ func _build_ui() -> void:
 
 	# Spacer
 	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 30
+	spacer.custom_minimum_size.y = 20
 	center.add_child(spacer)
 
-	# Buttons
-	_add_button(center, "PLAY VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai)
-	_add_button(center, "Random Deck Game", Color(0.9, 0.7, 0.0), _on_random_game)
-	_add_button(center, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai)
-	_add_button(center, "Pack Store", Color(0.6, 0.4, 0.15), _on_pack_store)
-	_add_button(center, "Deck Builder", Color(0.4, 0.3, 0.55), _on_deck_builder)
-	_add_button(center, "My Collection", Color(0.3, 0.5, 0.3), _on_collection)
-	_add_button(center, "How to Play", Color(0.25, 0.4, 0.6), _on_how_to_play)
+	# Two-column layout: Play | Collect
+	var columns := HBoxContainer.new()
+	columns.add_theme_constant_override("separation", 24)
+	columns.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(columns)
+
+	# Left column: Play modes
+	var play_col := VBoxContainer.new()
+	play_col.add_theme_constant_override("separation", 8)
+	play_col.custom_minimum_size.x = 220
+	columns.add_child(play_col)
+
+	var play_header := Label.new()
+	play_header.text = "PLAY"
+	play_header.add_theme_font_size_override("font_size", 11)
+	play_header.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	play_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	play_col.add_child(play_header)
+
+	_add_button(play_col, "BATTLE VS AI", Color(1.0, 0.6, 0.0), _on_play_vs_ai, 220)
+	_add_button(play_col, "Random Deck", Color(0.7, 0.55, 0.0), _on_random_game, 220)
+	_add_button(play_col, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai, 220)
+
+	# Right column: Collection & Economy
+	var collect_col := VBoxContainer.new()
+	collect_col.add_theme_constant_override("separation", 8)
+	collect_col.custom_minimum_size.x = 220
+	columns.add_child(collect_col)
+
+	var collect_header := Label.new()
+	collect_header.text = "COLLECT"
+	collect_header.add_theme_font_size_override("font_size", 11)
+	collect_header.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	collect_header.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	collect_col.add_child(collect_header)
+
+	_add_button(collect_col, "Pack Store", Color(0.6, 0.4, 0.15), _on_pack_store, 220)
+	_add_button(collect_col, "Deck Builder", Color(0.4, 0.3, 0.55), _on_deck_builder, 220)
+	_add_button(collect_col, "My Collection", Color(0.3, 0.5, 0.3), _on_collection, 220)
+
+	# Bottom row: How to Play
+	var spacer2 := Control.new()
+	spacer2.custom_minimum_size.y = 4
+	center.add_child(spacer2)
+
+	_add_button(center, "How to Play", Color(0.2, 0.25, 0.35), _on_how_to_play, 200)
 
 	# Spacer
 	var spacer3 := Control.new()
-	spacer3.custom_minimum_size.y = 8
+	spacer3.custom_minimum_size.y = 4
 	center.add_child(spacer3)
 
 	# Version
@@ -104,12 +142,12 @@ func _add_feature_card(parent: HBoxContainer, title_text: String, desc_text: Str
 	vbox.add_child(d)
 
 
-func _add_button(parent: VBoxContainer, text: String, color: Color, callback: Callable) -> void:
+func _add_button(parent: Container, text: String, color: Color, callback: Callable, width: int = 300) -> void:
 	var btn := Button.new()
 	btn.text = text
-	btn.custom_minimum_size = Vector2(300, 48)
+	btn.custom_minimum_size = Vector2(width, 42)
 	btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	btn.add_theme_font_size_override("font_size", 18)
+	btn.add_theme_font_size_override("font_size", 15)
 	btn.pressed.connect(callback)
 
 	# Style
