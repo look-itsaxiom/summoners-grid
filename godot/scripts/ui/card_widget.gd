@@ -137,7 +137,9 @@ func _draw() -> void:
 		var art_scale: float = minf(art_rect.size.x / tex_size.x, art_rect.size.y / tex_size.y)
 		var draw_size := tex_size * art_scale
 		var draw_pos := art_rect.position + (art_rect.size - draw_size) / 2.0
-		draw_texture_rect(art_tex, Rect2(draw_pos, draw_size), false)
+		# Darken non-species art (action icons) to match card darkness
+		var art_tint := Color(1, 1, 1) if species != "" else Color(0.7, 0.7, 0.8)
+		draw_texture_rect(art_tex, Rect2(draw_pos, draw_size), false, art_tint)
 
 	# Name plate
 	var name_top: float = art_top + art_h + 2
