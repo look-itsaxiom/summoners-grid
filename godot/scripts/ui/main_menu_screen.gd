@@ -144,7 +144,11 @@ func _build_ui() -> void:
 		rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		center.add_child(rank_label)
 
-		var stats_text := "🪙 %d  |  📦 %d cards" % [storage.get_coins(), storage.get_card_count()]
+		var player_coins: int = storage.get_coins()
+		var stats_text := "🪙 %d  |  📦 %d cards" % [player_coins, storage.get_card_count()]
+		if player_coins < CardStorage.PACK_COST_STANDARD:
+			var needed: int = CardStorage.PACK_COST_STANDARD - player_coins
+			stats_text += "  |  %d🪙 to next pack" % needed
 		var rarities: Dictionary = storage.get_rarity_counts()
 		if rarities.has("myth"):
 			stats_text += "  |  ✨ %d myth" % rarities["myth"]
