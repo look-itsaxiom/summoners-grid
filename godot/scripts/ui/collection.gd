@@ -158,9 +158,15 @@ func _build_sidebar() -> PanelContainer:
 	sp_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
 	vbox.add_child(sp_label)
 
-	_add_filter_btn(vbox, "All Species", "", "species")
+	_add_filter_btn(vbox, "All Species (%d)" % _cards.size(), "", "species")
+	var sp_counts: Dictionary = {}
+	for c in _cards:
+		var s: String = c.get("species", "")
+		sp_counts[s] = sp_counts.get(s, 0) + 1
 	for sp in ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]:
-		_add_filter_btn(vbox, "%s %s" % [SPECIES_EMOJI.get(sp, ""), sp.capitalize()], sp, "species")
+		var count: int = sp_counts.get(sp, 0)
+		var label_text := "%s %s (%d)" % [SPECIES_EMOJI.get(sp, ""), sp.capitalize(), count]
+		_add_filter_btn(vbox, label_text, sp, "species")
 
 	# Rarity filter
 	var spacer := Control.new()
@@ -173,10 +179,15 @@ func _build_sidebar() -> PanelContainer:
 	r_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
 	vbox.add_child(r_label)
 
-	_add_filter_btn(vbox, "All Rarities", "", "rarity")
+	var r_counts: Dictionary = {}
+	for c in _cards:
+		var r2: String = c.get("rarity", "")
+		r_counts[r2] = r_counts.get(r2, 0) + 1
+	_add_filter_btn(vbox, "All Rarities (%d)" % _cards.size(), "", "rarity")
 	for r in ["common", "uncommon", "rare", "legend", "myth"]:
 		var rc: Color = RARITY_COLORS.get(r, Color.WHITE)
-		_add_filter_btn(vbox, r.to_upper(), r, "rarity", rc)
+		var r_count: int = r_counts.get(r, 0)
+		_add_filter_btn(vbox, "%s (%d)" % [r.to_upper(), r_count], r, "rarity", rc)
 
 	# Navigation
 	var spacer2 := Control.new()
