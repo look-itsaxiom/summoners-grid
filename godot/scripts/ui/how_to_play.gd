@@ -168,7 +168,7 @@ func _build_ui() -> void:
 	back_btn.text = "BACK TO MENU"
 	back_btn.custom_minimum_size = Vector2(200, 44)
 	back_btn.add_theme_font_size_override("font_size", 16)
-	back_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	back_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.3, 0.3, 0.45)
 	style.corner_radius_top_left = 8

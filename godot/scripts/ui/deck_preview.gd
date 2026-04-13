@@ -263,8 +263,8 @@ func _add_button(parent: HBoxContainer, text: String, color: Color, callback: Ca
 
 
 func _on_start_game() -> void:
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/game.tscn")
 
 
 func _on_back() -> void:
-	get_tree().change_scene_to_file("res://scenes/menu.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn")

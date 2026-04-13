@@ -314,7 +314,7 @@ func _on_play() -> void:
 	gm.spectator_mode = false
 	gm.use_random_decks = false
 	gm.set("_custom_deck_a", custom_deck)
-	get_tree().change_scene_to_file("res://scenes/game.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/game.tscn")
 
 
 ## Build a playable deck by mapping collection cards to game templates.

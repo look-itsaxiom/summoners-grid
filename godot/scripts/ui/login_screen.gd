@@ -17,7 +17,7 @@ func _ready() -> void:
 
 	# If already logged in, skip to menu
 	if _auth.is_logged_in():
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn")
 		return
 
 	# Check if auth is configured
@@ -181,7 +181,7 @@ func _build_login_ui() -> void:
 	gs.corner_radius_bottom_left = 4
 	gs.corner_radius_bottom_right = 4
 	guest_btn.add_theme_stylebox_override("normal", gs)
-	guest_btn.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/menu.tscn"))
+	guest_btn.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 	center.add_child(guest_btn)
 
 
@@ -224,7 +224,7 @@ func _on_sign_in() -> void:
 	_is_processing = false
 
 	if result.get("success", false):
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn")
 	else:
 		_status_label.text = result.get("error", "Sign in failed")
 		_status_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))
@@ -248,7 +248,7 @@ func _on_sign_up() -> void:
 	_is_processing = false
 
 	if result.get("success", false):
-		get_tree().change_scene_to_file("res://scenes/menu.tscn")
+		get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn")
 	else:
 		_status_label.text = result.get("error", "Sign up failed")
 		_status_label.add_theme_color_override("font_color", Color(1, 0.3, 0.3))

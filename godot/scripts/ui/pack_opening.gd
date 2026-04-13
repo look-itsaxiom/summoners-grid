@@ -171,7 +171,7 @@ func _build_ui() -> void:
 	var hover2 := style2.duplicate()
 	hover2.bg_color = style2.bg_color.lightened(0.15)
 	open_more.add_theme_stylebox_override("hover", hover2)
-	open_more.pressed.connect(func(): get_tree().change_scene_to_file("res://scenes/pack_store.tscn"))
+	open_more.pressed.connect(func(): get_node("/root/SceneTransition").change_scene("res://scenes/pack_store.tscn"))
 	btn_row.add_child(open_more)
 
 
@@ -379,7 +379,7 @@ func _find_node_recursive(node: Node, target_name: String) -> Node:
 
 
 func _on_continue() -> void:
-	get_tree().change_scene_to_file("res://scenes/pack_store.tscn")
+	get_node("/root/SceneTransition").change_scene("res://scenes/pack_store.tscn")
 
 
 # Screen shake
