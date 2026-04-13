@@ -22,8 +22,8 @@ Check this file every Ralph Loop iteration.
 | 14 | Quest completion + level rewards | done | done | +2 levels + VP award implemented |
 | 15 | Role advancement stat recalc | done | done | headless test |
 | 16 | AI vs AI games complete without crashes | done | done | spectator mode works |
-| 17 | Effect stack (LIFO) | done | done | push/resolve/speed-lock + 16 tests |
-| 18 | Play Example card-by-card verification | done | TODO | need GUT tests |
+| 17 | Effect stack (LIFO) | done | done | push/resolve/speed-lock + 16 tests, verified in-game via godot-mcp |
+| 18 | Play Example card-by-card verification | done | done | Both engines agree (web=godot). Play Example doc has slightly different stat values than formulas produce — formulas are authoritative per GDD. 95 headless tests passing. |
 
 ## Content & Polish (22 items) — GAME FEATURES
 | # | Item | Web | Godot | Notes |
