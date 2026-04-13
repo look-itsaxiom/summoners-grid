@@ -5,12 +5,13 @@ config_version=5
 
 [application]
 
-run/main_scene="res://scenes/menu.tscn"
+run/main_scene="res://scenes/login.tscn"
 
 config/name="Summoner's Grid"
 config/features=PackedStringArray("4.3")
 
 [autoload]
+
 
 
 
@@ -76,6 +77,8 @@ ApiClient="*res://scripts/engine/api_client.gd"
 CardStorage="*res://scripts/engine/card_storage.gd"
 
 BGM="*res://scripts/engine/bgm.gd"
+
+Auth="*res://scripts/engine/auth.gd"
 
 
 [display]
