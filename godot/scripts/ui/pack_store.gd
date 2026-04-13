@@ -194,77 +194,12 @@ func _buy_pack(pack_type: String) -> void:
 		_status_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
 		return
 
-	var cards: Array = result.get("cards", [])
-	_status_label.text = "Opened %d cards!" % cards.size()
-	_status_label.add_theme_color_override("font_color", Color(0.3, 1.0, 0.3))
-
-	# Play SFX
-	var sfx = get_node_or_null("/root/SFX")
-	if sfx:
-		sfx.vp_gain()
-
-	# Display cards
-	for child in _result_container.get_children():
-		child.queue_free()
-
-	var grid := GridContainer.new()
-	grid.columns = 5
-	grid.add_theme_constant_override("h_separation", 8)
-	grid.add_theme_constant_override("v_separation", 8)
-	_result_container.add_child(grid)
-
-	var rarity_colors := {
-		"common": Color(0.5, 0.5, 0.5),
-		"uncommon": Color(0.3, 0.6, 0.3),
-		"rare": Color(0.3, 0.5, 0.7),
-		"legend": Color(0.7, 0.6, 0.3),
-		"myth": Color(0.7, 0.3, 0.6),
-	}
-
-	for card in cards:
-		var card_panel := PanelContainer.new()
-		card_panel.custom_minimum_size = Vector2(120, 80)
-		var cs := StyleBoxFlat.new()
-		var rc: Color = rarity_colors.get(card.get("rarity", "common"), Color(0.5, 0.5, 0.5))
-		cs.bg_color = Color(0.1, 0.1, 0.16)
-		cs.border_color = rc
-		cs.border_width_top = 2
-		cs.border_width_bottom = 2
-		cs.border_width_left = 2
-		cs.border_width_right = 2
-		cs.corner_radius_top_left = 6
-		cs.corner_radius_top_right = 6
-		cs.corner_radius_bottom_left = 6
-		cs.corner_radius_bottom_right = 6
-		cs.content_margin_left = 8
-		cs.content_margin_right = 8
-		cs.content_margin_top = 6
-		cs.content_margin_bottom = 6
-		card_panel.add_theme_stylebox_override("panel", cs)
-		grid.add_child(card_panel)
-
-		var cv := VBoxContainer.new()
-		cv.add_theme_constant_override("separation", 2)
-		card_panel.add_child(cv)
-
-		var name_lbl := Label.new()
-		name_lbl.text = card.get("name", "?")
-		name_lbl.add_theme_font_size_override("font_size", 11)
-		name_lbl.add_theme_color_override("font_color", Color.WHITE)
-		name_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		cv.add_child(name_lbl)
-
-		var info_lbl := Label.new()
-		info_lbl.text = "%s · %s" % [card.get("rarity", "?").to_upper(), card.get("species", "?").capitalize()]
-		info_lbl.add_theme_font_size_override("font_size", 9)
-		info_lbl.add_theme_color_override("font_color", rc)
-		cv.add_child(info_lbl)
-
-		var dna_lbl := Label.new()
-		dna_lbl.text = card.get("dna", "").substr(0, 12) + "..."
-		dna_lbl.add_theme_font_size_override("font_size", 8)
-		dna_lbl.add_theme_color_override("font_color", Color(0.4, 0.4, 0.5))
-		cv.add_child(dna_lbl)
+	# Transition to the pack opening ceremony
+	var opening_scene = load("res://scenes/pack_opening.tscn")
+	var opening = opening_scene.instantiate()
+	opening.pack_data = result
+	get_tree().root.add_child(opening)
+	queue_free()  # Remove pack store
 
 
 func _add_nav_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
