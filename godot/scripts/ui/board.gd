@@ -147,6 +147,14 @@ func _draw() -> void:
 
 			draw_rect(rect, color)
 
+			# Subtle inner bevel — lighter top-left edge, darker bottom-right
+			var bevel_light := Color(1, 1, 1, 0.04)
+			var bevel_dark := Color(0, 0, 0, 0.08)
+			draw_line(rect.position, rect.position + Vector2(CELL_SIZE, 0), bevel_light, 1.0)
+			draw_line(rect.position, rect.position + Vector2(0, CELL_SIZE), bevel_light, 1.0)
+			draw_line(rect.position + Vector2(CELL_SIZE, CELL_SIZE), rect.position + Vector2(0, CELL_SIZE), bevel_dark, 1.0)
+			draw_line(rect.position + Vector2(CELL_SIZE, CELL_SIZE), rect.position + Vector2(CELL_SIZE, 0), bevel_dark, 1.0)
+
 			# Weapon range overlay (subtle orange tint)
 			if pos in weapon_range_cells:
 				draw_rect(rect, COLOR_WEAPON_RANGE)
@@ -154,14 +162,16 @@ func _draw() -> void:
 			# Grid lines
 			draw_rect(rect, COLOR_GRID_LINE, false, 1.0)
 
-	# Territory border lines
+	# Territory border lines with glow
 	var border_width := BOARD_W * CELL_SIZE
 	# Player A territory top border (y=3 line)
 	var a_border_y := offset.y + (BOARD_H - TERRITORY_DEPTH) * CELL_SIZE
-	draw_line(Vector2(offset.x, a_border_y), Vector2(offset.x + border_width, a_border_y), COLOR_TERRITORY_BORDER, 2.0)
+	draw_line(Vector2(offset.x, a_border_y), Vector2(offset.x + border_width, a_border_y), Color(0.3, 0.3, 0.5, 0.2), 4.0)
+	draw_line(Vector2(offset.x, a_border_y), Vector2(offset.x + border_width, a_border_y), COLOR_TERRITORY_BORDER, 1.5)
 	# Player B territory bottom border (y=11 line)
 	var b_border_y := offset.y + TERRITORY_DEPTH * CELL_SIZE
-	draw_line(Vector2(offset.x, b_border_y), Vector2(offset.x + border_width, b_border_y), COLOR_TERRITORY_BORDER, 2.0)
+	draw_line(Vector2(offset.x, b_border_y), Vector2(offset.x + border_width, b_border_y), Color(0.3, 0.3, 0.5, 0.2), 4.0)
+	draw_line(Vector2(offset.x, b_border_y), Vector2(offset.x + border_width, b_border_y), COLOR_TERRITORY_BORDER, 1.5)
 
 	# Draw column labels
 	for x in range(BOARD_W):
@@ -227,6 +237,10 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	# Apply scale transform around cell center
 	var center := screen_pos + Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5)
 	var scaled_pos := center - Vector2(CELL_SIZE * 0.5, CELL_SIZE * 0.5) * unit_scale
+
+	# Drop shadow
+	var shadow_rect := Rect2(scaled_pos + Vector2(3, 3) * unit_scale, (Vector2(CELL_SIZE - 4, CELL_SIZE - 4)) * unit_scale)
+	draw_rect(shadow_rect, Color(0, 0, 0, 0.3))
 
 	# Unit background — solid dark card with team-colored border
 	var bg_rect := Rect2(scaled_pos + Vector2(2, 2) * unit_scale, (Vector2(CELL_SIZE - 4, CELL_SIZE - 4)) * unit_scale)
