@@ -121,8 +121,17 @@ func _build_ui() -> void:
 	spacer3.custom_minimum_size.y = 4
 	center.add_child(spacer3)
 
-	# Player stats bar
+	# Daily bonus notification
 	var storage = get_node_or_null("/root/CardStorage")
+	if storage and storage.got_daily_bonus_today():
+		var bonus_label := Label.new()
+		bonus_label.text = "Daily Bonus: +100 coins!"
+		bonus_label.add_theme_font_size_override("font_size", 12)
+		bonus_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+		bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		center.add_child(bonus_label)
+
+	# Player stats bar
 	if storage:
 		var stats_text := "🪙 %d coins  |  📦 %d cards" % [storage.get_coins(), storage.get_card_count()]
 		var match_stats: Dictionary = storage.get_match_stats()
