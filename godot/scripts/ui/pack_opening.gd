@@ -202,11 +202,12 @@ func _start_reveal() -> void:
 	_is_revealing = true
 
 
-func _gui_input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _is_revealing and _current_index < _cards.size():
 			_reveal_card(_current_index)
 			_current_index += 1
+			get_viewport().set_input_as_handled()
 
 			if _current_index >= _cards.size():
 				_all_revealed()

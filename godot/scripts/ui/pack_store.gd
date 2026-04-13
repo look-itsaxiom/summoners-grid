@@ -28,6 +28,7 @@ func _build_ui() -> void:
 	var scroll := ScrollContainer.new()
 	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
 	add_child(scroll)
 
 	var margin := MarginContainer.new()
@@ -174,7 +175,8 @@ func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String
 	var hover := btn_style.duplicate()
 	hover.bg_color = color.lightened(0.15)
 	buy_btn.add_theme_stylebox_override("hover", hover)
-	buy_btn.pressed.connect(func(): _buy_pack(pack_type))
+	var pt := pack_type  # Capture for lambda
+	buy_btn.pressed.connect(func(): _buy_pack(pt))
 	vbox.add_child(buy_btn)
 
 
