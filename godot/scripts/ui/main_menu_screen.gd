@@ -29,6 +29,8 @@ func _build_ui() -> void:
 	var center := VBoxContainer.new()
 	center.add_theme_constant_override("separation", 12)
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_child(center)
 
 	# Title

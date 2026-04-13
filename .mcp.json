@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "godot-mcp": {
-      "command": "node",
-      "args": ["/var/home/axiom/SkibbySoft/cardcap/.godot-mcp/build/index.js"]
+      "command": "npx",
+      "args": ["godot-mcp"]
     }
   }
 }
