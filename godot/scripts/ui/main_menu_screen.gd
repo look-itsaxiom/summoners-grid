@@ -13,12 +13,24 @@ func _ready() -> void:
 		bgm.play("menu")
 
 
+var _particles: Array = []
+var _particle_timer := 0.0
+
 func _build_ui() -> void:
-	# Background
+	# Background with subtle gradient
 	var bg := ColorRect.new()
 	bg.color = BG_COLOR
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
+
+	# Subtle top gradient overlay for depth
+	var gradient := ColorRect.new()
+	gradient.color = Color(0.08, 0.05, 0.15, 0.3)
+	gradient.set_anchors_preset(Control.PRESET_FULL_RECT)
+	gradient.anchor_bottom = 0.4
+	add_child(gradient)
+
+	set_process(true)
 
 	# MarginContainer centers content with padding
 	var margin := MarginContainer.new()
@@ -133,6 +145,35 @@ func _build_ui() -> void:
 	version.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(version)
+
+
+func _process(delta: float) -> void:
+	# Spawn floating sparkle particles
+	_particle_timer += delta
+	if _particle_timer > 0.3 and _particles.size() < 20:
+		_particle_timer = 0.0
+		var sparkle := ColorRect.new()
+		sparkle.custom_minimum_size = Vector2(2, 2)
+		sparkle.size = Vector2(2, 2)
+		sparkle.color = Color(1.0, 0.85, 0.0, 0.3)
+		sparkle.position = Vector2(randf() * 1280, 720 + 10)
+		sparkle.z_index = -1
+		add_child(sparkle)
+		_particles.append({"node": sparkle, "speed": 20 + randf() * 40, "drift": randf_range(-15, 15)})
+
+	# Update particles
+	var to_remove: Array = []
+	for p in _particles:
+		var node: ColorRect = p["node"]
+		node.position.y -= p["speed"] * delta
+		node.position.x += p["drift"] * delta
+		node.color.a -= delta * 0.15
+		if node.position.y < -20 or node.color.a <= 0:
+			to_remove.append(p)
+			node.queue_free()
+
+	for p in to_remove:
+		_particles.erase(p)
 
 
 func _add_feature_card(parent: HBoxContainer, title_text: String, desc_text: String) -> void:
