@@ -16,8 +16,39 @@ const WIN_REWARD := 150  # Coins for winning
 const LOSS_REWARD := 50  # Coins for losing (participation)
 
 
+var _has_claimed_starter := false
+
+
 func _ready() -> void:
 	load_collection()
+	_check_starter_pack()
+
+
+## Grant a free starter pack on first launch.
+func _check_starter_pack() -> void:
+	if _has_claimed_starter or _collection.size() > 0:
+		return
+
+	# Generate 3 starter summons — one warrior, one magician, one scout
+	var starters := [
+		{"name": "Starter Warrior", "species": "gignen", "rarity": "uncommon", "power": 82,
+		 "stats": {"STR": 12, "END": 10, "DEF": 10, "INT": 8, "SPI": 8, "MDF": 7, "SPD": 8, "ACC": 9, "LCK": 10},
+		 "dna": "starter_warrior_%d" % randi()},
+		{"name": "Starter Magician", "species": "fae", "rarity": "uncommon", "power": 80,
+		 "stats": {"STR": 7, "END": 8, "DEF": 8, "INT": 12, "SPI": 11, "MDF": 10, "SPD": 9, "ACC": 8, "LCK": 7},
+		 "dna": "starter_magician_%d" % randi()},
+		{"name": "Starter Scout", "species": "wilderling", "rarity": "uncommon", "power": 81,
+		 "stats": {"STR": 10, "END": 8, "DEF": 7, "INT": 7, "SPI": 7, "MDF": 7, "SPD": 12, "ACC": 11, "LCK": 12},
+		 "dna": "starter_scout_%d" % randi()},
+	]
+
+	for card in starters:
+		card["acquired_at"] = Time.get_datetime_string_from_system()
+		card["source"] = "starter_pack"
+		_collection.append(card)
+
+	_has_claimed_starter = true
+	save_collection()
 
 
 ## Get all owned cards.
@@ -133,6 +164,7 @@ func save_collection() -> void:
 		"coins": _coins,
 		"total_matches": _total_matches,
 		"total_wins": _total_wins,
+		"has_claimed_starter": _has_claimed_starter,
 		"saved_at": Time.get_datetime_string_from_system(),
 	}
 
@@ -169,3 +201,4 @@ func load_collection() -> void:
 	_coins = data.get("coins", 500)
 	_total_matches = data.get("total_matches", 0)
 	_total_wins = data.get("total_wins", 0)
+	_has_claimed_starter = data.get("has_claimed_starter", false)
