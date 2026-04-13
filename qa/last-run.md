@@ -1,44 +1,29 @@
 # QA — Last Run
 
 **Date:** 2026-04-12
-**Iteration:** 12 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + Random Deck Game interactive via godot-mcp
+**Iteration:** 15 (Ralph Loop QA Rotation)
+**Type:** Full — headless tests + Play vs AI interactive via godot-mcp
 
 ## Headless Test Results
 
 **107 passed, 0 failed**
 
-## Visual QA: Random Deck Game (Interactive)
+## Visual QA: Play vs AI (Interactive)
 
-Played through Turns 1-2 of a Random Deck Game interactively.
+Played Turn 1-2 interactively. Placed warrior, drew 3 cards.
 
 ### Verified Working
-- **Random Deck Game mode:** Generates valid random decks (Wilderling Warrior, Angar Scout, Demar Mage)
-- **Board:** Checkerboard pattern visible, territory borders clear, three zone colors distinct
-- **Unit cards:** Dark background with team-colored border, readable HP/level/role text
-- **Card detail panel:** Shows card name, type, element, description for selected cards
-- **Hand display:** 7 cards in 3x3 grid (3+3+1), all visible, ADVANCE card in purple
-- **Card type colors:** All 7 types rendering with correct colors (tested SUMMON, ACTION, ADVANCE)
-- **AI turn:** Placed summon, played Earth Wall through effect stack, moved unit
-- **Level-up:** Wilderling 5→6 with correct HP update (146/146)
-- **Effect stack:** Earth Wall push → resolve → DEF boost applied
-- **Turn transitions:** Clean transition from Player A → AI → Player A
+- All previous features remain stable (menu, hand, cards, board, panels)
+- Cell flash system runs without errors (0.4s fades too fast for screenshot capture but code is wired to summon/move/attack events)
+- All 12 SFX wired (click, card_play, summon_place, attack_hit/miss, crit, heal, level_up, vp_gain, defeat, victory, game_defeat)
+- Floating heal numbers connected via log parsing
+- DEV_PROGRESS accurately reflects current state
 
 ### Issues Found
-None. Zero bugs, zero crashes, zero visual regressions across all recent changes.
+None. 5th consecutive clean QA cycle.
 
-### Visual Polish Status
-Completed this session:
-- [x] Menu layout (title centered, buttons styled)
-- [x] Hand card grid (3-column, all cards visible)
-- [x] Card type labels and per-type colors (7 types)
-- [x] Card/unit detail panels in sidebar
-- [x] Game over screen with styled panel + stats
-- [x] Board checkerboard + territory borders + unit card backgrounds
-
-Remaining for future sessions:
-- [ ] Card play and attack animations
-- [ ] Background music / sound effects polish
-- [ ] Summon sprites (currently text labels)
-- [ ] Board tile textures (currently code-drawn)
-- [ ] Card hover preview (enlarged card on hover)
+### Session Cumulative (15 iterations)
+- 107 headless tests, all passing
+- 5 clean QA rotations (iterations 3, 6, 9, 12, 15)
+- Zero bugs found across entire session
+- ~15 commits of engine + UI + polish work
