@@ -1,39 +1,37 @@
 # QA — Last Run
 
 **Date:** 2026-04-12
-**Iteration:** 6 (Ralph Loop QA Rotation)
-**Type:** Full — headless tests + visual QA via godot-mcp
+**Iteration:** 9 (Ralph Loop QA Rotation)
+**Type:** Full — headless tests + interactive Play vs AI via godot-mcp
 
 ## Headless Test Results
 
-**107 passed, 0 failed** (up from 95 — added 12 Play Example formula tests)
+**107 passed, 0 failed**
 
-## Visual QA: AI vs AI Full Game
+## Visual QA: Play vs AI (Interactive)
 
-Watched a complete AI vs AI game via godot-mcp (6 turns, Player B wins 4-2 VP).
+Played through Turns 1-3 interactively via godot-mcp.
 
 ### Verified Working
-- Menu: title, subtitle, all 3 buttons, alpha build text — all centered and readable
-- Game start: coin flip, turn order, draw phase skip on T1
-- Summon placement: territory validation, unit appears on board with HP/level/role
-- Card play: effect stack push → resolve → effect application (Sharpened Blade, Obliterate, etc.)
-- Combat: to-hit rolls, crit checks, damage calculation, elemental advantage
-- Healing: base + crit healing (Healing Hands verified)
-- Role advancement: Warrior → Knight, Magician → Warlock (both visible on board)
-- VP system: defeat VP (tier-based), territory VP
-- Win condition: first to 3 VP triggers game over
-- Game over screen: DEFEAT/VICTORY banner, stats summary, New Game + Main Menu buttons
-- Hand display: 3-column grid, all 6 cards visible with full names and type labels
-- Floating damage numbers and "DEFEATED!" text
-- HP bars with color coding (green/yellow/red)
-- Game log: all actions logged with turn numbers
+- Menu: all buttons functional, title centered
+- Turn 1: draw skip, level skip, summon placement at (5,1)
+- Summon draw: 3 cards drawn after placement, hand went to 6
+- Card selection: gold border, description shown in status area
+- Sharpened Blade: selected → clicked warrior → effect stack push → resolve → WP +10
+- End Turn: AI took its turn automatically
+- AI Turn 2: moved scout, attacked warrior (crit for 40 damage!), placed stoneheart
+- Level-up: Warrior 5→6, damage retained (68→74 HP, max 108→114)
+- Hand display: 3-column grid, all 6 cards visible, word wrap working
+- Card type labels: [SUMMON], [ACTION], [BUILDING] all correct
+- Card colors: distinct per type (blue summon, brown action)
+- Game log: scrolling, color-coded turn numbers, all actions logged
 
-### Visual Issues Found (not blocking, for future polish)
-1. Turn banner overlay text ("Player B — Turn 3") overlaps board grid numbers at top-left
-2. Board unit names truncated to 10 chars (expected at 48px cells — needs sprites eventually)
-3. No card play or attack animations
-4. No background music or ambient sound
-5. Board uses colored rects, no tile textures
+### Issues Found
+None. Zero bugs, zero crashes, zero visual regressions.
 
-### No Bugs Found
-Zero crashes, zero formula errors, zero game flow issues. The game is functionally complete for single-player.
+### Remaining Visual Polish (not bugs)
+- No card play or attack animations
+- No background music
+- Board units use text labels (need sprites)
+- Board uses colored rects (need tile textures)
+- No card hover preview
