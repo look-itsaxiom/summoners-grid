@@ -213,10 +213,18 @@ func _refresh_hand() -> void:
 		if ct == "summon":
 			label_text += "\n[SUMMON]"
 		elif ct == "action":
-			var target: String = card.get("target_type", "").replace("_", " ")
-			label_text += "\n[%s]" % target.to_upper()
+			var speed: String = card.get("speed", "action").to_upper()
+			label_text += "\n[%s]" % speed
 		elif ct == "quest":
 			label_text += "\n[QUEST]"
+		elif ct == "building":
+			label_text += "\n[BUILDING]"
+		elif ct == "counter":
+			label_text += "\n[COUNTER]"
+		elif ct == "reaction":
+			label_text += "\n[REACTION]"
+		elif ct == "advance":
+			label_text += "\n[ADVANCE]"
 		else:
 			label_text += "\n[%s]" % ct.to_upper()
 
@@ -246,6 +254,18 @@ func _refresh_hand() -> void:
 		elif ct == "quest":
 			style.bg_color = Color(0.15, 0.25, 0.15)
 			style.border_color = Color(0.3, 0.6, 0.3)
+		elif ct == "building":
+			style.bg_color = Color(0.2, 0.2, 0.12)
+			style.border_color = Color(0.5, 0.5, 0.25)
+		elif ct == "counter":
+			style.bg_color = Color(0.3, 0.1, 0.1)
+			style.border_color = Color(0.7, 0.2, 0.2)
+		elif ct == "reaction":
+			style.bg_color = Color(0.25, 0.1, 0.2)
+			style.border_color = Color(0.6, 0.25, 0.5)
+		elif ct == "advance":
+			style.bg_color = Color(0.2, 0.15, 0.3)
+			style.border_color = Color(0.5, 0.35, 0.7)
 		else:
 			style.bg_color = Color(0.2, 0.15, 0.25)
 			style.border_color = Color(0.5, 0.3, 0.6)
