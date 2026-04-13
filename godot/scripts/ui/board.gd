@@ -262,29 +262,23 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var team_bar := Rect2(bg_rect.position + Vector2(1, 1), Vector2(bg_rect.size.x - 2, 3))
 	draw_rect(team_bar, team_color)
 
-	# Species sprite (if available)
+	# Species sprite — fill most of the cell
 	if species in _species_sprites and _species_sprites[species] != null:
 		var tex: Texture2D = _species_sprites[species]
-		var sprite_size := 28.0  # Fit nicely in 48px cell
-		var sprite_pos := screen_pos + Vector2((CELL_SIZE - sprite_size) / 2.0, 2)
-		draw_texture_rect(tex, Rect2(sprite_pos, Vector2(sprite_size, sprite_size)), false, Color(1, 1, 1, 0.85))
+		var sprite_size := 36.0 * unit_scale
+		var sprite_pos := screen_pos + Vector2((CELL_SIZE * unit_scale - sprite_size) / 2.0, 5 * unit_scale)
+		draw_texture_rect(tex, Rect2(sprite_pos, Vector2(sprite_size, sprite_size)), false, Color(1, 1, 1, 0.9))
 	else:
-		# Fallback: text name
 		var name_str: String = card.get("name", "?")
-		if name_str.length() > 10:
-			name_str = name_str.substr(0, 10)
-		var name_pos := screen_pos + Vector2(2, 12)
-		draw_string(ThemeDB.fallback_font, name_pos, name_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, team_color)
+		if name_str.length() > 8:
+			name_str = name_str.substr(0, 6) + ".."
+		var name_pos := screen_pos + Vector2(2, 14)
+		draw_string(ThemeDB.fallback_font, name_pos, name_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 9, team_color)
 
-	# HP text — below sprite
-	var hp_str := "%d/%d" % [unit["current_hp"], unit["max_hp"]]
-	var hp_pos := screen_pos + Vector2(2, 34)
-	draw_string(ThemeDB.fallback_font, hp_pos, hp_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, Color(0.5, 1.0, 0.5))
-
-	# Level — small text at bottom
-	var level_str := "Lv%d" % unit["level"]
-	var level_pos := screen_pos + Vector2(2, 43)
-	draw_string(ThemeDB.fallback_font, level_pos, level_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 7, Color(0.6, 0.6, 0.8))
+	# Level badge — top left corner
+	var level_str := "%d" % unit["level"]
+	draw_circle(screen_pos + Vector2(8, 8) * unit_scale, 6.0 * unit_scale, Color(0.1, 0.1, 0.2, 0.8))
+	draw_string(ThemeDB.fallback_font, screen_pos + Vector2(3, 11) * unit_scale, level_str, HORIZONTAL_ALIGNMENT_CENTER, 10, 7, Color(0.8, 0.8, 1.0))
 
 	# HP bar with glow
 	var bar_y := screen_pos.y + CELL_SIZE - 7
