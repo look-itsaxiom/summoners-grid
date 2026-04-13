@@ -259,8 +259,8 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.6), false, 2.0)
 
 	# Team color top bar
-	var bar_rect := Rect2(bg_rect.position + Vector2(1, 1), Vector2(bg_rect.size.x - 2, 3))
-	draw_rect(bar_rect, team_color)
+	var team_bar := Rect2(bg_rect.position + Vector2(1, 1), Vector2(bg_rect.size.x - 2, 3))
+	draw_rect(team_bar, team_color)
 
 	# Species sprite (if available)
 	if species in _species_sprites and _species_sprites[species] != null:
