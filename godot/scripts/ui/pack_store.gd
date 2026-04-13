@@ -223,11 +223,17 @@ func _buy_pack(pack_type: String) -> void:
 ## Generate a pack of cards locally using randomized species + rarity.
 func _generate_local_pack(pack_size: int) -> Array:
 	var species_list := ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]
-	var rarities := ["common", "common", "common", "uncommon", "uncommon", "rare", "rare", "legend", "myth"]
-	var name_prefixes := ["Shadow", "Iron", "Crystal", "Storm", "Ember", "Frost", "Dawn", "Dusk", "Stone", "Wild",
-		"Crimson", "Azure", "Golden", "Silver", "Dark", "Light", "Ancient", "Swift", "Brave", "Fierce"]
-	var name_suffixes := ["blade", "heart", "fang", "claw", "shield", "strike", "spirit", "soul", "wing", "scale",
-		"horn", "thorn", "fire", "frost", "stone", "song", "dance", "storm", "guard", "walker"]
+
+	# Species-themed name pools for more immersive card names
+	var species_names := {
+		"gignen": ["Aldric", "Brennan", "Cedric", "Darian", "Elric", "Gareth", "Haldor", "Kael", "Lorcan", "Maren", "Nolan", "Osric", "Quinn", "Rowan", "Soren", "Thane", "Varen", "Wren"],
+		"fae": ["Aelindra", "Briseis", "Caelum", "Dewshine", "Elowen", "Faelan", "Glimmer", "Iselda", "Lysara", "Miriel", "Nimue", "Opaline", "Rivanah", "Sylaris", "Thistledown", "Willowmere"],
+		"stoneheart": ["Anvil", "Boulderkin", "Cragmore", "Durnhelm", "Forgeborn", "Grannek", "Hammerfall", "Ironvein", "Korrak", "Magmor", "Obsidian", "Quartzfist", "Rumblor", "Slatejaw", "Tungsten"],
+		"wilderling": ["Ashfang", "Bristleclaw", "Cindermane", "Duskprowl", "Fangripper", "Greymaw", "Howler", "Ironpelt", "Knifewind", "Moonstalker", "Nightfang", "Razorback", "Shadowpaw", "Thornfur", "Windrunner"],
+		"angar": ["Aethon", "Brighthelm", "Celestine", "Divinor", "Exalted", "Glorian", "Haloward", "Illumina", "Justicar", "Luminar", "Novastar", "Oathkeeper", "Radiance", "Seraphiel", "Valoris"],
+		"demar": ["Ashwick", "Blightcurse", "Charscribe", "Doomweave", "Embertrick", "Fiendscrawl", "Grimtome", "Hexfire", "Infernix", "Jinxbolt", "Malicor", "Netherspark", "Pyrestitch", "Shadowink", "Vexshade"],
+		"creptilis": ["Basilisk", "Cobriel", "Dracofen", "Frostscale", "Gekkora", "Hydrix", "Iguana", "Komodos", "Lacertus", "Mambara", "Naga", "Pythara", "Salamandrix", "Taipanos", "Viperion"],
+	}
 
 	var cards: Array = []
 	for i in range(pack_size):
@@ -257,10 +263,16 @@ func _generate_local_pack(pack_size: int) -> Array:
 			elif roll < 0.97: rarity = "legend"
 			else: rarity = "myth"
 
-		var card_name := "%s%s" % [
-			name_prefixes[randi() % name_prefixes.size()],
-			name_suffixes[randi() % name_suffixes.size()],
-		]
+		var pool: Array = species_names.get(sp, ["Unknown"])
+		var card_name: String = pool[randi() % pool.size()]
+
+		# Rarer cards get titles
+		if rarity == "legend":
+			var titles := ["the Bold", "the Wise", "the Fierce", "the Ancient", "the Radiant"]
+			card_name += " %s" % titles[randi() % titles.size()]
+		elif rarity == "myth":
+			var titles := ["the Eternal", "the Mythic", "Worldbreaker", "Godslayer", "the Immortal"]
+			card_name += " %s" % titles[randi() % titles.size()]
 
 		# Generate a fake DNA hex string
 		var dna := ""
