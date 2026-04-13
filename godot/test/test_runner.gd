@@ -31,6 +31,7 @@ func _run_all_tests() -> void:
 	_test_effect_stack()
 	_test_play_example()
 	_test_dna_system()
+	_test_balance_simulation()
 
 	print("\n=== Results: %d passed, %d failed ===" % [_pass, _fail])
 
@@ -530,3 +531,95 @@ func _test_dna_system() -> void:
 	_check("Random DNA valid", true, DNA.validate_dna(random_dna))
 	var random_card: Dictionary = DNA.reconstruct(random_dna)
 	_check("Random card has species", true, random_card.get("species", "") in DNA.SPECIES_ORDER)
+
+
+func _test_balance_simulation() -> void:
+	print("--- Balance Simulation (10 games) ---")
+	var gm = root.get_node("GameManager")
+	var c = root.get_node("CardDB")
+
+	var a_wins := 0
+	var b_wins := 0
+	var total_turns := 0
+	var max_turns := 0
+
+	for game_i in range(10):
+		var deck_a: Dictionary = c.create_player_a_deck()
+		var deck_b: Dictionary = c.create_player_b_deck()
+		gm.initialize_game(deck_a, deck_b)
+		gm.decide_turn_order("playerA")
+
+		var turn_limit := 30
+		var turns := 0
+		while not gm.is_game_over and turns < turn_limit:
+			gm.execute_draw_phase()
+			gm.execute_level_phase()
+
+			# Simple AI: play first summon, then attack nearest
+			var player: String = gm.active_player
+			var hand: Array = gm.players[player]["hand"]
+
+			# Play summon
+			for i in range(hand.size() - 1, -1, -1):
+				if hand[i].get("card_type", "") == "summon":
+					var placements = gm.get_valid_placements()
+					if placements.size() > 0:
+						gm.play_summon(i, placements[0])
+					break
+
+			if gm.is_game_over:
+				break
+
+			# Move + attack with each unit
+			var my_ids: Array[String] = []
+			for s in gm.board_summons:
+				if s["owner"] == player:
+					my_ids.append(s["instance_id"])
+
+			for uid in my_ids:
+				if gm.is_game_over:
+					break
+				var unit_idx := -1
+				for si in range(gm.board_summons.size()):
+					if gm.board_summons[si]["instance_id"] == uid:
+						unit_idx = si
+						break
+				if unit_idx == -1:
+					continue
+
+				var unit: Dictionary = gm.board_summons[unit_idx]
+				var attacks = gm.get_valid_attacks(uid)
+				if attacks.size() > 0:
+					gm.attack_with_summon(uid, attacks[0])
+				else:
+					var moves = gm.get_valid_moves(uid)
+					if moves.size() > 0:
+						gm.move_summon(uid, moves[0])
+						attacks = gm.get_valid_attacks(uid)
+						if attacks.size() > 0:
+							gm.attack_with_summon(uid, attacks[0])
+
+			if not gm.is_game_over:
+				gm.end_action_phase()
+			turns += 1
+
+		total_turns += turns
+		if turns > max_turns:
+			max_turns = turns
+
+		var winner: String = ""
+		if gm.players["playerA"]["victory_points"] >= gm.VP_TO_WIN:
+			winner = "playerA"
+			a_wins += 1
+		elif gm.players["playerB"]["victory_points"] >= gm.VP_TO_WIN:
+			winner = "playerB"
+			b_wins += 1
+
+	var avg_turns: float = float(total_turns) / 10.0
+	print("  A wins: %d, B wins: %d, draws: %d" % [a_wins, b_wins, 10 - a_wins - b_wins])
+	print("  Avg turns: %.1f, Max turns: %d" % [avg_turns, max_turns])
+
+	# Balance checks
+	_check("Balance: games complete", true, a_wins + b_wins >= 7)  # At least 70% should have a winner
+	_check("Balance: avg turns > 3", true, avg_turns > 3.0)  # Games shouldn't be instant
+	_check("Balance: avg turns < 25", true, avg_turns < 25.0)  # Games shouldn't drag
