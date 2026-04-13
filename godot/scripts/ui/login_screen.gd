@@ -34,19 +34,20 @@ func _build_dev_mode_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(margin)
+
 	var center := VBoxContainer.new()
-	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	center.grow_vertical = Control.GROW_DIRECTION_BOTH
-	center.custom_minimum_size = Vector2(400, 300)
-	center.position = Vector2(440, 200)
 	center.add_theme_constant_override("separation", 16)
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
-	add_child(center)
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	margin.add_child(center)
 
 	var title := Label.new()
 	title.text = "Summoner's Grid"
-	title.add_theme_font_size_override("font_size", 36)
+	title.add_theme_font_size_override("font_size", 42)
 	title.add_theme_color_override("font_color", GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
@@ -96,15 +97,16 @@ func _build_login_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
+	var login_margin := MarginContainer.new()
+	login_margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(login_margin)
+
 	var center := VBoxContainer.new()
-	center.set_anchors_preset(Control.PRESET_CENTER)
-	center.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	center.grow_vertical = Control.GROW_DIRECTION_BOTH
-	center.custom_minimum_size = Vector2(400, 400)
-	center.position = Vector2(440, 150)
 	center.add_theme_constant_override("separation", 12)
 	center.alignment = BoxContainer.ALIGNMENT_CENTER
-	add_child(center)
+	center.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	login_margin.add_child(center)
 
 	var title := Label.new()
 	title.text = "Summoner's Grid"
