@@ -11,6 +11,7 @@ func _ready() -> void:
 	var bgm = get_node_or_null("/root/BGM")
 	if bgm:
 		bgm.play("menu")
+	_check_first_time()
 
 
 var _particles: Array = []
@@ -318,3 +319,94 @@ func _on_match_history() -> void:
 
 func _on_settings() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/settings.tscn")
+
+
+func _check_first_time() -> void:
+	var settings = get_node_or_null("/root/Settings")
+	if settings == null:
+		return
+	if settings.total_wins + settings.total_losses > 0:
+		return
+
+	# First time — show welcome popup
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.6)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	var panel := PanelContainer.new()
+	panel.custom_minimum_size = Vector2(420, 0)
+	panel.position = Vector2(430, 200)
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.08, 0.08, 0.14)
+	ps.border_color = Color(1.0, 0.85, 0.0)
+	ps.border_width_top = 2
+	ps.border_width_bottom = 2
+	ps.border_width_left = 2
+	ps.border_width_right = 2
+	ps.corner_radius_top_left = 10
+	ps.corner_radius_top_right = 10
+	ps.corner_radius_bottom_left = 10
+	ps.corner_radius_bottom_right = 10
+	ps.content_margin_top = 20
+	ps.content_margin_bottom = 16
+	ps.content_margin_left = 24
+	ps.content_margin_right = 24
+	panel.add_theme_stylebox_override("panel", ps)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 10)
+	panel.add_child(vbox)
+
+	var title := Label.new()
+	title.text = "Welcome, Summoner!"
+	title.add_theme_font_size_override("font_size", 22)
+	title.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(title)
+
+	var desc := Label.new()
+	desc.text = "New here? Start with \"How to Play\" to learn the basics,\nor jump straight into a Random Deck game to try it out.\n\nYou have 500 coins — enough for a card pack from the Pack Store!"
+	desc.add_theme_font_size_override("font_size", 12)
+	desc.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc.autowrap_mode = TextServer.AUTOWRAP_WORD
+	vbox.add_child(desc)
+
+	var btn_row := HBoxContainer.new()
+	btn_row.add_theme_constant_override("separation", 12)
+	btn_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	vbox.add_child(btn_row)
+
+	var learn_btn := Button.new()
+	learn_btn.text = "How to Play"
+	learn_btn.custom_minimum_size = Vector2(140, 38)
+	learn_btn.add_theme_font_size_override("font_size", 13)
+	var ls := StyleBoxFlat.new()
+	ls.bg_color = Color(0.2, 0.4, 0.6)
+	ls.corner_radius_top_left = 6
+	ls.corner_radius_top_right = 6
+	ls.corner_radius_bottom_left = 6
+	ls.corner_radius_bottom_right = 6
+	learn_btn.add_theme_stylebox_override("normal", ls)
+	learn_btn.pressed.connect(func():
+		overlay.queue_free()
+		_on_how_to_play()
+	)
+	btn_row.add_child(learn_btn)
+
+	var play_btn := Button.new()
+	play_btn.text = "Let's Go!"
+	play_btn.custom_minimum_size = Vector2(140, 38)
+	play_btn.add_theme_font_size_override("font_size", 13)
+	var pls := StyleBoxFlat.new()
+	pls.bg_color = Color(0.3, 0.5, 0.2)
+	pls.corner_radius_top_left = 6
+	pls.corner_radius_top_right = 6
+	pls.corner_radius_bottom_left = 6
+	pls.corner_radius_bottom_right = 6
+	play_btn.add_theme_stylebox_override("normal", pls)
+	play_btn.pressed.connect(func(): overlay.queue_free())
+	btn_row.add_child(play_btn)
