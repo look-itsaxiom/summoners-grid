@@ -61,7 +61,7 @@ Check this file every Ralph Loop iteration.
 | 45 | Attack animations | todo | done | Lunge toward target + hit flash + screen shake |
 | 46 | Movement trail | todo | done | Smooth slide tween between cells (0.2s) |
 | 47 | Level-up VFX | todo | done | Golden ring expansion + "LV UP!" floating text + cell flash |
-| 48 | Elemental VFX | todo | TODO | |
+| 48 | Elemental VFX | todo | done | Element-colored cell flash + damage numbers (fire=orange, water=blue, etc.) |
 | 49 | HP bar styling | done | done | Gradient highlight on top half, color-coded (green/yellow/red) |
 | 50 | Card hover preview | todo | done | card detail panel in sidebar + unit stat panel |
 | 51 | Board zoom + pan | todo | TODO | |

@@ -1474,12 +1474,21 @@ func _on_attack_resolved(result: Dictionary) -> void:
 		_sfx.attack_hit()
 		_screen_shake(4.0)
 
-	# Hit flash on target unit
+	# Hit flash on target unit — use element color if elemental advantage
 	if not target_unit.is_empty():
 		board.animate_hit_flash(target_id)
 		var tpos: Vector2i = target_unit.get("position", Vector2i(-1, -1))
 		if tpos.x >= 0:
-			board.flash_cell(tpos, Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0))
+			var flash_color: Color
+			if is_crit:
+				flash_color = Color(1.0, 0.85, 0.0)
+			else:
+				# Check for elemental advantage — color the flash by element
+				var atk_element := ""
+				if not attacker_unit.is_empty():
+					atk_element = attacker_unit.get("card", {}).get("equipment", {}).get("weapon", {}).get("element", "neutral")
+				flash_color = _get_element_color(atk_element) if atk_element != "neutral" and atk_element != "" else Color(1.0, 0.2, 0.2)
+			board.flash_cell(tpos, flash_color)
 
 	if damage > 0:
 		var screen_pos: Vector2
@@ -1488,8 +1497,16 @@ func _on_attack_resolved(result: Dictionary) -> void:
 		else:
 			screen_pos = Vector2(640, 360)
 
-		var color := Color(1.0, 0.2, 0.2) if not is_crit else Color(1.0, 0.85, 0.0)
-		FloatingNumber.spawn(self, str(damage), screen_pos, color, is_crit)
+		var num_color: Color
+		if is_crit:
+			num_color = Color(1.0, 0.85, 0.0)
+		else:
+			# Tint damage numbers by attacker's weapon element
+			var atk_elem := ""
+			if not attacker_unit.is_empty():
+				atk_elem = attacker_unit.get("card", {}).get("equipment", {}).get("weapon", {}).get("element", "neutral")
+			num_color = _get_element_color(atk_elem) if atk_elem != "neutral" and atk_elem != "" else Color(1.0, 0.2, 0.2)
+		FloatingNumber.spawn(self, str(damage), screen_pos, num_color, is_crit)
 
 	board.queue_redraw()
 
@@ -1507,6 +1524,18 @@ func _on_summon_defeated(unit: Dictionary) -> void:
 	_sfx.defeat()
 	var screen_pos := _unit_screen_pos(unit)
 	FloatingNumber.spawn(self, "DEFEATED", screen_pos + Vector2(0, -15), Color(1.0, 0.3, 0.3), true)
+
+
+func _get_element_color(element: String) -> Color:
+	match element:
+		"fire": return Color(1.0, 0.3, 0.1)
+		"water": return Color(0.2, 0.5, 1.0)
+		"earth": return Color(0.6, 0.45, 0.2)
+		"wind": return Color(0.4, 0.9, 0.5)
+		"light": return Color(1.0, 0.95, 0.6)
+		"dark": return Color(0.5, 0.2, 0.6)
+		"lightning": return Color(1.0, 0.9, 0.2)
+		_: return Color(1.0, 0.2, 0.2)
 
 
 func _unit_screen_pos(unit: Dictionary) -> Vector2:
