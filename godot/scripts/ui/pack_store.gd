@@ -185,21 +185,82 @@ func _buy_pack(pack_type: String) -> void:
 	_status_label.text = "Opening pack..."
 	_status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.5))
 
-	var result: Dictionary = await _api.open_pack(pack_type)
+	# Generate cards locally (offline mode — no server needed)
+	var pack_size: int = 10 if pack_type == "premium" else 5
+	var cards: Array = _generate_local_pack(pack_size)
+
+	var result := {
+		"success": true,
+		"packType": pack_type,
+		"packSize": pack_size,
+		"cards": cards,
+	}
 
 	_is_opening = false
-
-	if not result.get("success", false):
-		_status_label.text = "Failed to open pack: %s" % result.get("error", "Unknown error")
-		_status_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
-		return
 
 	# Transition to the pack opening ceremony
 	var opening_scene = load("res://scenes/pack_opening.tscn")
 	var opening = opening_scene.instantiate()
 	opening.pack_data = result
 	get_tree().root.add_child(opening)
-	queue_free()  # Remove pack store
+	queue_free()
+
+
+## Generate a pack of cards locally using randomized species + rarity.
+func _generate_local_pack(pack_size: int) -> Array:
+	var species_list := ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]
+	var rarities := ["common", "common", "common", "uncommon", "uncommon", "rare", "rare", "legend", "myth"]
+	var name_prefixes := ["Shadow", "Iron", "Crystal", "Storm", "Ember", "Frost", "Dawn", "Dusk", "Stone", "Wild",
+		"Crimson", "Azure", "Golden", "Silver", "Dark", "Light", "Ancient", "Swift", "Brave", "Fierce"]
+	var name_suffixes := ["blade", "heart", "fang", "claw", "shield", "strike", "spirit", "soul", "wing", "scale",
+		"horn", "thorn", "fire", "frost", "stone", "song", "dance", "storm", "guard", "walker"]
+
+	var cards: Array = []
+	for i in range(pack_size):
+		var sp: String = species_list[randi() % species_list.size()]
+		var rarity: String
+
+		# Guarantee rarity for last slots
+		if i == pack_size - 1:
+			# Last card: rare+
+			var roll := randf()
+			if roll < 0.7: rarity = "rare"
+			elif roll < 0.92: rarity = "legend"
+			else: rarity = "myth"
+		elif i == pack_size - 2:
+			# Second to last: uncommon+
+			var roll := randf()
+			if roll < 0.6: rarity = "uncommon"
+			elif roll < 0.85: rarity = "rare"
+			elif roll < 0.97: rarity = "legend"
+			else: rarity = "myth"
+		else:
+			# Normal slot
+			var roll := randf()
+			if roll < 0.5: rarity = "common"
+			elif roll < 0.75: rarity = "uncommon"
+			elif roll < 0.9: rarity = "rare"
+			elif roll < 0.97: rarity = "legend"
+			else: rarity = "myth"
+
+		var card_name := "%s%s" % [
+			name_prefixes[randi() % name_prefixes.size()],
+			name_suffixes[randi() % name_suffixes.size()],
+		]
+
+		# Generate a fake DNA hex string
+		var dna := ""
+		for _j in range(32):
+			dna += "0123456789abcdef"[randi() % 16]
+
+		cards.append({
+			"name": card_name,
+			"species": sp,
+			"rarity": rarity,
+			"dna": dna,
+		})
+
+	return cards
 
 
 func _add_nav_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
