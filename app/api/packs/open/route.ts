@@ -1,38 +1,59 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateDNA, reconstructCardFromDNA } from '../../../../src/engine/dna';
 import { dnaToNFTMetadata } from '../../../../src/engine/dna/metadata';
+import { findOrCreateUser, createCard, createPackPurchase, completePackPurchase } from '../../../../src/server/db';
 import type { Rarity } from '../../../../src/types';
 
 /**
  * POST /api/packs/open
  *
- * Server-side pack opening — generates DNA with server entropy,
- * returns cards with their DNA strings.
+ * Opens a card pack:
+ * 1. Verify user auth (or create dev user)
+ * 2. Create pack purchase record
+ * 3. Generate cards with DNA
+ * 4. Store cards in database
+ * 5. Return card data
  *
- * In production, this would also:
- * 1. Verify user authentication (Passport JWT)
- * 2. Mint NFTs on Immutable via Minting API
- * 3. Queue art generation jobs
- * 4. Debit pack cost from user
+ * Body: { packType?: "standard" | "premium", walletAddress?: string }
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json().catch(() => ({}));
-    const packSize = Math.min(Math.max(body.packSize ?? 5, 1), 10);
+    const packType: string = body.packType ?? 'standard';
+    const packSize = packType === 'premium' ? 10 : 5;
+    const priceCents = packType === 'premium' ? 1000 : 300; // $10 or $3
 
-    // Generate cards with server-side entropy
-    // In production: use crypto.getRandomValues() for true randomness
+    // Auth: get wallet address from header or body (dev mode: accept body)
+    const authHeader = request.headers.get('authorization');
+    let walletAddress = body.walletAddress ?? null;
+
+    if (authHeader?.startsWith('Bearer ')) {
+      // TODO: verify Immutable Passport JWT and extract wallet
+      // For now: use wallet from body
+    }
+
+    if (!walletAddress) {
+      // Dev mode: create a test user
+      walletAddress = '0xdev_' + Date.now().toString(16);
+    }
+
+    // Find or create user
+    const user = findOrCreateUser(walletAddress, body.email);
+
+    // Create pack purchase record
+    const packId = createPackPurchase(user.id, packType, packSize, priceCents);
+
+    // Generate cards
     const cards = [];
+    const cardDNAs: string[] = [];
 
     for (let i = 0; i < packSize; i++) {
-      // Rarity guarantees per slot
+      // Rarity guarantees
       let rarity: Rarity | undefined;
       if (i === packSize - 1) {
-        // Last slot: guaranteed rare+
         const roll = Math.random();
         rarity = roll < 0.7 ? 'rare' : roll < 0.92 ? 'legend' : 'myth';
       } else if (i === packSize - 2) {
-        // Second-to-last: guaranteed uncommon+
         const roll = Math.random();
         rarity = roll < 0.6 ? 'uncommon' : roll < 0.85 ? 'rare' : roll < 0.97 ? 'legend' : 'myth';
       }
@@ -41,25 +62,36 @@ export async function POST(request: NextRequest) {
       const card = reconstructCardFromDNA(dna);
       const metadata = dnaToNFTMetadata(dna);
 
+      // Store card in database
+      const cardId = createCard(user.id, dna, card.species, card.rarity, card.name, card.role ?? undefined);
+      cardDNAs.push(dna);
+
       cards.push({
+        id: cardId,
         dna,
         name: card.name,
         species: card.species,
         rarity: card.rarity,
+        role: card.role,
         metadata,
-        // In production: tokenId from Immutable mint response
-        tokenId: null,
+        tokenId: null, // Will be set after NFT minting
       });
     }
 
+    // Complete the pack purchase (dev mode: auto-complete without payment)
+    completePackPurchase(packId, `dev_${Date.now()}`, cardDNAs);
+
     return NextResponse.json({
       success: true,
+      packId,
+      packType,
       packSize,
+      priceCents,
       cards,
-      // In production: reference_id for idempotency
-      referenceId: `pack-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      user: { id: user.id, walletAddress: user.wallet_address },
     });
   } catch (error) {
+    console.error('Pack open error:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to open pack' },
       { status: 500 }
