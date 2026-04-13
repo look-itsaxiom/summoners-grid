@@ -26,8 +26,18 @@ var _detail_panel: VBoxContainer
 var _filter_species: String = ""
 var _filter_rarity: String = ""
 
+# Card frame textures by rarity
+var _card_frames: Dictionary = {}
+
+func _load_card_frames() -> void:
+	for r in ["common", "uncommon", "rare", "legend", "myth"]:
+		var path := "res://assets/card_frames/%s.png" % r
+		if ResourceLoader.exists(path):
+			_card_frames[r] = load(path)
+
 
 func _ready() -> void:
+	_load_card_frames()
 	# Load collection from persistent storage
 	var storage = get_node_or_null("/root/CardStorage")
 	if storage:
@@ -280,6 +290,17 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 	style.content_margin_top = 12
 	style.content_margin_bottom = 8
 	panel.add_theme_stylebox_override("panel", style)
+
+	# Card frame background image
+	if rarity in _card_frames and _card_frames[rarity] != null:
+		var frame_tex: TextureRect = TextureRect.new()
+		frame_tex.texture = _card_frames[rarity]
+		frame_tex.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		frame_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		frame_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		frame_tex.modulate = Color(1, 1, 1, 0.3)  # Subtle background
+		frame_tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		panel.add_child(frame_tex)
 
 	var vbox := VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 4)
