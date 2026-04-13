@@ -63,14 +63,19 @@ func _build_ui() -> void:
 	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	margin.add_child(center)
 
-	# Title
+	# Title — Cinzel fantasy font if available
 	var title := Label.new()
 	title.text = "Summoner's Grid"
-	title.add_theme_font_size_override("font_size", 46)
+	var cinzel_path := "res://assets/fonts/cinzel.ttf"
+	if ResourceLoader.exists(cinzel_path):
+		var font := FontFile.new()
+		font.load_dynamic_font(cinzel_path)
+		title.add_theme_font_override("font", font)
+	title.add_theme_font_size_override("font_size", 52)
 	title.add_theme_color_override("font_color", TITLE_COLOR)
-	title.add_theme_color_override("font_shadow_color", Color(0.4, 0.2, 0.0, 0.6))
-	title.add_theme_constant_override("shadow_offset_x", 2)
-	title.add_theme_constant_override("shadow_offset_y", 3)
+	title.add_theme_color_override("font_shadow_color", Color(0.3, 0.15, 0.0, 0.7))
+	title.add_theme_constant_override("shadow_offset_x", 3)
+	title.add_theme_constant_override("shadow_offset_y", 4)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
 
