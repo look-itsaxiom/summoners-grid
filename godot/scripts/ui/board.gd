@@ -10,10 +10,14 @@ const BOARD_H := 14
 const TERRITORY_DEPTH := 3
 
 # Colors
-const COLOR_PLAYER_A := Color(0.08, 0.15, 0.08)       # Dark green territory
-const COLOR_PLAYER_B := Color(0.15, 0.08, 0.08)       # Dark red territory
-const COLOR_UNCLAIMED := Color(0.08, 0.08, 0.12)      # Dark blue neutral
-const COLOR_GRID_LINE := Color(0.2, 0.2, 0.3, 0.5)
+const COLOR_PLAYER_A := Color(0.06, 0.12, 0.06)       # Dark green territory
+const COLOR_PLAYER_A_ALT := Color(0.07, 0.14, 0.07)   # Checkerboard alt
+const COLOR_PLAYER_B := Color(0.12, 0.06, 0.06)       # Dark red territory
+const COLOR_PLAYER_B_ALT := Color(0.14, 0.07, 0.07)   # Checkerboard alt
+const COLOR_UNCLAIMED := Color(0.07, 0.07, 0.11)      # Dark blue neutral
+const COLOR_UNCLAIMED_ALT := Color(0.08, 0.08, 0.13)  # Checkerboard alt
+const COLOR_GRID_LINE := Color(0.18, 0.18, 0.28, 0.4)
+const COLOR_TERRITORY_BORDER := Color(0.4, 0.4, 0.6, 0.6)
 const COLOR_VALID_MOVE := Color(0.0, 0.5, 1.0, 0.25)
 const COLOR_VALID_ATTACK := Color(1.0, 0.2, 0.2, 0.25)
 const COLOR_VALID_PLACE := Color(0.0, 1.0, 0.4, 0.2)
@@ -45,7 +49,7 @@ func _draw() -> void:
 	for y in range(BOARD_H):
 		for x in range(BOARD_W):
 			var rect := Rect2(offset + Vector2(x * CELL_SIZE, (BOARD_H - 1 - y) * CELL_SIZE), Vector2(CELL_SIZE, CELL_SIZE))
-			var color := _get_territory_color(y)
+			var color := _get_territory_color(x, y)
 
 			# Highlight overlays
 			var pos := Vector2i(x, y)
@@ -62,6 +66,15 @@ func _draw() -> void:
 
 			# Grid lines
 			draw_rect(rect, COLOR_GRID_LINE, false, 1.0)
+
+	# Territory border lines
+	var border_width := BOARD_W * CELL_SIZE
+	# Player A territory top border (y=3 line)
+	var a_border_y := offset.y + (BOARD_H - TERRITORY_DEPTH) * CELL_SIZE
+	draw_line(Vector2(offset.x, a_border_y), Vector2(offset.x + border_width, a_border_y), COLOR_TERRITORY_BORDER, 2.0)
+	# Player B territory bottom border (y=11 line)
+	var b_border_y := offset.y + TERRITORY_DEPTH * CELL_SIZE
+	draw_line(Vector2(offset.x, b_border_y), Vector2(offset.x + border_width, b_border_y), COLOR_TERRITORY_BORDER, 2.0)
 
 	# Draw column labels
 	for x in range(BOARD_W):
@@ -98,9 +111,10 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var unit_owner: String = unit["owner"]
 	var team_color := COLOR_UNIT_A if unit_owner == "playerA" else COLOR_UNIT_B
 
-	# Unit background glow
-	var bg_rect := Rect2(screen_pos + Vector2(1, 1), Vector2(CELL_SIZE - 2, CELL_SIZE - 2))
-	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.15))
+	# Unit background — solid dark card with team-colored border
+	var bg_rect := Rect2(screen_pos + Vector2(2, 2), Vector2(CELL_SIZE - 4, CELL_SIZE - 4))
+	draw_rect(bg_rect, Color(0.05, 0.05, 0.1, 0.9))
+	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.5), false, 1.5)
 
 	# Name — centered in cell
 	var name_pos := screen_pos + Vector2(2, 12)
@@ -139,12 +153,13 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	)
 
 
-func _get_territory_color(y: int) -> Color:
+func _get_territory_color(x: int, y: int) -> Color:
+	var is_alt: bool = (x + y) % 2 == 0
 	if y < TERRITORY_DEPTH:
-		return COLOR_PLAYER_A
+		return COLOR_PLAYER_A_ALT if is_alt else COLOR_PLAYER_A
 	elif y >= BOARD_H - TERRITORY_DEPTH:
-		return COLOR_PLAYER_B
-	return COLOR_UNCLAIMED
+		return COLOR_PLAYER_B_ALT if is_alt else COLOR_PLAYER_B
+	return COLOR_UNCLAIMED_ALT if is_alt else COLOR_UNCLAIMED
 
 
 func _gui_input(event: InputEvent) -> void:
