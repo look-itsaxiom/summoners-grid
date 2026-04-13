@@ -1,6 +1,7 @@
 extends Control
 ## Main game screen — connects board, HUD, hand display, and game log.
 
+var CardWidget = preload("res://scripts/ui/card_widget.gd")
 var _shake_intensity := 0.0
 var _shake_decay := 5.0
 var _spectator_speed := 1.0  # 1x, 2x, or 4x
@@ -337,98 +338,14 @@ func _refresh_hand() -> void:
 	var hand: Array = _gm.players[_gm.active_player]["hand"]
 	for i in range(hand.size()):
 		var card: Dictionary = hand[i]
-		var ct: String = card.get("card_type", "")
-		var btn := Button.new()
-
-		# Card display text
-		var label_text: String = card.get("name", "?")
-		if ct == "summon":
-			label_text += "\n[SUMMON]"
-		elif ct == "action":
-			var speed: String = card.get("speed", "action").to_upper()
-			label_text += "\n[%s]" % speed
-		elif ct == "quest":
-			label_text += "\n[QUEST]"
-		elif ct == "building":
-			label_text += "\n[BUILDING]"
-		elif ct == "counter":
-			label_text += "\n[COUNTER]"
-		elif ct == "reaction":
-			label_text += "\n[REACTION]"
-		elif ct == "advance":
-			label_text += "\n[ADVANCE]"
-		else:
-			label_text += "\n[%s]" % ct.to_upper()
-
-		btn.text = label_text
-		btn.custom_minimum_size = Vector2(85, 60)
-		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		btn.add_theme_font_size_override("font_size", 10)
-		btn.clip_text = false
-		btn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		btn.tooltip_text = card.get("description", card.get("name", ""))
-
-		# Color by type — card-like style with top color stripe
-		var style := StyleBoxFlat.new()
-		style.corner_radius_top_left = 5
-		style.corner_radius_top_right = 5
-		style.corner_radius_bottom_left = 3
-		style.corner_radius_bottom_right = 3
-		style.content_margin_left = 5
-		style.content_margin_right = 5
-		style.content_margin_top = 6
-		style.content_margin_bottom = 4
-		style.shadow_color = Color(0, 0, 0, 0.3)
-		style.shadow_size = 2
-		style.shadow_offset = Vector2(1, 2)
-
-		if ct == "summon":
-			style.bg_color = Color(0.15, 0.2, 0.35)
-			style.border_color = Color(0.3, 0.4, 0.7)
-		elif ct == "action":
-			style.bg_color = Color(0.25, 0.15, 0.1)
-			style.border_color = Color(0.6, 0.4, 0.2)
-		elif ct == "quest":
-			style.bg_color = Color(0.15, 0.25, 0.15)
-			style.border_color = Color(0.3, 0.6, 0.3)
-		elif ct == "building":
-			style.bg_color = Color(0.2, 0.2, 0.12)
-			style.border_color = Color(0.5, 0.5, 0.25)
-		elif ct == "counter":
-			style.bg_color = Color(0.3, 0.1, 0.1)
-			style.border_color = Color(0.7, 0.2, 0.2)
-		elif ct == "reaction":
-			style.bg_color = Color(0.25, 0.1, 0.2)
-			style.border_color = Color(0.6, 0.25, 0.5)
-		elif ct == "advance":
-			style.bg_color = Color(0.2, 0.15, 0.3)
-			style.border_color = Color(0.5, 0.35, 0.7)
-		else:
-			style.bg_color = Color(0.2, 0.15, 0.25)
-			style.border_color = Color(0.5, 0.3, 0.6)
-
-		style.border_width_bottom = 2
-		style.border_width_top = 3  # Thicker top = color stripe effect
-		style.border_width_left = 1
-		style.border_width_right = 1
-
+		var cw := Control.new()
+		cw.set_script(CardWidget)
+		cw.setup(card, true)  # Mini mode for hand
 		if i == selected_card_index:
-			style.border_color = Color.GOLD
-			style.border_width_top = 3
-			style.border_width_bottom = 3
-			style.border_width_left = 3
-			style.border_width_right = 3
-			style.bg_color = style.bg_color.lightened(0.15)
-
-		btn.add_theme_stylebox_override("normal", style)
-
-		var hover_style: StyleBoxFlat = style.duplicate()
-		hover_style.bg_color = style.bg_color.lightened(0.1)
-		btn.add_theme_stylebox_override("hover", hover_style)
-
+			cw.modulate = Color(1.2, 1.1, 0.8)  # Gold highlight
 		var idx := i
-		btn.pressed.connect(func(): _on_card_selected(idx))
-		hand_container.add_child(btn)
+		cw.card_clicked.connect(func(): _on_card_selected(idx))
+		hand_container.add_child(cw)
 
 	# Add playable advance cards
 	var playable = _gm.get_playable_advance_cards()
