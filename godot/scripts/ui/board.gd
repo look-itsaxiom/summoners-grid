@@ -27,8 +27,8 @@ const COLOR_WEAPON_RANGE := Color(1.0, 0.5, 0.0, 0.12)
 const COLOR_HP_HIGH := Color(0.2, 0.8, 0.2)
 const COLOR_HP_MED := Color(0.8, 0.7, 0.15)
 const COLOR_HP_LOW := Color(0.8, 0.2, 0.2)
-const COLOR_UNIT_A := Color(0.4, 0.7, 1.0)
-const COLOR_UNIT_B := Color(1.0, 0.4, 0.4)
+var COLOR_UNIT_A := Color(0.4, 0.7, 1.0)
+var COLOR_UNIT_B := Color(1.0, 0.4, 0.4)
 
 var valid_moves: Array[Vector2i] = []
 var valid_attacks: Array[String] = []  # instance_ids
@@ -58,6 +58,15 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_process(true)
 	_load_sprites()
+	_apply_color_mode()
+
+
+func _apply_color_mode() -> void:
+	var settings = get_node_or_null("/root/Settings")
+	if settings != null and settings.color_blind_mode:
+		# Blue vs Orange — distinguishable by deuteranopia/protanopia
+		COLOR_UNIT_A = Color(0.3, 0.5, 1.0)    # Blue
+		COLOR_UNIT_B = Color(1.0, 0.6, 0.1)    # Orange
 
 
 func _load_sprites() -> void:
@@ -280,9 +289,15 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 
 func _get_territory_color(x: int, y: int) -> Color:
 	var is_alt: bool = (x + y) % 2 == 0
+	var settings = get_node_or_null("/root/Settings")
+	var cb: bool = settings != null and settings.color_blind_mode
 	if y < TERRITORY_DEPTH:
+		if cb:
+			return Color(0.06, 0.08, 0.16) if is_alt else Color(0.05, 0.07, 0.14)  # Blue tint
 		return COLOR_PLAYER_A_ALT if is_alt else COLOR_PLAYER_A
 	elif y >= BOARD_H - TERRITORY_DEPTH:
+		if cb:
+			return Color(0.16, 0.10, 0.04) if is_alt else Color(0.14, 0.08, 0.03)  # Orange tint
 		return COLOR_PLAYER_B_ALT if is_alt else COLOR_PLAYER_B
 	return COLOR_UNCLAIMED_ALT if is_alt else COLOR_UNCLAIMED
 

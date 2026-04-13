@@ -107,6 +107,21 @@ func _build_ui() -> void:
 		_settings.save_settings()
 	)
 
+	var spacer_acc := Control.new()
+	spacer_acc.custom_minimum_size.y = 4
+	center.add_child(spacer_acc)
+
+	# ── Accessibility Section ──
+	_add_section_header(center, "ACCESSIBILITY")
+
+	# Color blind mode
+	var cb_row := _add_toggle_row(center, "Color Blind Mode (Blue/Orange)")
+	cb_row.button_pressed = _settings.color_blind_mode
+	cb_row.toggled.connect(func(on: bool):
+		_settings.color_blind_mode = on
+		_settings.save_settings()
+	)
+
 	var spacer3 := Control.new()
 	spacer3.custom_minimum_size.y = 8
 	center.add_child(spacer3)
