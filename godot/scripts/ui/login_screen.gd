@@ -52,19 +52,19 @@ func _build_dev_mode_ui() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(title)
 
-	var subtitle := Label.new()
-	subtitle.text = "DEV MODE — No auth server configured"
-	subtitle.add_theme_font_size_override("font_size", 11)
-	subtitle.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
-	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	center.add_child(subtitle)
+	var tagline := Label.new()
+	tagline.text = "TACTICAL GRID-BASED RPG CARD GAME"
+	tagline.add_theme_font_size_override("font_size", 12)
+	tagline.add_theme_color_override("font_color", Color(0.6, 0.6, 0.7))
+	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	center.add_child(tagline)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size.y = 20
+	spacer.custom_minimum_size.y = 30
 	center.add_child(spacer)
 
 	var play_btn := Button.new()
-	play_btn.text = "PLAY AS GUEST"
+	play_btn.text = "PLAY"
 	play_btn.custom_minimum_size = Vector2(250, 48)
 	play_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	play_btn.add_theme_font_size_override("font_size", 18)
@@ -84,9 +84,9 @@ func _build_dev_mode_ui() -> void:
 	center.add_child(play_btn)
 
 	var note := Label.new()
-	note.text = "To enable accounts, configure Supabase in\nuser://supabase_config.json"
-	note.add_theme_font_size_override("font_size", 9)
-	note.add_theme_color_override("font_color", Color(0.35, 0.35, 0.45))
+	note.text = "Early Access Alpha"
+	note.add_theme_font_size_override("font_size", 10)
+	note.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
 	note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	center.add_child(note)
 
