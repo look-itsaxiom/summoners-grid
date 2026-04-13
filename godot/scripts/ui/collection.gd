@@ -378,7 +378,149 @@ func _create_card_widget(card: Dictionary) -> PanelContainer:
 		dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		vbox.add_child(dna_lbl)
 
+	# Make clickable
+	var click_btn := Button.new()
+	click_btn.set_anchors_preset(Control.PRESET_FULL_RECT)
+	click_btn.flat = true
+	click_btn.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	click_btn.pressed.connect(func(): _show_card_detail(card))
+	panel.add_child(click_btn)
+
 	return panel
+
+
+func _show_card_detail(card: Dictionary) -> void:
+	var rarity: String = card.get("rarity", "common")
+	var rc: Color = RARITY_COLORS.get(rarity, Color(0.5, 0.5, 0.5))
+
+	# Overlay
+	var overlay := ColorRect.new()
+	overlay.color = Color(0, 0, 0, 0.8)
+	overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(overlay)
+
+	# Click overlay to dismiss
+	var dismiss := Button.new()
+	dismiss.set_anchors_preset(Control.PRESET_FULL_RECT)
+	dismiss.flat = true
+	dismiss.pressed.connect(func(): overlay.queue_free())
+	overlay.add_child(dismiss)
+
+	# Detail panel
+	var panel := PanelContainer.new()
+	panel.set_anchors_preset(Control.PRESET_CENTER)
+	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	panel.grow_vertical = Control.GROW_DIRECTION_BOTH
+	panel.custom_minimum_size = Vector2(400, 450)
+	panel.position = Vector2(440, 100)
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.06, 0.06, 0.12)
+	ps.border_color = rc
+	ps.border_width_top = 3
+	ps.border_width_bottom = 3
+	ps.border_width_left = 3
+	ps.border_width_right = 3
+	ps.corner_radius_top_left = 12
+	ps.corner_radius_top_right = 12
+	ps.corner_radius_bottom_left = 12
+	ps.corner_radius_bottom_right = 12
+	ps.content_margin_left = 24
+	ps.content_margin_right = 24
+	ps.content_margin_top = 20
+	ps.content_margin_bottom = 16
+	panel.add_theme_stylebox_override("panel", ps)
+	overlay.add_child(panel)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	panel.add_child(vbox)
+
+	# Species art
+	var sp: String = card.get("species", "")
+	if sp in _species_sprites and _species_sprites[sp] != null:
+		var sprite := TextureRect.new()
+		sprite.texture = _species_sprites[sp]
+		sprite.custom_minimum_size = Vector2(80, 80)
+		sprite.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		sprite.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		sprite.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(sprite)
+
+	# Name
+	var name_lbl := Label.new()
+	name_lbl.text = card.get("name", "?")
+	name_lbl.add_theme_font_size_override("font_size", 22)
+	name_lbl.add_theme_color_override("font_color", Color.WHITE)
+	name_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(name_lbl)
+
+	# Rarity + Species
+	var info_lbl := Label.new()
+	info_lbl.text = "%s  ·  %s" % [rarity.to_upper(), sp.capitalize()]
+	info_lbl.add_theme_font_size_override("font_size", 13)
+	info_lbl.add_theme_color_override("font_color", rc)
+	info_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(info_lbl)
+
+	# Power
+	var power: int = card.get("power", 0)
+	if power > 0:
+		var power_lbl := Label.new()
+		power_lbl.text = "⚡ Power: %d" % power
+		power_lbl.add_theme_font_size_override("font_size", 16)
+		power_lbl.add_theme_color_override("font_color", GOLD)
+		power_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(power_lbl)
+
+	# Stats grid
+	var stats: Dictionary = card.get("stats", {})
+	if not stats.is_empty():
+		var divider := ColorRect.new()
+		divider.color = Color(0.3, 0.25, 0.5, 0.4)
+		divider.custom_minimum_size = Vector2(0, 1)
+		vbox.add_child(divider)
+
+		var stats_title := Label.new()
+		stats_title.text = "STATS"
+		stats_title.add_theme_font_size_override("font_size", 11)
+		stats_title.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+		stats_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(stats_title)
+
+		var stats_grid := GridContainer.new()
+		stats_grid.columns = 3
+		stats_grid.add_theme_constant_override("h_separation", 16)
+		stats_grid.add_theme_constant_override("v_separation", 4)
+		stats_grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(stats_grid)
+
+		for key in ["STR", "END", "DEF", "INT", "SPI", "MDF", "SPD", "ACC", "LCK"]:
+			var val: int = stats.get(key, 0)
+			var stat_lbl := Label.new()
+			stat_lbl.text = "%s %d" % [key, val]
+			stat_lbl.add_theme_font_size_override("font_size", 12)
+			var stat_color := Color(0.6, 0.7, 0.8)
+			if val >= 12: stat_color = Color(0.3, 0.8, 0.3)
+			if val >= 15: stat_color = Color(1.0, 0.75, 0.0)
+			stat_lbl.add_theme_color_override("font_color", stat_color)
+			stats_grid.add_child(stat_lbl)
+
+	# DNA
+	var dna_lbl := Label.new()
+	dna_lbl.text = "DNA: %s" % card.get("dna", "")
+	dna_lbl.add_theme_font_size_override("font_size", 8)
+	dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
+	dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(dna_lbl)
+
+	# Dismiss hint
+	var hint := Label.new()
+	hint.text = "Click anywhere to close"
+	hint.add_theme_font_size_override("font_size", 10)
+	hint.add_theme_color_override("font_color", Color(0.35, 0.35, 0.45))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
 
 
 func _generate_demo_collection() -> Array:
