@@ -224,15 +224,15 @@ func _buy_pack(pack_type: String) -> void:
 func _generate_local_pack(pack_size: int) -> Array:
 	var species_list := ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]
 
-	# Species-themed name pools for more immersive card names
+	# Species-themed name pools — 30+ per species for variety
 	var species_names := {
-		"gignen": ["Aldric", "Brennan", "Cedric", "Darian", "Elric", "Gareth", "Haldor", "Kael", "Lorcan", "Maren", "Nolan", "Osric", "Quinn", "Rowan", "Soren", "Thane", "Varen", "Wren"],
-		"fae": ["Aelindra", "Briseis", "Caelum", "Dewshine", "Elowen", "Faelan", "Glimmer", "Iselda", "Lysara", "Miriel", "Nimue", "Opaline", "Rivanah", "Sylaris", "Thistledown", "Willowmere"],
-		"stoneheart": ["Anvil", "Boulderkin", "Cragmore", "Durnhelm", "Forgeborn", "Grannek", "Hammerfall", "Ironvein", "Korrak", "Magmor", "Obsidian", "Quartzfist", "Rumblor", "Slatejaw", "Tungsten"],
-		"wilderling": ["Ashfang", "Bristleclaw", "Cindermane", "Duskprowl", "Fangripper", "Greymaw", "Howler", "Ironpelt", "Knifewind", "Moonstalker", "Nightfang", "Razorback", "Shadowpaw", "Thornfur", "Windrunner"],
-		"angar": ["Aethon", "Brighthelm", "Celestine", "Divinor", "Exalted", "Glorian", "Haloward", "Illumina", "Justicar", "Luminar", "Novastar", "Oathkeeper", "Radiance", "Seraphiel", "Valoris"],
-		"demar": ["Ashwick", "Blightcurse", "Charscribe", "Doomweave", "Embertrick", "Fiendscrawl", "Grimtome", "Hexfire", "Infernix", "Jinxbolt", "Malicor", "Netherspark", "Pyrestitch", "Shadowink", "Vexshade"],
-		"creptilis": ["Basilisk", "Cobriel", "Dracofen", "Frostscale", "Gekkora", "Hydrix", "Iguana", "Komodos", "Lacertus", "Mambara", "Naga", "Pythara", "Salamandrix", "Taipanos", "Viperion"],
+		"gignen": ["Aldric", "Brennan", "Cedric", "Darian", "Elric", "Gareth", "Haldor", "Kael", "Lorcan", "Maren", "Nolan", "Osric", "Quinn", "Rowan", "Soren", "Thane", "Varen", "Wren", "Alistair", "Brock", "Dorian", "Fenwick", "Griffin", "Harlan", "Jasper", "Kellan", "Magnus", "Orion", "Phelan", "Ryland"],
+		"fae": ["Aelindra", "Briseis", "Caelum", "Dewshine", "Elowen", "Faelan", "Glimmer", "Iselda", "Lysara", "Miriel", "Nimue", "Opaline", "Rivanah", "Sylaris", "Thistledown", "Willowmere", "Ambrosine", "Crystallia", "Dawnpetal", "Ethereia", "Floranis", "Gossamer", "Honeydew", "Iridia", "Juniperleaf", "Moonwhisper", "Petalwind", "Shimmerleaf", "Starbloom", "Twillia"],
+		"stoneheart": ["Anvil", "Boulderkin", "Cragmore", "Durnhelm", "Forgeborn", "Grannek", "Hammerfall", "Ironvein", "Korrak", "Magmor", "Obsidian", "Quartzfist", "Rumblor", "Slatejaw", "Tungsten", "Basaltus", "Cobaltjaw", "Deepforge", "Embervein", "Flintridge", "Gravelguard", "Ironhelm", "Kragstone", "Orebreaker", "Peakshield", "Runeforge", "Steelvein", "Titangrip", "Understone", "Zincore"],
+		"wilderling": ["Ashfang", "Bristleclaw", "Cindermane", "Duskprowl", "Fangripper", "Greymaw", "Howler", "Ironpelt", "Knifewind", "Moonstalker", "Nightfang", "Razorback", "Shadowpaw", "Thornfur", "Windrunner", "Bloodfang", "Copperclaw", "Dirtrunner", "Emberhowl", "Frostbite", "Gravetooth", "Hawkeye", "Irontusk", "Jagscar", "Longclaw", "Mudslider", "Pinefang", "Sharphide", "Stormhowl", "Venomfur"],
+		"angar": ["Aethon", "Brighthelm", "Celestine", "Divinor", "Exalted", "Glorian", "Haloward", "Illumina", "Justicar", "Luminar", "Novastar", "Oathkeeper", "Radiance", "Seraphiel", "Valoris", "Aurelius", "Benedictus", "Concordia", "Devotion", "Empyrean", "Faithguard", "Gracewing", "Holybright", "Invictus", "Justarius", "Keraphim", "Lightbearer", "Merciful", "Noblecrown", "Providence"],
+		"demar": ["Ashwick", "Blightcurse", "Charscribe", "Doomweave", "Embertrick", "Fiendscrawl", "Grimtome", "Hexfire", "Infernix", "Jinxbolt", "Malicor", "Netherspark", "Pyrestitch", "Shadowink", "Vexshade", "Acidquill", "Brimthorn", "Cryptflame", "Darkbrand", "Evilgrin", "Fellmark", "Gloomhex", "Hellscrawl", "Impburn", "Jestercurse", "Knifetongue", "Lichwhisper", "Madmark", "Nightpact", "Plaguescrawl"],
+		"creptilis": ["Basilisk", "Cobriel", "Dracofen", "Frostscale", "Gekkora", "Hydrix", "Iguana", "Komodos", "Lacertus", "Mambara", "Naga", "Pythara", "Salamandrix", "Taipanos", "Viperion", "Amphibus", "Chamelios", "Dracolis", "Elapidae", "Fangcoil", "Gatorix", "Herpeton", "Iguanox", "Jawscale", "Kingcobra", "Lizardos", "Monitors", "Newtera", "Ophidius", "Rattlescale"],
 	}
 
 	var cards: Array = []
