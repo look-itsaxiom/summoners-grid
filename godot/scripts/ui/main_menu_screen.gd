@@ -145,7 +145,10 @@ func _build_ui() -> void:
 		center.add_child(rank_label)
 
 		var player_coins: int = storage.get_coins()
-		var stats_text := "🪙 %d  |  📦 %d cards" % [player_coins, storage.get_card_count()]
+		var total_power := 0
+		for card in storage.get_cards():
+			total_power += card.get("power", 0)
+		var stats_text := "🪙 %d  |  📦 %d cards  |  ⚡ %d power" % [player_coins, storage.get_card_count(), total_power]
 		if player_coins < CardStorage.PACK_COST_STANDARD:
 			var needed: int = CardStorage.PACK_COST_STANDARD - player_coins
 			stats_text += "  |  %d🪙 to next pack" % needed
