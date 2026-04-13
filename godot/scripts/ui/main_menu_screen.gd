@@ -18,25 +18,32 @@ var _particles: Array = []
 var _particle_timer := 0.0
 
 func _build_ui() -> void:
-	# Background
-	var bg := ColorRect.new()
-	bg.color = BG_COLOR
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Background — art or fallback color
+	var bg_path := "res://assets/menu_bg.png"
+	if ResourceLoader.exists(bg_path):
+		var bg_tex := TextureRect.new()
+		bg_tex.texture = load(bg_path)
+		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		add_child(bg_tex)
+		# Dark overlay so text is readable
+		var overlay := ColorRect.new()
+		overlay.color = Color(0.0, 0.0, 0.05, 0.55)
+		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(overlay)
+	else:
+		var bg := ColorRect.new()
+		bg.color = BG_COLOR
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
 
-	# Top gradient — darker at top for visual weight
+	# Top gradient — darker at top for title readability
 	var gradient := ColorRect.new()
-	gradient.color = Color(0.06, 0.03, 0.12, 0.5)
+	gradient.color = Color(0.02, 0.01, 0.06, 0.6)
 	gradient.set_anchors_preset(Control.PRESET_FULL_RECT)
-	gradient.anchor_bottom = 0.35
+	gradient.anchor_bottom = 0.3
 	add_child(gradient)
-
-	# Bottom gradient — warm glow from below
-	var bottom_glow := ColorRect.new()
-	bottom_glow.color = Color(0.12, 0.06, 0.02, 0.3)
-	bottom_glow.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bottom_glow.anchor_top = 0.7
-	add_child(bottom_glow)
 
 	set_process(true)
 
