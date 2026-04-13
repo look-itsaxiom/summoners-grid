@@ -25,19 +25,13 @@ func _build_ui() -> void:
 	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(bg)
 
-	var scroll := ScrollContainer.new()
-	scroll.set_anchors_preset(Control.PRESET_FULL_RECT)
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	add_child(scroll)
-
 	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
 	margin.add_theme_constant_override("margin_top", 20)
 	margin.add_theme_constant_override("margin_bottom", 30)
 	margin.add_theme_constant_override("margin_left", 60)
 	margin.add_theme_constant_override("margin_right", 60)
-	margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(margin)
+	add_child(margin)
 
 	var main := VBoxContainer.new()
 	main.add_theme_constant_override("separation", 16)
