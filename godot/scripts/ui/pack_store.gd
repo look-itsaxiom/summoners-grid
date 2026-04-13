@@ -62,6 +62,15 @@ func _build_ui() -> void:
 	coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(coins_label)
 
+	# Helpful tip when broke
+	if storage.get_coins() < CardStorage.PACK_COST_STANDARD:
+		var tip := Label.new()
+		tip.text = "Play games to earn coins! Win = +150🪙, Lose = +50🪙"
+		tip.add_theme_font_size_override("font_size", 11)
+		tip.add_theme_color_override("font_color", Color(0.5, 0.6, 0.4))
+		tip.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		main.add_child(tip)
+
 	# Status
 	_status_label = Label.new()
 	_status_label.text = ""
