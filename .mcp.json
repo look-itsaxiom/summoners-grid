@@ -1,8 +1,22 @@
 {
   "mcpServers": {
+    "godot-docs": {
+      "command": "npx",
+      "args": ["-y", "godot-doc-mcp"]
+    },
     "godot-mcp": {
       "command": "node",
-      "args": ["/home/axiom/SkibbySoft/godot-mcp/build/index.js"]
+      "args": ["/home/axiom/SkibbySoft/godot-mcp/build/index.js"],
+      "env": {
+        "GODOT_PATH": "/home/axiom/.local/share/gdenv/bin/godot"
+      }
+    },
+    "spritecook": {
+      "command": "npx",
+      "args": ["-y", "spritecook-mcp"],
+      "env": {
+        "SPRITECOOK_API_KEY": "sc_live_613d6a8ad3639538f1b86d891bb33af8811172db871fc50e"
+      }
     }
   }
 }
