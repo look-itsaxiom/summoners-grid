@@ -188,7 +188,8 @@ func _build_ui() -> void:
 
 	# Version
 	var version := Label.new()
-	version.text = "Alpha Build — Summoner's Grid (Godot)"
+	var ver_str: String = ProjectSettings.get_setting("application/config/version", "0.0.0")
+	version.text = "v%s Alpha — Summoner's Grid" % ver_str
 	version.add_theme_font_size_override("font_size", 10)
 	version.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
 	version.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

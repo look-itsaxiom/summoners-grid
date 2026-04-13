@@ -9,11 +9,13 @@ run/main_scene="res://scenes/login.tscn"
 
 config/name="Summoner's Grid"
 config/description="Tactical grid-based RPG card game"
-config/version="0.1.0"
+config/version="0.1.5"
 config/features=PackedStringArray("4.3")
 config/icon="res://assets/icon.png"
 
 [autoload]
+
+
 
 DailyChallenge="*res://scripts/engine/daily_challenge.gd"
 
