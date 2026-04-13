@@ -434,6 +434,7 @@ func _on_cell_clicked(pos: Vector2i) -> void:
 
 
 func _on_card_selected(index: int) -> void:
+	_sfx.click()
 	selected_card_index = index
 	selected_unit_id = ""
 	board.clear_highlights()
@@ -786,6 +787,27 @@ func _on_log_added(entry: Dictionary) -> void:
 	if log_label:
 		var color := "cyan" if entry["player"] == "playerA" else "red"
 		log_label.append_text("[color=%s]T%d[/color] %s\n" % [color, entry["turn"], entry["message"]])
+
+	# Trigger sounds and floating numbers from log messages
+	var msg: String = entry.get("message", "")
+	if msg.contains("heals"):
+		_sfx.heal()
+		# Show floating heal number — parse "heals X HP"
+		var heal_match := msg.split("heals ")
+		if heal_match.size() > 1:
+			var heal_str: String = heal_match[1].split(" ")[0]
+			if heal_str.is_valid_int():
+				# Find the unit that was healed (name before "heals")
+				var unit_name: String = msg.split(" heals")[0]
+				for s in _gm.board_summons:
+					if s["card"].get("name", "") in unit_name:
+						var pos := _unit_screen_pos(s)
+						FloatingNumber.spawn(self, "+%s" % heal_str, pos, Color(0.3, 1.0, 0.3))
+						break
+	elif msg.contains("gains") and msg.contains("VP"):
+		_sfx.vp_gain()
+	elif msg.contains("levels up"):
+		_sfx.level_up()
 
 
 func _on_phase_changed(_new_phase: String) -> void:
