@@ -37,6 +37,9 @@ var hovered_cell: Vector2i = Vector2i(-1, -1)
 # Cell flash animations: { Vector2i: { color: Color, alpha: float } }
 var _cell_flashes: Dictionary = {}
 
+# Species sprite textures (loaded once)
+var _species_sprites: Dictionary = {}
+
 @onready var _gm = get_node("/root/GameManager")
 
 
@@ -44,6 +47,15 @@ func _ready() -> void:
 	custom_minimum_size = Vector2(BOARD_W * CELL_SIZE + 40, BOARD_H * CELL_SIZE + 40)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	set_process(true)
+	_load_sprites()
+
+
+func _load_sprites() -> void:
+	var species := ["gignen", "fae", "stoneheart", "wilderling", "angar", "demar", "creptilis"]
+	for sp in species:
+		var path := "res://assets/sprites/%s.png" % sp
+		if ResourceLoader.exists(path):
+			_species_sprites[sp] = load(path)
 
 
 func _process(delta: float) -> void:
@@ -131,10 +143,7 @@ func _draw() -> void:
 
 func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	var card: Dictionary = unit.get("card", {})
-	var name_str: String = card.get("name", "?")
-	if name_str.length() > 10:
-		name_str = name_str.substr(0, 10)
-
+	var species: String = card.get("species", "")
 	var unit_owner: String = unit["owner"]
 	var team_color := COLOR_UNIT_A if unit_owner == "playerA" else COLOR_UNIT_B
 
@@ -143,18 +152,28 @@ func _draw_unit(screen_pos: Vector2, unit: Dictionary) -> void:
 	draw_rect(bg_rect, Color(0.05, 0.05, 0.1, 0.9))
 	draw_rect(bg_rect, team_color * Color(1, 1, 1, 0.5), false, 1.5)
 
-	# Name — centered in cell
-	var name_pos := screen_pos + Vector2(2, 12)
-	draw_string(ThemeDB.fallback_font, name_pos, name_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, team_color)
+	# Species sprite (if available)
+	if species in _species_sprites and _species_sprites[species] != null:
+		var tex: Texture2D = _species_sprites[species]
+		var sprite_size := 28.0  # Fit nicely in 48px cell
+		var sprite_pos := screen_pos + Vector2((CELL_SIZE - sprite_size) / 2.0, 2)
+		draw_texture_rect(tex, Rect2(sprite_pos, Vector2(sprite_size, sprite_size)), false, Color(1, 1, 1, 0.85))
+	else:
+		# Fallback: text name
+		var name_str: String = card.get("name", "?")
+		if name_str.length() > 10:
+			name_str = name_str.substr(0, 10)
+		var name_pos := screen_pos + Vector2(2, 12)
+		draw_string(ThemeDB.fallback_font, name_pos, name_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, team_color)
 
-	# HP text — centered
+	# HP text — below sprite
 	var hp_str := "%d/%d" % [unit["current_hp"], unit["max_hp"]]
-	var hp_pos := screen_pos + Vector2(2, 23)
-	draw_string(ThemeDB.fallback_font, hp_pos, hp_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 9, Color(0.5, 1.0, 0.5))
+	var hp_pos := screen_pos + Vector2(2, 34)
+	draw_string(ThemeDB.fallback_font, hp_pos, hp_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 8, Color(0.5, 1.0, 0.5))
 
-	# Level + role — centered
-	var level_str := "Lv%d %s" % [unit["level"], unit["current_role"].substr(0, 7)]
-	var level_pos := screen_pos + Vector2(2, 33)
+	# Level — small text at bottom
+	var level_str := "Lv%d" % unit["level"]
+	var level_pos := screen_pos + Vector2(2, 43)
 	draw_string(ThemeDB.fallback_font, level_pos, level_str, HORIZONTAL_ALIGNMENT_CENTER, CELL_SIZE - 4, 7, Color(0.6, 0.6, 0.8))
 
 	# HP bar
