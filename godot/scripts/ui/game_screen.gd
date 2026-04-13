@@ -507,8 +507,12 @@ func _run_ai_turn() -> void:
 	# Execute AI's draw + level
 	_gm.execute_draw_phase()
 	_gm.execute_level_phase()
+	board.queue_redraw()
 
 	var ai_player: String = _gm.active_player
+
+	# Small delay so player can see phase changes
+	await get_tree().create_timer(0.3).timeout
 
 	# 1. Play a summon if possible
 	var ai_hand: Array = _gm.players[ai_player]["hand"]
@@ -516,7 +520,6 @@ func _run_ai_turn() -> void:
 		if ai_hand[i].get("card_type", "") == "summon":
 			var placements = _gm.get_valid_placements()
 			if placements.size() > 0:
-				# Prefer front-center positions
 				placements.sort_custom(func(a, b):
 					var a_front: int = a.y if ai_player == "playerA" else (13 - a.y)
 					var b_front: int = b.y if ai_player == "playerA" else (13 - b.y)
@@ -524,6 +527,9 @@ func _run_ai_turn() -> void:
 					return absi(a.x - 6) < absi(b.x - 6)
 				)
 				_gm.play_summon(i, placements[0])
+				board.queue_redraw()
+				_refresh_ui()
+				await get_tree().create_timer(0.4).timeout
 			break
 
 	if _gm.is_game_over: return
@@ -534,11 +540,15 @@ func _run_ai_turn() -> void:
 		if entry["valid_targets"].size() > 0:
 			_gm.play_advance_card(entry["index"], entry["valid_targets"][0]["instance_id"])
 			_sfx.level_up()
+			board.queue_redraw()
+			await get_tree().create_timer(0.3).timeout
 			break
 	if _gm.is_game_over: return
 
 	# 2. Play action cards (5-priority system ported from web AI)
 	_ai_play_action_cards(ai_player)
+	board.queue_redraw()
+	await get_tree().create_timer(0.3).timeout
 
 	if _gm.is_game_over: return
 
@@ -570,6 +580,8 @@ func _run_ai_turn() -> void:
 		var attacks = _gm.get_valid_attacks(unit_id)
 		if nearest["instance_id"] in attacks:
 			_gm.attack_with_summon(unit_id, nearest["instance_id"])
+			board.queue_redraw()
+			await get_tree().create_timer(0.4).timeout
 		else:
 			# Move toward nearest enemy
 			var moves = _gm.get_valid_moves(unit_id)
@@ -579,11 +591,15 @@ func _run_ai_turn() -> void:
 					if _dist(m, nearest["position"]) < _dist(best_move, nearest["position"]):
 						best_move = m
 				_gm.move_summon(unit_id, best_move)
+				board.queue_redraw()
+				await get_tree().create_timer(0.25).timeout
 
 				# Attack after move
 				attacks = _gm.get_valid_attacks(unit_id)
 				if nearest["instance_id"] in attacks:
 					_gm.attack_with_summon(unit_id, nearest["instance_id"])
+					board.queue_redraw()
+					await get_tree().create_timer(0.4).timeout
 
 	if _gm.is_game_over: return
 
