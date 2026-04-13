@@ -259,6 +259,32 @@ func _apply_filter(filter_type: String, value: String) -> void:
 	_refresh_grid()
 
 
+func _get_card_index(card: Dictionary) -> int:
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage == null:
+		return -1
+	var all_cards: Array = storage.get_cards()
+	for i in range(all_cards.size()):
+		if all_cards[i].get("name", "") == card.get("name", "") and all_cards[i].get("acquired_at", "") == card.get("acquired_at", ""):
+			return i
+	return -1
+
+
+func _refresh_display() -> void:
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage:
+		_cards = storage.get_cards()
+	_refresh_grid()
+	# Update count label
+	if _count_label:
+		var rc: Dictionary = get_node("/root/CardStorage").get_rarity_counts() if get_node_or_null("/root/CardStorage") else {}
+		_count_label.text = "MY COLLECTION   %d cards  (%d myth · %d legend · %d rare · %d uncommon · %d common)" % [
+			_cards.size(),
+			rc.get("myth", 0), rc.get("legend", 0), rc.get("rare", 0),
+			rc.get("uncommon", 0), rc.get("common", 0)
+		]
+
+
 func _refresh_grid() -> void:
 	# Apply filters
 	_filtered.clear()
@@ -560,6 +586,32 @@ func _show_card_detail(card: Dictionary) -> void:
 	dna_lbl.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
 	dna_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	vbox.add_child(dna_lbl)
+
+	# Sell button
+	var sell_values := {"common": 25, "uncommon": 50, "rare": 100, "legend": 250, "myth": 500}
+	var sell_price: int = sell_values.get(rarity, 25)
+	var sell_btn := Button.new()
+	sell_btn.text = "Sell for %d coins" % sell_price
+	sell_btn.custom_minimum_size = Vector2(160, 32)
+	sell_btn.add_theme_font_size_override("font_size", 11)
+	sell_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var sell_style := StyleBoxFlat.new()
+	sell_style.bg_color = Color(0.5, 0.2, 0.2)
+	sell_style.corner_radius_top_left = 4
+	sell_style.corner_radius_top_right = 4
+	sell_style.corner_radius_bottom_left = 4
+	sell_style.corner_radius_bottom_right = 4
+	sell_btn.add_theme_stylebox_override("normal", sell_style)
+	var card_idx: int = _get_card_index(card)
+	sell_btn.pressed.connect(func():
+		var storage_node = get_node_or_null("/root/CardStorage")
+		if storage_node and card_idx >= 0:
+			storage_node.add_coins(sell_price)
+			storage_node.remove_cards_by_indices([card_idx])
+			overlay.queue_free()
+			_refresh_display()
+	)
+	vbox.add_child(sell_btn)
 
 	# Dismiss hint
 	var hint := Label.new()

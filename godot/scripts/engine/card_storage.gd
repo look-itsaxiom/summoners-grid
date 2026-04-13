@@ -107,6 +107,16 @@ func add_pack(cards: Array, pack_type: String) -> void:
 	save_collection()
 
 
+## Remove specific cards from collection by index (descending order to avoid shifting).
+func remove_cards_by_indices(indices: Array) -> void:
+	indices.sort()
+	indices.reverse()
+	for idx in indices:
+		if idx >= 0 and idx < _collection.size():
+			_collection.remove_at(idx)
+	save_collection()
+
+
 ## Get pack opening history.
 func get_pack_history() -> Array:
 	return _pack_history
