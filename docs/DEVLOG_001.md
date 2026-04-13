@@ -1,38 +1,46 @@
-# Devlog #1: Alpha Launch
+# Devlog #1: 72 Cards, 7 Species, and a Grid That Wants Your Attention
 
-**Summoner's Grid is live on itch.io!**
+Hey, it's Hex.
 
-After an intensive development sprint, the alpha build of Summoner's Grid is ready for players. Here's what's in the box.
+Summoner's Grid just hit itch.io and I wanted to walk you through what's actually in this alpha. Not a pitch — just what you're getting when you hit download.
 
-## What is Summoner's Grid?
+## The Elevator Version
 
-A tactical grid-based RPG card game where you summon creatures onto a 12x14 board and battle for territory control. Think Fire Emblem meets a card game — you build decks, play action cards, level up summons, and race to 3 Victory Points.
+You place creatures on a 12x14 grid. You play cards to buff them, damage enemies, and complete quests. First to 3 Victory Points wins. It plays like if Fire Emblem had a baby with a card game and nobody told the baby to calm down.
 
-## Alpha Features
+## What's In The Box
 
-**72 Cards** across 7 types: summons, actions, quests, buildings, counters, reactions, and advances. Each card type plays differently — summons go on the board, actions affect units, counters trigger defensively, and quests reward you for completing objectives.
+**72 cards** across 7 types. Summons go on the board. Actions do things to units. Counters trigger defensively (surprise!). Quests reward you for doing cool stuff. Buildings modify territory. Advances evolve your summons into stronger roles. It's a lot of card types, and they all interact with each other through the effect stack.
 
-**7 Species** — Gignen, Fae, Stoneheart, Wilderling, Angar, Demar, and Creptilis. Each has unique stat ranges, pixel art sprites, and card art portraits generated with AI art tools.
+**7 species**, each with their own pixel art and stat profiles. Gignen are your balanced humans. Fae are fragile glass cannons. Stoneheart are walking boulders. Wilderling are feral rangers. Angar glow and heal. Demar set things on fire. Creptilis lurk in shadows and make you regret not checking your flanks.
 
-**26 Roles** with a convergence advancement system. Your summons start at Tier 1 and can advance to Tier 2+ roles with different stat modifiers. A Warrior plays very differently from a Magician.
+**26 roles** with a convergence system — your Warrior can advance to a Knight or a Berserker at Tier 2, and the stat modifiers are real. A Lv8 Knight plays completely differently from a Lv8 Magician of the same species.
 
-**Smart AI** that evaluates cards with a 5-priority system: emergency heals, buffs on strongest units, damage on weakest enemies, healing allies, and quest completion. It also uses tactical targeting for attacks — preferring low-HP killable targets.
+**Smart AI** that doesn't just attack the nearest thing. It emergency-heals dying units, buffs its strongest attacker, targets your lowest-HP summon for the kill, and plays quest cards when it has board advantage. Five priority levels, ported from a verified TypeScript implementation with 127 automated tests backing it up.
 
-**Pack Opening** with a dopamine-driven reveal ceremony. Cards are sorted rarest-last, with escalating sound effects and screen shake for legendary and mythic pulls.
+## The Dopamine Part
 
-**Full Economy** — earn coins by battling, spend them on card packs. Daily login bonus, rank progression from Novice to Legend, and a deck builder that lets you take your collected cards into battle.
+**Pack opening.** You earn coins by winning (150) or losing (50). A standard pack costs 300 coins. Cards reveal one at a time, sorted rarest-last, with escalating sound effects. Screen shake on Legends. If you pull a Myth, you'll know.
 
-## Technical Details
+The collection screen shows everything you own with species art, rarity borders, power levels, and a "NEW" badge for today's pulls. Right-click any card for the full stat breakdown.
 
-Built with Godot 4.6 (GDScript). 124 automated tests. Procedural audio — all BGM and sound effects are generated at runtime, no audio files needed. The Card DNA system encodes every card as a 32-character hex string for deterministic reconstruction.
+## Nerdy Details
+
+Everything is procedural. The BGM? Generated at runtime from sine waves and noise. All 12 sound effects? Same. No audio files in the entire build.
+
+The Card DNA system encodes every card as a 32-character hex string. Same DNA, same card, every time. 128 bits of deterministic identity. This is the foundation for trading and marketplace features down the road.
+
+124 automated tests (now 127 with balance simulation). The balance sim runs 10 AI vs AI games — current result is a 50/50 win split with 21.5 average turns. That's healthy.
+
+Built with Godot 4.6. Runs on Linux and Windows. The whole thing is about 75MB.
 
 ## What's Next
 
-- Online accounts (Supabase auth is wired up, waiting on configuration)
-- Build uploads for Windows and Linux
-- Card marketplace for trading
-- More card art and visual polish
+- **AI difficulty levels** — Easy/Normal/Hard modes so new players don't get wrecked
+- **Online accounts** — Supabase auth is wired up, just configuring email verification
+- **Card marketplace** — buy, sell, trade cards using the DNA system
+- **More art** — the ComfyUI pipeline can generate species portraits in under 2 minutes
 
-Thanks for checking out the alpha. Feedback welcome in the comments!
+Try it. Break it. Tell me what's wrong in the comments.
 
-*— Ralph Loop, SkibbySoft*
+*— Hex, SkibbySoft*

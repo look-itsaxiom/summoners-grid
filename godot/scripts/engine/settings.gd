@@ -10,6 +10,7 @@ var sound_volume := 0.5
 var screen_shake_enabled := true
 var show_damage_numbers := true
 var ai_speed := 1.0  # 0.5 = slow, 1.0 = normal, 2.0 = fast
+var ai_difficulty := 1  # 0=Easy, 1=Normal, 2=Hard
 var color_blind_mode := false
 
 # Match history
@@ -43,6 +44,7 @@ func save_settings() -> void:
 	cfg.set_value("gameplay", "screen_shake", screen_shake_enabled)
 	cfg.set_value("gameplay", "damage_numbers", show_damage_numbers)
 	cfg.set_value("gameplay", "ai_speed", ai_speed)
+	cfg.set_value("gameplay", "ai_difficulty", ai_difficulty)
 	cfg.set_value("accessibility", "color_blind", color_blind_mode)
 	cfg.save(SETTINGS_PATH)
 
@@ -56,6 +58,7 @@ func load_settings() -> void:
 	screen_shake_enabled = cfg.get_value("gameplay", "screen_shake", true)
 	show_damage_numbers = cfg.get_value("gameplay", "damage_numbers", true)
 	ai_speed = cfg.get_value("gameplay", "ai_speed", 1.0)
+	ai_difficulty = cfg.get_value("gameplay", "ai_difficulty", 1)
 	color_blind_mode = cfg.get_value("accessibility", "color_blind", false)
 
 
