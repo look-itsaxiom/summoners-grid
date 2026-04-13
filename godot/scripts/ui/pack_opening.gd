@@ -204,14 +204,25 @@ func _create_card_slot(index: int) -> PanelContainer:
 	vbox.add_theme_constant_override("separation", 4)
 	panel.add_child(vbox)
 
-	# Face-down: question mark
-	var mystery := Label.new()
-	mystery.name = "Mystery"
-	mystery.text = "?"
-	mystery.add_theme_font_size_override("font_size", 48)
-	mystery.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
-	mystery.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	vbox.add_child(mystery)
+	# Face-down: card back image or fallback "?"
+	var card_back_path := "res://assets/card_back.png"
+	if ResourceLoader.exists(card_back_path):
+		var back_img := TextureRect.new()
+		back_img.name = "Mystery"
+		back_img.texture = load(card_back_path)
+		back_img.custom_minimum_size = Vector2(100, 140)
+		back_img.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+		back_img.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		back_img.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		vbox.add_child(back_img)
+	else:
+		var mystery := Label.new()
+		mystery.name = "Mystery"
+		mystery.text = "?"
+		mystery.add_theme_font_size_override("font_size", 48)
+		mystery.add_theme_color_override("font_color", Color(0.3, 0.3, 0.4))
+		mystery.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		vbox.add_child(mystery)
 
 	var hint := Label.new()
 	hint.name = "Hint"
