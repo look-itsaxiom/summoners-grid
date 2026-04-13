@@ -143,6 +143,21 @@ func _build_ui() -> void:
 		"and take them into battle. Rarer cards are genuinely stronger!",
 	])
 
+	# Controls
+	_add_divider(main)
+	_add_label(main, "CONTROLS", 16, HEADER_COLOR)
+	_add_text_block(main, [
+		"• Left-click: select cards, units, and targets",
+		"• Right-click a unit: inspect detailed stats and equipment",
+		"• Mouse wheel: zoom in/out on the board",
+		"• Middle-click drag: pan the board view",
+		"• R: reset board zoom and pan",
+		"• 1-9: select hand cards by number",
+		"• E: end your turn",
+		"• Escape: deselect current selection",
+		"• Hover a unit: see weapon range overlay",
+	])
+
 	# Tips
 	_add_divider(main)
 	_add_label(main, "TIPS", 16, HEADER_COLOR)
@@ -153,6 +168,7 @@ func _build_ui() -> void:
 		"• Advance your summons to Tier 2+ roles for powerful stat modifiers",
 		"• Set Counter cards face-down to surprise your opponent",
 		"• Position your summons strategically — protect your territory!",
+		"• Check Settings for color blind mode and audio options",
 	])
 
 	# Back button
