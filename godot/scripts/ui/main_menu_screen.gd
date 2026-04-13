@@ -62,6 +62,7 @@ func _build_ui() -> void:
 	_add_button(center, "Random Deck Game", Color(0.9, 0.7, 0.0), _on_random_game)
 	_add_button(center, "Watch AI vs AI", Color(0.3, 0.3, 0.4), _on_watch_ai)
 	_add_button(center, "Pack Store", Color(0.6, 0.4, 0.15), _on_pack_store)
+	_add_button(center, "Deck Builder", Color(0.4, 0.3, 0.55), _on_deck_builder)
 	_add_button(center, "My Collection", Color(0.3, 0.5, 0.3), _on_collection)
 	_add_button(center, "How to Play", Color(0.25, 0.4, 0.6), _on_how_to_play)
 
@@ -152,6 +153,10 @@ func _on_watch_ai() -> void:
 
 func _on_pack_store() -> void:
 	get_tree().change_scene_to_file("res://scenes/pack_store.tscn")
+
+
+func _on_deck_builder() -> void:
+	get_tree().change_scene_to_file("res://scenes/deck_builder.tscn")
 
 
 func _on_collection() -> void:
