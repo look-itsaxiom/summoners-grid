@@ -1023,6 +1023,26 @@ func _on_game_over(winner_id: String) -> void:
 			achievements.try_unlock("deck_master")
 		achievements.check_all()
 
+	# Check daily challenge
+	if not _gm.spectator_mode:
+		var daily = get_node_or_null("/root/DailyChallenge")
+		if daily:
+			var defeats := 0
+			var cards_played := 0
+			var territory_vp := false
+			var summons_lost := 0
+			for entry in _gm.game_log:
+				var msg: String = entry.get("message", "")
+				if "defeated" in msg and entry.get("player", "") == "playerB":
+					defeats += 1
+				if "defeated" in msg and entry.get("player", "") == "playerA":
+					summons_lost += 1
+				if msg.begins_with("Played "):
+					cards_played += 1
+				if "territory" in msg.to_lower() and "VP" in msg:
+					territory_vp = true
+			daily.check_match(winner_id, _gm.turn_number, mode, summons_lost, cards_played, defeats, territory_vp)
+
 	var storage = get_node_or_null("/root/CardStorage")
 	var _ranked_up := false
 	var _new_rank_name := ""

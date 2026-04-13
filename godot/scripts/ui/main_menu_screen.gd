@@ -128,6 +128,22 @@ func _build_ui() -> void:
 	spacer3.custom_minimum_size.y = 4
 	center.add_child(spacer3)
 
+	# Daily challenge
+	var daily = get_node_or_null("/root/DailyChallenge")
+	if daily:
+		var challenge: Dictionary = daily.get_challenge()
+		if not challenge.is_empty():
+			var dc_label := Label.new()
+			if daily.is_completed():
+				dc_label.text = "Daily Challenge Complete!"
+				dc_label.add_theme_color_override("font_color", Color(0.3, 0.9, 0.3))
+			else:
+				dc_label.text = "Daily: %s — %s (+%d coins)" % [challenge["name"], challenge["description"], challenge["reward"]]
+				dc_label.add_theme_color_override("font_color", Color(1.0, 0.7, 0.2))
+			dc_label.add_theme_font_size_override("font_size", 11)
+			dc_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			center.add_child(dc_label)
+
 	# Daily bonus notification
 	var storage = get_node_or_null("/root/CardStorage")
 	if storage and storage.got_daily_bonus_today():
