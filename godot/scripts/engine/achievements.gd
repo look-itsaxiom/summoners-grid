@@ -101,7 +101,7 @@ func try_unlock(id: String) -> int:
 		var storage = get_node_or_null("/root/CardStorage")
 		if storage:
 			storage._coins += reward
-			storage._save()
+			storage.save_collection()
 
 	achievement_unlocked.emit(id, def["name"], reward)
 	_save()
@@ -145,7 +145,7 @@ func get_all() -> Array:
 	return result
 
 
-func _show_toast(id: String, achievement_name: String, reward: int) -> void:
+func _show_toast(_id: String, achievement_name: String, reward: int) -> void:
 	# Create a CanvasLayer toast that slides in from the top
 	var canvas := CanvasLayer.new()
 	canvas.layer = 100

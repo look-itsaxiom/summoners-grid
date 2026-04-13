@@ -82,7 +82,7 @@ func check_match(winner: String, turns: int, mode: String, summons_lost: int, ca
 		var storage = get_node_or_null("/root/CardStorage")
 		if storage and reward > 0:
 			storage._coins += reward
-			storage._save()
+			storage.save_collection()
 		challenge_completed.emit(today_challenge, reward)
 		_save()
 
