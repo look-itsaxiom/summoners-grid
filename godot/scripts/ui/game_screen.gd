@@ -57,6 +57,7 @@ func _build_ui() -> void:
 	board = Control.new()
 	board.set_script(board_script)
 	board.cell_clicked.connect(_on_cell_clicked)
+	board.cell_right_clicked.connect(_on_cell_right_clicked)
 	main_hbox.add_child(board)
 
 	# Right sidebar
@@ -381,6 +382,7 @@ func _refresh_hand() -> void:
 
 
 func _on_cell_clicked(pos: Vector2i) -> void:
+	_close_inspector()
 	if _gm.is_game_over or _gm.phase != "action":
 		return
 
@@ -1216,6 +1218,147 @@ func _find_unit_at(pos: Vector2i) -> Dictionary:
 		if s["position"] == pos:
 			return s
 	return {}
+
+
+# ─── Card Inspector (right-click) ───
+
+var _inspector_popup: PanelContainer = null
+
+func _on_cell_right_clicked(pos: Vector2i) -> void:
+	_close_inspector()
+	var unit := _find_unit_at(pos)
+	if unit.is_empty():
+		return
+	_show_inspector(unit)
+
+
+func _show_inspector(unit: Dictionary) -> void:
+	var card: Dictionary = unit.get("card", {})
+	var stats: Dictionary = unit.get("calculated_stats", {})
+
+	_inspector_popup = PanelContainer.new()
+	_inspector_popup.custom_minimum_size = Vector2(280, 0)
+	_inspector_popup.z_index = 50
+	var ps := StyleBoxFlat.new()
+	ps.bg_color = Color(0.06, 0.06, 0.12, 0.95)
+	ps.border_color = Color(0.4, 0.35, 0.6)
+	ps.border_width_top = 2
+	ps.border_width_bottom = 2
+	ps.border_width_left = 2
+	ps.border_width_right = 2
+	ps.corner_radius_top_left = 8
+	ps.corner_radius_top_right = 8
+	ps.corner_radius_bottom_left = 8
+	ps.corner_radius_bottom_right = 8
+	ps.content_margin_top = 12
+	ps.content_margin_bottom = 12
+	ps.content_margin_left = 14
+	ps.content_margin_right = 14
+	_inspector_popup.add_theme_stylebox_override("panel", ps)
+
+	var vbox := VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 4)
+	_inspector_popup.add_child(vbox)
+
+	# Name + role
+	var name_label := Label.new()
+	var owner_str := "Ally" if unit["owner"] == "playerA" else "Enemy"
+	name_label.text = "%s  [%s]" % [card.get("name", "?"), owner_str]
+	name_label.add_theme_font_size_override("font_size", 14)
+	name_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	vbox.add_child(name_label)
+
+	var role_label := Label.new()
+	role_label.text = "Lv%d %s  ·  %s  ·  %s" % [
+		unit["level"], unit["current_role"],
+		card.get("species", "?").capitalize(),
+		card.get("element", "neutral").capitalize()
+	]
+	role_label.add_theme_font_size_override("font_size", 11)
+	role_label.add_theme_color_override("font_color", Color(0.6, 0.65, 0.8))
+	vbox.add_child(role_label)
+
+	# HP bar text
+	var hp_label := Label.new()
+	hp_label.text = "HP: %d / %d" % [unit["current_hp"], unit["max_hp"]]
+	hp_label.add_theme_font_size_override("font_size", 12)
+	var hp_pct: float = float(unit["current_hp"]) / float(unit["max_hp"])
+	hp_label.add_theme_color_override("font_color",
+		Color(0.2, 0.8, 0.2) if hp_pct > 0.5 else (Color(0.8, 0.7, 0.15) if hp_pct > 0.25 else Color(0.8, 0.2, 0.2)))
+	vbox.add_child(hp_label)
+
+	# Stats grid
+	var stat_names := ["STR", "DEF", "INT", "MDF", "SPD", "ACC", "LCK", "SPI", "END"]
+	var stat_text := ""
+	for i in range(stat_names.size()):
+		stat_text += "%s %-3d" % [stat_names[i], stats.get(stat_names[i], 0)]
+		if (i + 1) % 3 == 0 and i < stat_names.size() - 1:
+			stat_text += "\n"
+		elif i < stat_names.size() - 1:
+			stat_text += "   "
+	var stat_label := Label.new()
+	stat_label.text = stat_text
+	stat_label.add_theme_font_size_override("font_size", 11)
+	stat_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.8))
+	vbox.add_child(stat_label)
+
+	# Equipment
+	var equip: Dictionary = card.get("equipment", {})
+	var weapon: Dictionary = equip.get("weapon", {})
+	if not weapon.is_empty():
+		var wlabel := Label.new()
+		wlabel.text = "Weapon: %s (BP:%d, Range:%d, %s)" % [
+			weapon.get("name", "?"), weapon.get("base_power", 0),
+			weapon.get("range", 1), weapon.get("damage_type", "physical_melee")]
+		wlabel.add_theme_font_size_override("font_size", 10)
+		wlabel.add_theme_color_override("font_color", Color(0.8, 0.6, 0.3))
+		wlabel.autowrap_mode = TextServer.AUTOWRAP_WORD
+		vbox.add_child(wlabel)
+
+	var armor: Dictionary = equip.get("armor", {})
+	if not armor.is_empty():
+		var alabel := Label.new()
+		alabel.text = "Armor: %s (+%d DEF)" % [armor.get("name", "?"), armor.get("defense_bonus", 0)]
+		alabel.add_theme_font_size_override("font_size", 10)
+		alabel.add_theme_color_override("font_color", Color(0.5, 0.6, 0.8))
+		vbox.add_child(alabel)
+
+	var accessory: Dictionary = equip.get("accessory", {})
+	if not accessory.is_empty():
+		var aclabel := Label.new()
+		aclabel.text = "Accessory: %s" % accessory.get("name", "?")
+		aclabel.add_theme_font_size_override("font_size", 10)
+		aclabel.add_theme_color_override("font_color", Color(0.6, 0.5, 0.7))
+		vbox.add_child(aclabel)
+
+	# Movement
+	var mv_label := Label.new()
+	mv_label.text = "Movement: %d remaining" % unit["movement_remaining"]
+	mv_label.add_theme_font_size_override("font_size", 10)
+	mv_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	vbox.add_child(mv_label)
+
+	# Hint
+	var hint := Label.new()
+	hint.text = "Click anywhere to close"
+	hint.add_theme_font_size_override("font_size", 9)
+	hint.add_theme_color_override("font_color", Color(0.35, 0.35, 0.45))
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	vbox.add_child(hint)
+
+	# Position near the unit
+	var screen_pos := _unit_screen_pos(unit)
+	_inspector_popup.position = Vector2(
+		clampf(screen_pos.x + 30, 0, 980),
+		clampf(screen_pos.y - 80, 10, 500)
+	)
+	add_child(_inspector_popup)
+
+
+func _close_inspector() -> void:
+	if _inspector_popup != null:
+		_inspector_popup.queue_free()
+		_inspector_popup = null
 
 
 # ─── Screen Shake ───

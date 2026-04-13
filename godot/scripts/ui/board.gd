@@ -3,6 +3,7 @@ extends Control
 
 signal cell_clicked(position: Vector2i)
 signal cell_hovered(position: Vector2i)
+signal cell_right_clicked(position: Vector2i)
 
 const CELL_SIZE := 48
 const BOARD_W := 12
@@ -295,6 +296,10 @@ func _gui_input(event: InputEvent) -> void:
 				selected_cell = pos
 				cell_clicked.emit(pos)
 				queue_redraw()
+		elif event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+			var pos := _screen_to_grid(event.position)
+			if pos.x >= 0 and pos.x < BOARD_W and pos.y >= 0 and pos.y < BOARD_H:
+				cell_right_clicked.emit(pos)
 
 
 func _screen_to_grid(screen_pos: Vector2) -> Vector2i:

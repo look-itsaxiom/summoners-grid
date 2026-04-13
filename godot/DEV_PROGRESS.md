@@ -37,7 +37,7 @@ Check this file every Ralph Loop iteration.
 | 25 | Procedural SFX | done | done | 12 sounds (sfx.gd), all wired to game events |
 | 26 | Keyboard shortcuts | done | done | 1-9, E, Esc |
 | 27 | Color blind mode | done | TODO | |
-| 28 | Card inspector (right-click) | done | TODO | |
+| 28 | Card inspector (right-click) | done | done | Popup panel: name, role, species, element, HP, all 9 stats, equipment, movement |
 | 29 | Match history | done | done | Scrollable table (result/mode/turns/date), W/L stats, alternating rows |
 | 30 | Save/load game | done | done | JSON to user://savegame.json |
 | 31 | Screen shake on crits | done | done | intensity 12 crit, 4 normal |
