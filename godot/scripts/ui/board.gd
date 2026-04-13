@@ -145,6 +145,7 @@ func _draw() -> void:
 			elif pos == hovered_cell:
 				color = color.lerp(Color.WHITE, 0.05)
 
+			color.a = 0.7  # Semi-transparent so board bg shows through
 			draw_rect(rect, color)
 
 			# Subtle inner bevel — lighter top-left edge, darker bottom-right

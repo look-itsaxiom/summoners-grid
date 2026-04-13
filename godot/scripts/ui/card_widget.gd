@@ -23,7 +23,6 @@ const TYPE_COLORS := {
 var card_data: Dictionary = {}
 var is_mini := false
 var is_hovered := false
-var _hover_scale := 1.0
 
 static var _species_sprites: Dictionary = {}
 static var _card_art: Dictionary = {}
