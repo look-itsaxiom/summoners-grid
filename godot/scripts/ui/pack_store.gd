@@ -80,6 +80,24 @@ func _build_ui() -> void:
 	_add_pack_card(packs, "Standard Pack", "5 cards\nGuaranteed Uncommon+\nGuaranteed Rare+", "🪙 300", Color(0.3, 0.5, 0.7), "standard", coins >= 300)
 	_add_pack_card(packs, "Premium Pack", "10 cards\nGuaranteed Rare+\nGuaranteed Legend+", "🪙 1,000", Color(0.7, 0.6, 0.3), "premium", coins >= 1000)
 
+	# Coin bundles teaser
+	var coin_label := Label.new()
+	coin_label.text = "COIN BUNDLES"
+	coin_label.add_theme_font_size_override("font_size", 12)
+	coin_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
+	coin_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(coin_label)
+
+	var bundles := HBoxContainer.new()
+	bundles.add_theme_constant_override("separation", 12)
+	bundles.alignment = BoxContainer.ALIGNMENT_CENTER
+	main.add_child(bundles)
+
+	_add_coin_bundle(bundles, "500 🪙", "$0.99")
+	_add_coin_bundle(bundles, "1,200 🪙", "$1.99")
+	_add_coin_bundle(bundles, "3,000 🪙", "$4.99")
+	_add_coin_bundle(bundles, "7,000 🪙", "$9.99")
+
 	# Divider
 	var divider := ColorRect.new()
 	divider.color = Color(0.3, 0.25, 0.5, 0.4)
@@ -339,6 +357,29 @@ func _distribute_stats(budget: int, species: String) -> Dictionary:
 		stats[all_stats[randi() % all_stats.size()]] += remaining
 
 	return stats
+
+
+func _add_coin_bundle(parent: HBoxContainer, coins_text: String, price: String) -> void:
+	var btn := Button.new()
+	btn.text = "%s\n%s" % [coins_text, price]
+	btn.custom_minimum_size = Vector2(110, 50)
+	btn.add_theme_font_size_override("font_size", 11)
+	btn.disabled = true  # Coming soon
+	btn.tooltip_text = "Coming soon — real money purchases"
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.12, 0.1, 0.06)
+	style.border_color = Color(0.4, 0.35, 0.15)
+	style.border_width_top = 1
+	style.border_width_bottom = 1
+	style.border_width_left = 1
+	style.border_width_right = 1
+	style.corner_radius_top_left = 6
+	style.corner_radius_top_right = 6
+	style.corner_radius_bottom_left = 6
+	style.corner_radius_bottom_right = 6
+	btn.add_theme_stylebox_override("normal", style)
+	btn.add_theme_stylebox_override("disabled", style)
+	parent.add_child(btn)
 
 
 func _add_nav_button(parent: HBoxContainer, text: String, color: Color, callback: Callable) -> void:
