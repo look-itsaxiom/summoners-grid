@@ -171,6 +171,27 @@ func _build_ui() -> void:
 	spacer3.custom_minimum_size.y = 8
 	center.add_child(spacer3)
 
+	# ── Achievements Section ──
+	var achv = get_node_or_null("/root/Achievements")
+	if achv:
+		_add_section_header(center, "ACHIEVEMENTS")
+		var achv_progress := Label.new()
+		achv_progress.text = achv.get_progress_text()
+		achv_progress.add_theme_font_size_override("font_size", 13)
+		achv_progress.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+		achv_progress.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		center.add_child(achv_progress)
+
+		var achv_list := Label.new()
+		var lines: Array[String] = []
+		for a in achv.get_all():
+			var icon: String = "+" if a["unlocked"] else "-"
+			lines.append("%s %s — %s (%d coins)" % [icon, a["name"], a["description"], a["reward"]])
+		achv_list.text = "\n".join(lines)
+		achv_list.add_theme_font_size_override("font_size", 10)
+		achv_list.add_theme_color_override("font_color", Color(0.5, 0.55, 0.65))
+		center.add_child(achv_list)
+
 	# ── Stats Section ──
 	_add_section_header(center, "MATCH STATS")
 
@@ -182,7 +203,7 @@ func _build_ui() -> void:
 	center.add_child(stats)
 
 	var spacer4 := Control.new()
-	spacer4.custom_minimum_size.y = 12
+	spacer4.custom_minimum_size.y = 8
 	center.add_child(spacer4)
 
 	# Back button
