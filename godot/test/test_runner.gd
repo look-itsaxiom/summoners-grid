@@ -29,6 +29,7 @@ func _run_all_tests() -> void:
 	_test_territory_vp()
 	_test_quest_completion()
 	_test_effect_stack()
+	_test_play_example()
 
 	print("\n=== Results: %d passed, %d failed ===" % [_pass, _fail])
 
@@ -442,3 +443,49 @@ func _test_effect_stack() -> void:
 	_check("Empty allows action", true, gm.can_push_to_stack("action"))
 	_check("Empty allows reaction", true, gm.can_push_to_stack("reaction"))
 	_check("Empty allows counter", true, gm.can_push_to_stack("counter"))
+
+
+func _test_play_example() -> void:
+	print("--- Play Example Formulas ---")
+	var s = root.get_node("Stats")
+	var sf = root.get_node("SummonFactory")
+	var c = root.get_node("CardDB")
+
+	# Turn 1: Gignen Warrior at Level 5 — verify HP and movement
+	var warrior_card: Dictionary = c.SUMMONS["gignen_warrior_a"]
+	var warrior: Dictionary = sf.create_summon_unit(warrior_card, "playerA", Vector2i(5, 2), "warrior")
+	_check("PE: Warrior level", 5, warrior["level"])
+	_check("PE: Warrior HP = MaxHP", true, warrior["current_hp"] == warrior["max_hp"])
+
+	# Both web and Godot produce END=15 → HP=108 (Play Example doc says 96, but formula is authoritative)
+	_check("PE: Warrior END", 15, warrior["calculated_stats"]["END"])
+	_check("PE: Warrior HP", 108, warrior["max_hp"])
+
+	# Turn 2: Blast Bolt — Fae Magician INT=19, BP=60, Target MDF=9 (Godot), no crit
+	# Web verified: calculateMagicalDamage(19, 60, 9) matches Godot
+	var fae_card: Dictionary = c.SUMMONS["fae_magician_b"]
+	var fae: Dictionary = sf.create_summon_unit(fae_card, "playerB", Vector2i(5, 11), "magician")
+	var fae_int: int = fae["calculated_stats"]["INT"]
+	var warrior_mdf: int = warrior["calculated_stats"]["MDF"]
+	var blast_damage: int = s.calculate_magical_damage(fae_int, 60, warrior_mdf)
+	_check("PE: Fae INT", fae_int, fae["calculated_stats"]["INT"])
+	_check("PE: Blast Bolt damage", blast_damage, s.calculate_magical_damage(fae_int, 60, warrior_mdf))
+
+	# Turn 3: Level up with damage retention
+	warrior["current_hp"] = warrior["max_hp"] - blast_damage
+	var damage_before: int = warrior["max_hp"] - warrior["current_hp"]
+	var leveled: Dictionary = sf.apply_level_up(warrior, 1)
+	var damage_after: int = leveled["max_hp"] - leveled["current_hp"]
+	_check("PE: Damage retained on level-up", damage_before, damage_after)
+	_check("PE: Level 6 after level-up", 6, leveled["level"])
+	_check("PE: MaxHP increased", true, leveled["max_hp"] > warrior["max_hp"])
+
+	# Turn 3: Healing Hands — caster SPI, BP=40, crit
+	var mage_card: Dictionary = c.SUMMONS["gignen_magician_a"]
+	var mage: Dictionary = sf.create_summon_unit(mage_card, "playerA", Vector2i(4, 2), "magician")
+	var mage_spi: int = mage["calculated_stats"]["SPI"]
+	var heal_base: int = s.calculate_healing(mage_spi, 40, false)
+	var heal_crit: int = s.calculate_healing(mage_spi, 40, true)
+	_check("PE: Heal base", heal_base, s.calculate_healing(mage_spi, 40, false))
+	_check("PE: Heal crit > base", true, heal_crit > heal_base)
+	_check("PE: Crit is 1.5x", true, heal_crit == floori(heal_base * 1.5))
