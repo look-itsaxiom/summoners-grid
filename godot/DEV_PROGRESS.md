@@ -64,7 +64,7 @@ Check this file every Ralph Loop iteration.
 | 48 | Elemental VFX | todo | done | Element-colored cell flash + damage numbers (fire=orange, water=blue, etc.) |
 | 49 | HP bar styling | done | done | Gradient highlight on top half, color-coded (green/yellow/red) |
 | 50 | Card hover preview | todo | done | card detail panel in sidebar + unit stat panel |
-| 51 | Board zoom + pan | todo | TODO | |
+| 51 | Board zoom + pan | todo | done | Mouse wheel zoom (0.5x-2.5x), middle-click pan, R to reset |
 | 52 | Background music | todo | done | procedural BGM: menu, battle, victory, defeat (bgm.gd) |
 | 53 | UI skin / theme | todo | done | dark fantasy theme, styled panels, per-type card colors, game over panel |
 | 54 | Responsive layout | todo | TODO | |

@@ -1519,6 +1519,12 @@ func _unhandled_input(event: InputEvent) -> void:
 			_refresh_hand()
 			get_viewport().set_input_as_handled()
 
+		# R = Reset board zoom/pan
+		elif key == KEY_R:
+			board.reset_view()
+			get_viewport().set_input_as_handled()
+			get_viewport().set_input_as_handled()
+
 		# 1-9 = Select hand card
 		elif key >= KEY_1 and key <= KEY_9:
 			var idx: int = key - KEY_1

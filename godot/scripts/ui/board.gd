@@ -47,6 +47,12 @@ var _animating := false
 # Level-up ring effects: Array of { pos: Vector2i, radius: float, alpha: float }
 var _level_rings: Array = []
 
+# Zoom + pan state
+var _zoom := 1.0
+var _pan := Vector2.ZERO
+var _is_panning := false
+var _pan_start := Vector2.ZERO
+
 # Species sprite textures (loaded once)
 var _species_sprites: Dictionary = {}
 
@@ -118,6 +124,8 @@ func _process(delta: float) -> void:
 
 
 func _draw() -> void:
+	# Apply zoom + pan transform to all draw calls
+	draw_set_transform(_pan, 0, Vector2(_zoom, _zoom))
 	var offset := Vector2(28, 12)  # Margin for row/col labels
 
 	# Draw territory backgrounds
@@ -304,14 +312,36 @@ func _get_territory_color(x: int, y: int) -> Color:
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion:
-		var pos := _screen_to_grid(event.position)
-		if pos != hovered_cell:
-			hovered_cell = pos
-			cell_hovered.emit(pos)
+		if _is_panning:
+			_pan += event.relative
 			queue_redraw()
+		else:
+			var pos := _screen_to_grid(event.position)
+			if pos != hovered_cell:
+				hovered_cell = pos
+				cell_hovered.emit(pos)
+				queue_redraw()
 
 	if event is InputEventMouseButton:
-		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		# Zoom with mouse wheel
+		if event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			var old_zoom := _zoom
+			_zoom = minf(_zoom * 1.15, 2.5)
+			# Zoom toward cursor
+			_pan = event.position - (event.position - _pan) * (_zoom / old_zoom)
+			queue_redraw()
+		elif event.pressed and event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			var old_zoom := _zoom
+			_zoom = maxf(_zoom / 1.15, 0.5)
+			_pan = event.position - (event.position - _pan) * (_zoom / old_zoom)
+			queue_redraw()
+
+		# Pan with middle mouse button
+		elif event.button_index == MOUSE_BUTTON_MIDDLE:
+			_is_panning = event.pressed
+			_pan_start = event.position
+
+		elif event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 			var pos := _screen_to_grid(event.position)
 			if pos.x >= 0 and pos.x < BOARD_W and pos.y >= 0 and pos.y < BOARD_H:
 				selected_cell = pos
@@ -325,7 +355,8 @@ func _gui_input(event: InputEvent) -> void:
 
 func _screen_to_grid(screen_pos: Vector2) -> Vector2i:
 	var offset := Vector2(28, 12)
-	var local := screen_pos - offset
+	# Undo zoom + pan to get board-local coords
+	var local := (screen_pos - _pan) / _zoom - offset
 	var gx := int(local.x / CELL_SIZE)
 	var gy := BOARD_H - 1 - int(local.y / CELL_SIZE)
 	if gx < 0 or gx >= BOARD_W or gy < 0 or gy >= BOARD_H:
@@ -374,6 +405,13 @@ func show_moves(positions: Array[Vector2i]) -> void:
 ## Show valid attack targets.
 func show_attacks(instance_ids: Array[String]) -> void:
 	valid_attacks = instance_ids
+	queue_redraw()
+
+
+## Reset zoom and pan to default.
+func reset_view() -> void:
+	_zoom = 1.0
+	_pan = Vector2.ZERO
 	queue_redraw()
 
 
