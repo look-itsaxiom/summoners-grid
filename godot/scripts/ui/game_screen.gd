@@ -7,7 +7,6 @@ var _spectator_speed := 1.0  # 1x, 2x, or 4x
 var _speed_buttons: Array = []
 
 @onready var _gm = get_node("/root/GameManager")
-@onready var _sf = get_node("/root/SummonFactory")
 
 var board: Control
 var phase_label: Label
@@ -283,7 +282,7 @@ func _refresh_ui() -> void:
 		pb["victory_points"], _count_summons("playerB"), pb["hand"].size()
 	]
 
-	var is_player_action := not _gm.spectator_mode and _gm.phase == "action" and _gm.active_player == "playerA"
+	var is_player_action: bool = not _gm.spectator_mode and _gm.phase == "action" and _gm.active_player == "playerA"
 	end_turn_btn.visible = is_player_action
 
 	# Timer visibility
@@ -1467,7 +1466,7 @@ func _stop_turn_timer() -> void:
 func _update_timer_display() -> void:
 	var pct: float = _turn_time_remaining / TURN_TIME_LIMIT
 	var seconds: int = ceili(_turn_time_remaining)
-	_turn_timer_label.text = "%d:%02d" % [seconds / 60, seconds % 60]
+	_turn_timer_label.text = "%d:%02d" % [seconds / int(60), seconds % int(60)]
 
 	# Color shifts: blue → yellow → red
 	if pct > 0.5:
