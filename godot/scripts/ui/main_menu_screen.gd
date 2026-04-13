@@ -131,12 +131,20 @@ func _build_ui() -> void:
 		bonus_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		center.add_child(bonus_label)
 
-	# Player stats bar
+	# Player rank + stats bar
 	if storage:
-		var stats_text := "🪙 %d coins  |  📦 %d cards" % [storage.get_coins(), storage.get_card_count()]
-		var match_stats: Dictionary = storage.get_match_stats()
-		if match_stats["total"] > 0:
-			stats_text += "  |  ⚔️ %d-%d W/L" % [match_stats["wins"], match_stats["losses"]]
+		var rank: Dictionary = storage.get_rank()
+		var rank_label := Label.new()
+		var rank_text := "Rank: %s" % rank["name"]
+		if rank.has("next") and not rank["next"].is_empty():
+			rank_text += "  (%d/%d wins to %s)" % [rank["wins"], rank["next"]["min"], rank["next"]["name"]]
+		rank_label.text = rank_text
+		rank_label.add_theme_font_size_override("font_size", 11)
+		rank_label.add_theme_color_override("font_color", rank["color"])
+		rank_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		center.add_child(rank_label)
+
+		var stats_text := "🪙 %d  |  📦 %d cards" % [storage.get_coins(), storage.get_card_count()]
 		var rarities: Dictionary = storage.get_rarity_counts()
 		if rarities.has("myth"):
 			stats_text += "  |  ✨ %d myth" % rarities["myth"]

@@ -155,6 +155,28 @@ func get_match_stats() -> Dictionary:
 	return {"total": _total_matches, "wins": _total_wins, "losses": _total_matches - _total_wins}
 
 
+## Get player rank based on total wins.
+func get_rank() -> Dictionary:
+	var ranks := [
+		{"name": "Novice", "min": 0, "color": Color(0.5, 0.5, 0.5)},
+		{"name": "Apprentice", "min": 3, "color": Color(0.3, 0.7, 0.3)},
+		{"name": "Warrior", "min": 10, "color": Color(0.3, 0.5, 0.9)},
+		{"name": "Champion", "min": 25, "color": Color(1.0, 0.75, 0.0)},
+		{"name": "Master", "min": 50, "color": Color(0.85, 0.2, 0.85)},
+		{"name": "Legend", "min": 100, "color": Color(1.0, 0.4, 0.2)},
+	]
+	var current := ranks[0]
+	for r in ranks:
+		if _total_wins >= r["min"]:
+			current = r
+	var next_rank := {}
+	for i in range(ranks.size() - 1):
+		if ranks[i]["name"] == current["name"] and i + 1 < ranks.size():
+			next_rank = ranks[i + 1]
+			break
+	return {"name": current["name"], "color": current["color"], "wins": _total_wins, "next": next_rank}
+
+
 ## Get rarity breakdown.
 func get_rarity_counts() -> Dictionary:
 	var counts := {}
