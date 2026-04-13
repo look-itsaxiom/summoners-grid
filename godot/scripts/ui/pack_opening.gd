@@ -80,11 +80,24 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	# Dark background
-	var bg := ColorRect.new()
-	bg.color = BG_COLOR
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	# Background art or dark fallback
+	var bg_path := "res://assets/pack_opening_bg.png"
+	if ResourceLoader.exists(bg_path):
+		var bg_tex := TextureRect.new()
+		bg_tex.texture = load(bg_path)
+		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		add_child(bg_tex)
+		var overlay := ColorRect.new()
+		overlay.color = Color(0.0, 0.0, 0.05, 0.5)
+		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(overlay)
+	else:
+		var bg := ColorRect.new()
+		bg.color = BG_COLOR
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
 
 	# Center everything
 	var center := VBoxContainer.new()

@@ -67,10 +67,23 @@ func _ready() -> void:
 
 
 func _build_ui() -> void:
-	var bg := ColorRect.new()
-	bg.color = BG_COLOR
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(bg)
+	var bg_path := "res://assets/collection_bg.png"
+	if ResourceLoader.exists(bg_path):
+		var bg_tex := TextureRect.new()
+		bg_tex.texture = load(bg_path)
+		bg_tex.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg_tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		add_child(bg_tex)
+		var overlay := ColorRect.new()
+		overlay.color = Color(0.0, 0.0, 0.03, 0.65)
+		overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(overlay)
+	else:
+		var bg := ColorRect.new()
+		bg.color = BG_COLOR
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		add_child(bg)
 
 	# Main layout: sidebar filters + card grid
 	var hbox := HBoxContainer.new()
