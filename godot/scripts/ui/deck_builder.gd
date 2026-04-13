@@ -287,10 +287,15 @@ func _refresh_slots() -> void:
 
 		slot.add_theme_stylebox_override("panel", style)
 
-	_deck_label.text = "%d / 3 summons selected" % _deck_summons.size()
+	var total_power := 0
+	for card in _deck_summons:
+		total_power += card.get("power", 0)
+
 	if _deck_summons.size() == 3:
+		_deck_label.text = "DECK READY!  ⚡ %d total power" % total_power if total_power > 0 else "DECK READY!"
 		_deck_label.add_theme_color_override("font_color", Color(0.3, 0.8, 0.3))
 	else:
+		_deck_label.text = "%d / 3 summons selected" % _deck_summons.size()
 		_deck_label.add_theme_color_override("font_color", Color(0.5, 0.5, 0.6))
 
 
