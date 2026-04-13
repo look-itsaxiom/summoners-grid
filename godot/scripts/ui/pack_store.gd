@@ -191,21 +191,16 @@ func _buy_pack(pack_type: String) -> void:
 	var pack_size: int = 10 if pack_type == "premium" else 5
 	var cards: Array = _generate_local_pack(pack_size)
 
-	var result := {
+	# Store pack data in ApiClient for the opening scene to read
+	_api.set("_last_pack_data", {
 		"success": true,
 		"packType": pack_type,
 		"packSize": pack_size,
 		"cards": cards,
-	}
+	})
 
 	_is_opening = false
-
-	# Transition to the pack opening ceremony
-	var opening_scene = load("res://scenes/pack_opening.tscn")
-	var opening = opening_scene.instantiate()
-	opening.pack_data = result
-	get_tree().root.add_child(opening)
-	queue_free()
+	get_tree().change_scene_to_file("res://scenes/pack_opening.tscn")
 
 
 ## Generate a pack of cards locally using randomized species + rarity.

@@ -6,6 +6,7 @@ var base_url: String = "http://localhost:3000"
 var _wallet_address: String = ""
 var _auth_token: String = ""
 var _http: HTTPRequest
+var _last_pack_data: Dictionary = {}  # Temp storage for scene transitions
 
 
 func _ready() -> void:

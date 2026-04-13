@@ -31,12 +31,20 @@ var _sfx: Node
 var _is_revealing := false
 var _pack_type: String = "standard"
 
-# Set these before adding to scene tree
+# Can be set directly or read from ApiClient autoload
 var pack_data: Dictionary = {}
 
 
 func _ready() -> void:
 	_sfx = get_node_or_null("/root/SFX")
+
+	# Read pack data from ApiClient if not set directly
+	if pack_data.is_empty():
+		var api = get_node_or_null("/root/ApiClient")
+		if api and api.get("_last_pack_data") is Dictionary:
+			pack_data = api.get("_last_pack_data")
+			api.set("_last_pack_data", {})
+
 	_cards = pack_data.get("cards", [])
 	_pack_type = pack_data.get("packType", "standard")
 
