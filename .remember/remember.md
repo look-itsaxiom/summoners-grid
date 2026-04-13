@@ -1,14 +1,14 @@
 # Handoff
 
 ## State
-Branch `ralphs-here` (~90 commits this session, all pushed). Production-ready F2P card game: 9 screens, 387 tests. Features: coin economy (starter pack, daily bonus, win/loss rewards, greyed-out unaffordable packs, coins-to-next-pack counter), dopamine pack opening (click-to-reveal, sprites, rarity glow), collection (detail popup, NEW badges, filter counts, rarity breakdown), deck builder (total power, gameplay connection), smart AI targeting (HP-weighted), player rank system (Novice→Legend with RANK UP celebration), 210 species-themed names, 12 AI art assets, procedural audio, fade transitions, particles. Builds: Linux 71MB, Windows 103MB.
+Branch `ralphs-here`, tag `v0.1.0-alpha`. 104 session commits (232 total), all pushed. Production-ready F2P tactical card game. 27 GDScript files, 8120+ LOC, 10 scenes, 14 AI art assets. 387 tests. Full economy (coins/packs/daily/ranks/starter). Dopamine pack opening. Smart AI. Fade transitions. Procedural audio. Export builds: Linux 71MB, Windows 103MB.
 
 ## Next
 1. **Supabase** — `! npx supabase login` or supabase.com → `user://supabase_config.json`
-2. **Stripe** — real money coin purchases
-3. **Steam** — $100 at partner.steamgames.com, store page ready: `docs/STEAM_STORE_PAGE.md`
+2. **Steam** — $100 at partner.steamgames.com. Store page: `docs/STEAM_STORE_PAGE.md`
+3. **Stripe** — stripe.com keys. Coin bundles already in pack store UI (disabled).
 
 ## Context
-- Own stack, not Immutable. `BLOCKED.md` + `docs/PLATFORM_OPTIONS.md`.
-- All UI in Godot. Pack opening uses invisible Button click catcher (z_index=10).
-- 5-day sprint from 2026-04-13. User wants production-grade, dopamine, soul+greed.
+- Own stack (not Immutable). All UI in Godot. No web frontend.
+- Pack opening: invisible Button click catcher (z_index=10).
+- `BLOCKED.md` has 3 credential requests. 5-day sprint from 2026-04-13.
