@@ -76,8 +76,9 @@ func _build_ui() -> void:
 	packs.alignment = BoxContainer.ALIGNMENT_CENTER
 	main.add_child(packs)
 
-	_add_pack_card(packs, "Standard Pack", "5 cards\nGuaranteed Uncommon+\nGuaranteed Rare+", "🪙 300", Color(0.3, 0.5, 0.7), "standard")
-	_add_pack_card(packs, "Premium Pack", "10 cards\nGuaranteed Rare+\nGuaranteed Legend+", "🪙 1,000", Color(0.7, 0.6, 0.3), "premium")
+	var coins: int = get_node("/root/CardStorage").get_coins()
+	_add_pack_card(packs, "Standard Pack", "5 cards\nGuaranteed Uncommon+\nGuaranteed Rare+", "🪙 300", Color(0.3, 0.5, 0.7), "standard", coins >= 300)
+	_add_pack_card(packs, "Premium Pack", "10 cards\nGuaranteed Rare+\nGuaranteed Legend+", "🪙 1,000", Color(0.7, 0.6, 0.3), "premium", coins >= 1000)
 
 	# Divider
 	var divider := ColorRect.new()
@@ -119,12 +120,13 @@ func _build_ui() -> void:
 		get_node("/root/SceneTransition").change_scene("res://scenes/menu.tscn"))
 
 
-func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String, price: String, color: Color, pack_type: String) -> void:
+func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String, price: String, color: Color, pack_type: String, can_afford: bool = true) -> void:
+	var display_color: Color = color if can_afford else Color(0.25, 0.25, 0.3)
 	var panel := PanelContainer.new()
 	panel.custom_minimum_size = Vector2(260, 200)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.08, 0.08, 0.14)
-	style.border_color = color
+	style.border_color = display_color
 	style.border_width_top = 2
 	style.border_width_bottom = 2
 	style.border_width_left = 2
@@ -147,7 +149,7 @@ func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String
 	var t := Label.new()
 	t.text = title_text
 	t.add_theme_font_size_override("font_size", 18)
-	t.add_theme_color_override("font_color", color)
+	t.add_theme_color_override("font_color", display_color)
 	vbox.add_child(t)
 
 	var d := Label.new()
@@ -167,7 +169,7 @@ func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String
 	buy_btn.custom_minimum_size = Vector2(0, 38)
 	buy_btn.add_theme_font_size_override("font_size", 14)
 	var btn_style := StyleBoxFlat.new()
-	btn_style.bg_color = color
+	btn_style.bg_color = display_color
 	btn_style.corner_radius_top_left = 6
 	btn_style.corner_radius_top_right = 6
 	btn_style.corner_radius_bottom_left = 6
