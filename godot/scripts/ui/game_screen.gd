@@ -571,13 +571,26 @@ func _run_ai_turn() -> void:
 		if enemies.size() == 0: continue
 
 		# Find nearest enemy
-		var nearest = enemies[0]
+		# Smart targeting: prefer killable targets > low HP > nearest
+		var attacks = _gm.get_valid_attacks(unit_id)
+		var best_target = enemies[0]
+		var best_score := -999.0
 		for e in enemies:
-			if _dist(unit["position"], e["position"]) < _dist(unit["position"], nearest["position"]):
-				nearest = e
+			var score := 0.0
+			var in_range: bool = e["instance_id"] in attacks
+			if in_range:
+				score += 100.0  # Strongly prefer attackable targets
+				# Bonus for low HP (killable)
+				var hp_pct: float = float(e["current_hp"]) / float(e["max_hp"])
+				score += (1.0 - hp_pct) * 50.0  # Lower HP = higher score
+			# Proximity bonus
+			score -= _dist(unit["position"], e["position"]) * 2.0
+			if score > best_score:
+				best_score = score
+				best_target = e
+		var nearest = best_target
 
 		# Attack if in range
-		var attacks = _gm.get_valid_attacks(unit_id)
 		if nearest["instance_id"] in attacks:
 			_gm.attack_with_summon(unit_id, nearest["instance_id"])
 			board.queue_redraw()
