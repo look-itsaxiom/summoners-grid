@@ -834,9 +834,15 @@ func _on_game_over(winner_id: String) -> void:
 	status_label.text = "%s WINS!" % winner_id.to_upper()
 	end_turn_btn.visible = false
 
-	# Record match
+	# Record match and award coins
 	var mode := "spectator" if _gm.spectator_mode else ("random" if _gm.use_random_decks else "standard")
 	get_node("/root/Settings").record_match(winner_id, _gm.turn_number, mode)
+
+	var storage = get_node_or_null("/root/CardStorage")
+	if storage and not _gm.spectator_mode:
+		var won: bool = winner_id == "playerA"
+		var reward: int = storage.award_match_coins(won)
+		status_label.text = "%s WINS! +%d 🪙" % [winner_id.to_upper(), reward]
 
 	_refresh_ui()
 	_show_game_over_overlay(winner_id)

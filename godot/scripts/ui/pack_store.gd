@@ -53,6 +53,15 @@ func _build_ui() -> void:
 	subtitle.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	main.add_child(subtitle)
 
+	# Coin balance
+	var storage = get_node("/root/CardStorage")
+	var coins_label := Label.new()
+	coins_label.text = "🪙 %d coins" % storage.get_coins()
+	coins_label.add_theme_font_size_override("font_size", 16)
+	coins_label.add_theme_color_override("font_color", Color(1.0, 0.85, 0.0))
+	coins_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	main.add_child(coins_label)
+
 	# Status
 	_status_label = Label.new()
 	_status_label.text = ""
@@ -67,8 +76,8 @@ func _build_ui() -> void:
 	packs.alignment = BoxContainer.ALIGNMENT_CENTER
 	main.add_child(packs)
 
-	_add_pack_card(packs, "Standard Pack", "5 cards\nGuaranteed Uncommon+\nGuaranteed Rare+", "$3.00", Color(0.3, 0.5, 0.7), "standard")
-	_add_pack_card(packs, "Premium Pack", "10 cards\nGuaranteed Rare+\nGuaranteed Legend+", "$10.00", Color(0.7, 0.6, 0.3), "premium")
+	_add_pack_card(packs, "Standard Pack", "5 cards\nGuaranteed Uncommon+\nGuaranteed Rare+", "🪙 300", Color(0.3, 0.5, 0.7), "standard")
+	_add_pack_card(packs, "Premium Pack", "10 cards\nGuaranteed Rare+\nGuaranteed Legend+", "🪙 1,000", Color(0.7, 0.6, 0.3), "premium")
 
 	# Divider
 	var divider := ColorRect.new()
@@ -177,6 +186,17 @@ func _add_pack_card(parent: HBoxContainer, title_text: String, desc_text: String
 func _buy_pack(pack_type: String) -> void:
 	if _is_opening:
 		return
+
+	# Check if player can afford it
+	var storage = get_node("/root/CardStorage")
+	if not storage.can_afford(pack_type):
+		_status_label.text = "Not enough coins! Play games to earn more."
+		_status_label.add_theme_color_override("font_color", Color(1.0, 0.3, 0.3))
+		return
+
+	# Deduct coins
+	storage.spend_coins(pack_type)
+
 	_is_opening = true
 	_status_label.text = "Opening pack..."
 	_status_label.add_theme_color_override("font_color", Color(0.8, 0.8, 0.5))

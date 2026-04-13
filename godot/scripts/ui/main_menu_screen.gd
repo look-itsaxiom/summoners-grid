@@ -111,14 +111,14 @@ func _build_ui() -> void:
 
 	# Player stats bar
 	var storage = get_node_or_null("/root/CardStorage")
-	if storage and storage.get_card_count() > 0:
-		var stats_text := "📦 %d cards collected  |  %d packs opened" % [
-			storage.get_card_count(), storage.get_pack_history().size()]
+	if storage:
+		var stats_text := "🪙 %d coins  |  📦 %d cards" % [storage.get_coins(), storage.get_card_count()]
+		var match_stats: Dictionary = storage.get_match_stats()
+		if match_stats["total"] > 0:
+			stats_text += "  |  ⚔️ %d-%d W/L" % [match_stats["wins"], match_stats["losses"]]
 		var rarities: Dictionary = storage.get_rarity_counts()
 		if rarities.has("myth"):
 			stats_text += "  |  ✨ %d myth" % rarities["myth"]
-		if rarities.has("legend"):
-			stats_text += "  |  🏆 %d legend" % rarities["legend"]
 		var stats_label := Label.new()
 		stats_label.text = stats_text
 		stats_label.add_theme_font_size_override("font_size", 10)

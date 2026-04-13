@@ -6,6 +6,14 @@ const SAVE_PATH := "user://card_collection.json"
 
 var _collection: Array = []  # Array of card dictionaries
 var _pack_history: Array = []  # Array of { timestamp, pack_type, card_count }
+var _coins: int = 500  # Starting coins — enough for 1 free standard pack
+var _total_matches: int = 0
+var _total_wins: int = 0
+
+const PACK_COST_STANDARD := 300  # 300 coins = $3 equivalent
+const PACK_COST_PREMIUM := 1000  # 1000 coins = $10 equivalent
+const WIN_REWARD := 150  # Coins for winning
+const LOSS_REWARD := 50  # Coins for losing (participation)
 
 
 func _ready() -> void:
@@ -55,6 +63,49 @@ func get_pack_history() -> Array:
 	return _pack_history
 
 
+## Get current coin balance.
+func get_coins() -> int:
+	return _coins
+
+
+## Check if player can afford a pack.
+func can_afford(pack_type: String) -> bool:
+	var cost: int = PACK_COST_PREMIUM if pack_type == "premium" else PACK_COST_STANDARD
+	return _coins >= cost
+
+
+## Spend coins on a pack. Returns true if successful.
+func spend_coins(pack_type: String) -> bool:
+	var cost: int = PACK_COST_PREMIUM if pack_type == "premium" else PACK_COST_STANDARD
+	if _coins < cost:
+		return false
+	_coins -= cost
+	save_collection()
+	return true
+
+
+## Award coins for completing a match.
+func award_match_coins(won: bool) -> int:
+	var reward: int = WIN_REWARD if won else LOSS_REWARD
+	_coins += reward
+	_total_matches += 1
+	if won:
+		_total_wins += 1
+	save_collection()
+	return reward
+
+
+## Add coins directly (bonuses, purchases, etc.)
+func add_coins(amount: int) -> void:
+	_coins += amount
+	save_collection()
+
+
+## Get match stats.
+func get_match_stats() -> Dictionary:
+	return {"total": _total_matches, "wins": _total_wins, "losses": _total_matches - _total_wins}
+
+
 ## Get rarity breakdown.
 func get_rarity_counts() -> Dictionary:
 	var counts := {}
@@ -76,9 +127,12 @@ func get_species_counts() -> Dictionary:
 ## Save collection to disk.
 func save_collection() -> void:
 	var data := {
-		"version": 1,
+		"version": 2,
 		"collection": _collection,
 		"pack_history": _pack_history,
+		"coins": _coins,
+		"total_matches": _total_matches,
+		"total_wins": _total_wins,
 		"saved_at": Time.get_datetime_string_from_system(),
 	}
 
@@ -112,3 +166,6 @@ func load_collection() -> void:
 	var data: Dictionary = parsed
 	_collection = data.get("collection", [])
 	_pack_history = data.get("pack_history", [])
+	_coins = data.get("coins", 500)
+	_total_matches = data.get("total_matches", 0)
+	_total_wins = data.get("total_wins", 0)
