@@ -9,11 +9,16 @@ run/main_scene="res://scenes/login.tscn"
 
 config/name="Summoner's Grid"
 config/description="Tactical grid-based RPG card game"
-config/version="0.1.5"
+config/version="0.3.0"
 config/features=PackedStringArray("4.3")
 config/icon="res://assets/icon.png"
 
 [autoload]
+
+
+
+
+
 
 ThemeLoader="*res://scripts/engine/theme_loader.gd"
 
