@@ -109,8 +109,8 @@ func _build_ui() -> void:
 
 	_add_button(collect_col, "Pack Store", Color(0.6, 0.4, 0.15), _on_pack_store, 220)
 	_add_button(collect_col, "Marketplace", Color(0.5, 0.35, 0.1), _on_marketplace, 220)
+	_add_button(collect_col, "Card Forge", Color(0.55, 0.25, 0.1), _on_forge, 220)
 	_add_button(collect_col, "Deck Builder", Color(0.4, 0.3, 0.55), _on_deck_builder, 220)
-	_add_button(collect_col, "My Collection", Color(0.3, 0.5, 0.3), _on_collection, 220)
 
 	# Bottom row: How to Play
 	var spacer2 := Control.new()
@@ -316,6 +316,10 @@ func _on_pack_store() -> void:
 
 func _on_marketplace() -> void:
 	get_node("/root/SceneTransition").change_scene("res://scenes/marketplace.tscn")
+
+
+func _on_forge() -> void:
+	get_node("/root/SceneTransition").change_scene("res://scenes/forge.tscn")
 
 
 func _on_deck_builder() -> void:
