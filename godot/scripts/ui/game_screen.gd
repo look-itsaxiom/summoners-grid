@@ -66,11 +66,32 @@ func _build_ui() -> void:
 	board.cell_hovered.connect(_on_cell_hovered)
 	main_hbox.add_child(board)
 
-	# Right sidebar
+	# Right sidebar with Kenney panel background
+	var sidebar_panel := PanelContainer.new()
+	sidebar_panel.custom_minimum_size.x = 290
+	var panel_tex_path := "res://assets/ui/kenney/panel_brown.png"
+	if ResourceLoader.exists(panel_tex_path):
+		var ps := StyleBoxTexture.new()
+		ps.texture = load(panel_tex_path)
+		ps.texture_margin_left = 10
+		ps.texture_margin_right = 10
+		ps.texture_margin_top = 10
+		ps.texture_margin_bottom = 10
+		ps.content_margin_left = 8
+		ps.content_margin_right = 8
+		ps.content_margin_top = 6
+		ps.content_margin_bottom = 6
+		ps.modulate_color = Color(0.25, 0.2, 0.18, 0.85)
+		sidebar_panel.add_theme_stylebox_override("panel", ps)
+	else:
+		var ps := StyleBoxFlat.new()
+		ps.bg_color = Color(0.06, 0.06, 0.1, 0.8)
+		sidebar_panel.add_theme_stylebox_override("panel", ps)
+	main_hbox.add_child(sidebar_panel)
+
 	var sidebar := VBoxContainer.new()
-	sidebar.custom_minimum_size.x = 280
 	sidebar.add_theme_constant_override("separation", 6)
-	main_hbox.add_child(sidebar)
+	sidebar_panel.add_child(sidebar)
 
 	# Turn/phase info
 	turn_label = Label.new()
@@ -98,17 +119,32 @@ func _build_ui() -> void:
 	# Status / card detail area
 	var status_panel := PanelContainer.new()
 	status_panel.custom_minimum_size = Vector2(0, 60)
-	var sp_style := StyleBoxFlat.new()
-	sp_style.bg_color = Color(0.08, 0.08, 0.14)
-	sp_style.corner_radius_top_left = 4
-	sp_style.corner_radius_top_right = 4
-	sp_style.corner_radius_bottom_left = 4
-	sp_style.corner_radius_bottom_right = 4
-	sp_style.content_margin_left = 6
-	sp_style.content_margin_right = 6
-	sp_style.content_margin_top = 4
-	sp_style.content_margin_bottom = 4
-	status_panel.add_theme_stylebox_override("panel", sp_style)
+	var inset_path := "res://assets/ui/kenney/panelInset_brown.png"
+	if ResourceLoader.exists(inset_path):
+		var sp_style := StyleBoxTexture.new()
+		sp_style.texture = load(inset_path)
+		sp_style.texture_margin_left = 8
+		sp_style.texture_margin_right = 8
+		sp_style.texture_margin_top = 8
+		sp_style.texture_margin_bottom = 8
+		sp_style.content_margin_left = 8
+		sp_style.content_margin_right = 8
+		sp_style.content_margin_top = 6
+		sp_style.content_margin_bottom = 6
+		sp_style.modulate_color = Color(0.3, 0.25, 0.2, 0.9)
+		status_panel.add_theme_stylebox_override("panel", sp_style)
+	else:
+		var sp_style := StyleBoxFlat.new()
+		sp_style.bg_color = Color(0.08, 0.08, 0.14)
+		sp_style.corner_radius_top_left = 4
+		sp_style.corner_radius_top_right = 4
+		sp_style.corner_radius_bottom_left = 4
+		sp_style.corner_radius_bottom_right = 4
+		sp_style.content_margin_left = 6
+		sp_style.content_margin_right = 6
+		sp_style.content_margin_top = 4
+		sp_style.content_margin_bottom = 4
+		status_panel.add_theme_stylebox_override("panel", sp_style)
 	sidebar.add_child(status_panel)
 
 	status_label = Label.new()
